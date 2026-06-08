@@ -1,0 +1,310 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Theme token fallbacks (overwritten at runtime by applyTheme) ────────── */
+:root {
+  --c-bg: 236 232 224;
+  --c-surface: 247 244 238;
+  --c-surface-2: 240 236 228;
+  --c-border: 223 217 205;
+  --c-text: 45 41 35;
+  --c-muted: 124 116 102;
+  --c-accent: 166 112 70;
+  --c-accent-fg: 252 248 242;
+  --c-paper: 250 247 240;
+  --c-ink: 40 36 30;
+  --c-danger: 178 74 74;
+  --c-success: 92 150 110;
+  --radius: 10px;
+  --ui-scale: 1;
+
+  --editor-font: 'Lora', Georgia, serif;
+  --editor-size: 19px;
+  --editor-line-height: 1.75;
+  --editor-width: 680px;
+  --editor-spacing: 0em;
+  --editor-indent: 1.6em;
+  --editor-align: left;
+  --editor-zoom: 1;
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--c-border));
+  }
+  html {
+    font-size: calc(16px * var(--ui-scale));
+  }
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  #root {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  ::selection {
+    background-color: rgb(var(--c-accent) / 0.22);
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-surface border-border;
+  }
+  .focus-ring {
+    @apply outline-none ring-2 ring-accent/40 ring-offset-0;
+  }
+  .input-base {
+    @apply w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text
+           placeholder:text-muted/70 transition-colors
+           focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/25;
+  }
+  .label-text {
+    @apply text-xs font-medium uppercase tracking-wide text-muted;
+  }
+  .menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-text
+           transition-colors hover:bg-surface-2;
+  }
+}
+
+/* ── Custom scrollbars ──────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--c-muted) / 0.35) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--c-muted) / 0.3);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--c-muted) / 0.5);
+}
+
+/* ── The writing surface (TipTap / ProseMirror) ─────────────────────────── */
+.pm-editor .ProseMirror {
+  font-family: var(--editor-font);
+  font-size: calc(var(--editor-size) * var(--editor-zoom));
+  line-height: var(--editor-line-height);
+  color: rgb(var(--c-ink));
+  text-align: var(--editor-align);
+  outline: none;
+  caret-color: rgb(var(--c-accent));
+  word-wrap: break-word;
+}
+.pm-editor .ProseMirror p {
+  margin: 0;
+  margin-bottom: var(--editor-spacing);
+  text-indent: 0;
+}
+/* First-line indent for consecutive prose paragraphs (manuscript style). */
+.pm-editor.indent .ProseMirror p + p {
+  text-indent: var(--editor-indent);
+}
+.pm-editor .ProseMirror p:first-child {
+  text-indent: 0;
+}
+.pm-editor .ProseMirror > * + * {
+  margin-top: 0;
+}
+.pm-editor .ProseMirror h1 {
+  font-size: 1.7em;
+  font-weight: 600;
+  margin: 1.4em 0 0.5em;
+  line-height: 1.2;
+}
+.pm-editor .ProseMirror h2 {
+  font-size: 1.4em;
+  font-weight: 600;
+  margin: 1.3em 0 0.4em;
+  line-height: 1.25;
+}
+.pm-editor .ProseMirror h3 {
+  font-size: 1.18em;
+  font-weight: 600;
+  margin: 1.2em 0 0.3em;
+}
+.pm-editor .ProseMirror blockquote {
+  border-left: 3px solid rgb(var(--c-accent) / 0.5);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: rgb(var(--c-ink) / 0.82);
+  font-style: italic;
+}
+.pm-editor .ProseMirror ul,
+.pm-editor .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.6em 0;
+}
+.pm-editor .ProseMirror ul { list-style: disc; }
+.pm-editor .ProseMirror ol { list-style: decimal; }
+.pm-editor .ProseMirror li { margin: 0.2em 0; }
+.pm-editor .ProseMirror li p { text-indent: 0 !important; margin-bottom: 0; }
+.pm-editor .ProseMirror code {
+  font-family: var(--font-mono, monospace);
+  background: rgb(var(--c-muted) / 0.14);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.86em;
+}
+.pm-editor .ProseMirror pre {
+  background: rgb(var(--c-surface-2));
+  padding: 0.9em 1.1em;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.pm-editor .ProseMirror pre code { background: none; padding: 0; }
+.pm-editor .ProseMirror mark {
+  background: rgb(var(--c-accent) / 0.28);
+  border-radius: 2px;
+  padding: 0.05em 0;
+}
+.pm-editor .ProseMirror a {
+  color: rgb(var(--c-accent));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Scene break (horizontal rule) rendered as a centered ornament. */
+.pm-editor .ProseMirror hr {
+  border: none;
+  text-align: center;
+  margin: 1.8em 0;
+}
+.pm-editor .ProseMirror hr::before {
+  content: '⁂';
+  color: rgb(var(--c-muted));
+  font-size: 1.1em;
+  letter-spacing: 0.4em;
+}
+
+/* Placeholder */
+.pm-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgb(var(--c-muted) / 0.6);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* ── Screenplay element formatting ──────────────────────────────────────── */
+.pm-editor .ProseMirror p[data-script='scene-heading'] {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-top: 1.4em;
+  text-indent: 0 !important;
+}
+.pm-editor .ProseMirror p[data-script='action'] {
+  text-indent: 0 !important;
+  margin: 0.4em 0;
+}
+.pm-editor .ProseMirror p[data-script='character'] {
+  text-transform: uppercase;
+  margin: 0.9em 0 0;
+  margin-left: 38%;
+  text-indent: 0 !important;
+  font-weight: 600;
+}
+.pm-editor .ProseMirror p[data-script='parenthetical'] {
+  margin-left: 30%;
+  margin-right: 28%;
+  font-style: italic;
+  color: rgb(var(--c-ink) / 0.8);
+  text-indent: 0 !important;
+}
+.pm-editor .ProseMirror p[data-script='dialogue'] {
+  margin-left: 22%;
+  margin-right: 22%;
+  text-indent: 0 !important;
+}
+.pm-editor .ProseMirror p[data-script='transition'] {
+  text-transform: uppercase;
+  text-align: right;
+  font-weight: 600;
+  margin-top: 1em;
+  text-indent: 0 !important;
+}
+.pm-editor .ProseMirror p[data-script='shot'] {
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 1em;
+  text-indent: 0 !important;
+}
+
+/* ── Spellcheck decoration ──────────────────────────────────────────────── */
+.spell-error {
+  text-decoration: underline wavy rgb(var(--c-danger) / 0.85);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ── Focus mode ─────────────────────────────────────────────────────────── */
+.focus-active .ProseMirror > * {
+  transition: opacity 0.25s ease;
+  opacity: 0.28;
+}
+.focus-active .ProseMirror > .has-focus,
+.focus-active .ProseMirror > .has-focus * {
+  opacity: 1;
+}
+
+/* Comment / annotation inline mark */
+.pm-comment {
+  background: rgb(var(--c-accent) / 0.16);
+  border-bottom: 2px solid rgb(var(--c-accent) / 0.55);
+  border-radius: 2px;
+}
+
+/* Utility animations already declared in tailwind config */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Range slider ───────────────────────────────────────────────────────── */
+.parchment-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgb(var(--c-border));
+  outline: none;
+  cursor: pointer;
+}
+.parchment-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgb(var(--c-accent));
+  border: 2px solid rgb(var(--c-surface));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+.parchment-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgb(var(--c-accent));
+  border: 2px solid rgb(var(--c-surface));
+}
+
+/* Native color input cleanup */
+input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
+input[type='color']::-webkit-color-swatch { border: none; border-radius: 4px; }

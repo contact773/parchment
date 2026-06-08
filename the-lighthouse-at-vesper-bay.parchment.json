@@ -1,0 +1,321 @@
+{
+  "format": "parchment-project",
+  "version": 1,
+  "exportedAt": "2026-06-07T22:47:31.295Z",
+  "project": {
+    "id": "r7sepvUXREyh",
+    "title": "The Lighthouse at Vesper Bay",
+    "author": "A. N. Other",
+    "type": "novel",
+    "status": "planning",
+    "language": "en",
+    "genre": "Literary Mystery",
+    "logline": "A grieving woman returns to her childhood town to sell a dead lighthouse — and discovers it was never truly dark.",
+    "targetWords": 80000,
+    "defaultDocType": "prose",
+    "createdAt": 1780872261083,
+    "updatedAt": 1780872261128,
+    "lastOpenedAt": 1780872417825
+  },
+  "nodes": [
+    {
+      "id": "1RZwwKvBigc_",
+      "projectId": "r7sepvUXREyh",
+      "parentId": null,
+      "type": "folder",
+      "title": "Notes",
+      "order": 1,
+      "collapsed": false,
+      "synopsis": "",
+      "status": "idea",
+      "meta": {
+        "includeInCompile": true
+      },
+      "content": null,
+      "text": "",
+      "wordCount": 0,
+      "docType": "prose",
+      "createdAt": 1780872261101,
+      "updatedAt": 1780872261101
+    },
+    {
+      "id": "87sEtnzldiVD",
+      "projectId": "r7sepvUXREyh",
+      "parentId": null,
+      "type": "chapter",
+      "title": "Chapter One",
+      "order": 0,
+      "collapsed": false,
+      "synopsis": "",
+      "status": "idea",
+      "meta": {
+        "includeInCompile": true
+      },
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "text": "",
+      "wordCount": 0,
+      "docType": "prose",
+      "createdAt": 1780872261092,
+      "updatedAt": 1780872261092
+    },
+    {
+      "id": "En2y3DDQeYsj",
+      "projectId": "r7sepvUXREyh",
+      "parentId": "87sEtnzldiVD",
+      "type": "scene",
+      "title": "Opening Scene",
+      "order": 0,
+      "collapsed": false,
+      "synopsis": "Mara returns to Vesper Bay and sees the dead lighthouse lit.",
+      "status": "draft",
+      "meta": {
+        "pov": "Mara",
+        "goal": "Get in, sell the house, feel nothing",
+        "conflict": "The light she shouldn't be able to see",
+        "outcome": "A note: “The light still works.”",
+        "includeInCompile": true
+      },
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The lighthouse had not burned in forty years, and yet Mara Vance could have sworn she saw it lit as the ferry rounded the headland — a single amber eye, blinking once across the water before the fog swallowed it whole."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "She told herself it was the cold. The kind of cold that got behind your ribs and rearranged things. She had come back to Vesper Bay to bury her grandmother and to sell the house, in that order, and to feel nothing in particular about either."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "\"You're the Vance girl,\" the ferryman said. It was not a question. Nobody here asked questions; they simply arrived at conclusions and waited for you to catch up."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "\"I was,\" Mara said."
+              }
+            ]
+          },
+          {
+            "type": "horizontalRule"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The house smelled of salt and old paper and something underneath that she did not want to name. On the kitchen table, weighted by a stone, lay an envelope with her name on it in handwriting she had spent twenty years trying to forget."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Inside was a single line, and she read it twice before she let herself believe it:"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "italic"
+                  }
+                ],
+                "text": "The light still works. You only have to climb."
+              }
+            ]
+          }
+        ]
+      },
+      "text": "The lighthouse had not burned in forty years, and yet Mara Vance could have sworn she saw it lit as the ferry rounded the headland — a single amber eye, blinking once across the water before the fog swallowed it whole.\nShe told herself it was the cold. The kind of cold that got behind your ribs and rearranged things. She had come back to Vesper Bay to bury her grandmother and to sell the house, in that order, and to feel nothing in particular about either.\n\"You're the Vance girl,\" the ferryman said. It was not a question. Nobody here asked questions; they simply arrived at conclusions and waited for you to catch up.\n\"I was,\" Mara said.\n\nThe house smelled of salt and old paper and something underneath that she did not want to name. On the kitchen table, weighted by a stone, lay an envelope with her name on it in handwriting she had spent twenty years trying to forget.\nInside was a single line, and she read it twice before she let herself believe it:\nThe light still works. You only have to climb.",
+      "wordCount": 187,
+      "docType": "prose",
+      "createdAt": 1780872261096,
+      "updatedAt": 1780872261111
+    },
+    {
+      "id": "NVdPFHHlH5O-",
+      "projectId": "r7sepvUXREyh",
+      "parentId": null,
+      "type": "chapter",
+      "title": "Chapter Two",
+      "order": 1,
+      "collapsed": false,
+      "synopsis": "",
+      "status": "idea",
+      "meta": {
+        "includeInCompile": true
+      },
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "text": "",
+      "wordCount": 0,
+      "docType": "prose",
+      "createdAt": 1780872261118,
+      "updatedAt": 1780872261118
+    },
+    {
+      "id": "agqn_NAD-QmA",
+      "projectId": "r7sepvUXREyh",
+      "parentId": "1RZwwKvBigc_",
+      "type": "note",
+      "title": "Premise & Themes",
+      "order": 0,
+      "collapsed": false,
+      "synopsis": "",
+      "status": "idea",
+      "meta": {
+        "includeInCompile": true
+      },
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph"
+          }
+        ]
+      },
+      "text": "",
+      "wordCount": 0,
+      "docType": "prose",
+      "createdAt": 1780872261105,
+      "updatedAt": 1780872261105
+    },
+    {
+      "id": "jKb8RETJidO0",
+      "projectId": "r7sepvUXREyh",
+      "parentId": "NVdPFHHlH5O-",
+      "type": "scene",
+      "title": "Stairs",
+      "order": 0,
+      "collapsed": false,
+      "synopsis": "Mara wakes having dreamed of the climb.",
+      "status": "outline",
+      "meta": {
+        "includeInCompile": true
+      },
+      "content": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Morning came grey and certain. Mara had slept in her coat on the sofa, and woke to gulls arguing over something on the roof, and to the realization that she had dreamed of stairs."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Forty years was a long time for a light to stay dead. It was also, she thought, exactly long enough for someone to make sure it stayed that way."
+              }
+            ]
+          }
+        ]
+      },
+      "text": "Morning came grey and certain. Mara had slept in her coat on the sofa, and woke to gulls arguing over something on the roof, and to the realization that she had dreamed of stairs.\nForty years was a long time for a light to stay dead. It was also, she thought, exactly long enough for someone to make sure it stayed that way.",
+      "wordCount": 63,
+      "docType": "prose",
+      "createdAt": 1780872261122,
+      "updatedAt": 1780872261126
+    }
+  ],
+  "characters": [
+    {
+      "id": "TEZIIOnDHq5x",
+      "projectId": "r7sepvUXREyh",
+      "name": "Mara Vance",
+      "role": "protagonist",
+      "order": 0,
+      "createdAt": 1780872261131,
+      "updatedAt": 1780872261131,
+      "summary": "A restoration architect who left Vesper Bay at eighteen and swore never to return.",
+      "goal": "Sell the house and leave",
+      "motivation": "To stop being haunted by the place that made her",
+      "conflict": "The town — and the light — refuse to let her go",
+      "arc": "From numb avoidance to chosen belonging",
+      "color": "#b3704a"
+    },
+    {
+      "id": "Ty95Ku4D-DP2",
+      "projectId": "r7sepvUXREyh",
+      "name": "Elias Crane",
+      "role": "antagonist",
+      "order": 1,
+      "createdAt": 1780872261132,
+      "updatedAt": 1780872261132,
+      "summary": "The harbormaster who has kept the lighthouse dark for reasons of his own.",
+      "goal": "Keep the light off",
+      "motivation": "Guilt he has never confessed",
+      "color": "#9a5d5d"
+    }
+  ],
+  "locations": [],
+  "threads": [
+    {
+      "id": "2scn39AnIZnN",
+      "projectId": "r7sepvUXREyh",
+      "name": "Mara & the house",
+      "status": "developing",
+      "sceneIds": [],
+      "order": 1,
+      "createdAt": 1780872261133,
+      "updatedAt": 1780872261133,
+      "description": "Whether she sells or stays.",
+      "color": "#5f7d6e"
+    },
+    {
+      "id": "S1lvPdxXYhbw",
+      "projectId": "r7sepvUXREyh",
+      "name": "Who relit the light?",
+      "status": "open",
+      "sceneIds": [],
+      "order": 0,
+      "createdAt": 1780872261133,
+      "updatedAt": 1780872261133,
+      "description": "The central mystery — and who wants it dark.",
+      "color": "#b3704a"
+    }
+  ]
+}

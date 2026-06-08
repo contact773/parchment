@@ -1,0 +1,48 @@
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import CharacterCount from '@tiptap/extension-character-count'
+import TextAlign from '@tiptap/extension-text-align'
+import Highlight from '@tiptap/extension-highlight'
+import Typography from '@tiptap/extension-typography'
+import type { Extensions } from '@tiptap/core'
+import type { DocType, LanguageCode } from '@/types'
+import { Spellcheck } from '../spellcheck/SpellcheckExtension'
+import { ScriptElementExt } from './ScriptElement'
+import { CommentMark } from './CommentMark'
+import { FocusBlock } from './FocusBlock'
+
+export interface BuildOptions {
+  docType: DocType
+  language: LanguageCode
+  spellcheckEnabled: boolean
+  focus: boolean
+  placeholder?: string
+}
+
+export function buildExtensions(opts: BuildOptions): Extensions {
+  const ext: Extensions = [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3] },
+      codeBlock: { HTMLAttributes: { spellcheck: 'false' } },
+    }),
+    Placeholder.configure({
+      placeholder: opts.placeholder ?? 'Begin writing…',
+      emptyEditorClass: 'is-editor-empty',
+    }),
+    CharacterCount,
+    Highlight,
+    Typography,
+    CommentMark,
+    Spellcheck.configure({ enabled: opts.spellcheckEnabled, language: opts.language }),
+  ]
+
+  if (opts.docType === 'script') {
+    ext.push(ScriptElementExt)
+  } else {
+    ext.push(TextAlign.configure({ types: ['heading', 'paragraph'] }))
+  }
+
+  if (opts.focus) ext.push(FocusBlock)
+
+  return ext
+}
