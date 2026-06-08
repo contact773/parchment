@@ -364,6 +364,25 @@ export function toProjectBackup(bundle: ExportBundle): string {
   )
 }
 
+/** Export a single node (and its descendants) — used for per-scene/chapter export. */
+export async function runExportNode(
+  format: ExportFormat,
+  project: Project,
+  allNodes: TreeNode[],
+  rootId: string,
+): Promise<string> {
+  const subtree: TreeNode[] = []
+  const stack = [rootId]
+  while (stack.length) {
+    const id = stack.pop()!
+    const node = allNodes.find((n) => n.id === id)
+    if (!node) continue
+    subtree.push(node)
+    allNodes.filter((n) => n.parentId === id).forEach((c) => stack.push(c.id))
+  }
+  return runExport(format, { project, nodes: subtree, characters: [], locations: [], threads: [] })
+}
+
 // ── Orchestrator ─────────────────────────────────────────────────────────
 export async function runExport(format: ExportFormat, bundle: ExportBundle): Promise<string> {
   const base = slug(bundle.project.title)

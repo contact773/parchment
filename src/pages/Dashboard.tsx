@@ -17,6 +17,7 @@ import {
   Star,
   RotateCcw,
   CalendarClock,
+  HelpCircle,
 } from 'lucide-react'
 import { db } from '@/data/db'
 import { archiveProject, deleteProject, duplicateProject, touchProject, trashProject, restoreProject, togglePinProject } from '@/data/repo'
@@ -32,6 +33,7 @@ import { Progress, EmptyState, Badge, Segmented } from '@/components/ui/misc'
 import { ExportDialog } from '@/features/export/ExportDialog'
 import { NewProjectModal } from '@/features/projects/NewProjectModal'
 import { importBackup } from '@/features/export/backup'
+import { importDocumentFile } from '@/features/export/importDoc'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
 import { timeAgo, formatNumber, formatCompact } from '@/lib/format'
@@ -44,6 +46,7 @@ export function Dashboard() {
   const allNodes = useLiveQuery(() => db.nodes.toArray()) ?? []
   const onboardingDone = useSettings((s) => s.settings.onboardingDone)
   const setSettings = useSettings((s) => s.setSettings)
+  const defaultLanguage = useSettings((s) => s.settings.defaultLanguage)
   const dailyGoal = useSettings((s) => s.stats.dailyGoal)
   const todayWords = useSettings((s) => s.todayWords())
   const streak = useSettings((s) => s.streak())
@@ -96,9 +99,16 @@ export function Dashboard() {
   }
 
   const onImport = async (file: File) => {
+    const ext = (file.name.split('.').pop() ?? '').toLowerCase()
     try {
-      const res = await importBackup(file)
-      toast(res.kind === 'full' ? `Restored ${res.projects} project(s)` : 'Project imported', 'success')
+      if (ext === 'json') {
+        const res = await importBackup(file)
+        toast(res.kind === 'full' ? `Restored ${res.projects} project(s)` : 'Project imported', 'success')
+      } else {
+        const p = await importDocumentFile(file, defaultLanguage)
+        toast(`Imported “${p.title}”`, 'success')
+        navigate(`/project/${p.id}`)
+      }
     } catch (e) {
       toast(`Import failed: ${(e as Error).message}`, 'error')
     }
@@ -121,7 +131,7 @@ export function Dashboard() {
             <input
               ref={fileRef}
               type="file"
-              accept="application/json,.json"
+              accept=".json,.txt,.md,.markdown,.docx"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0]
@@ -129,8 +139,11 @@ export function Dashboard() {
                 e.target.value = ''
               }}
             />
-            <IconButton label="Import backup" onClick={() => fileRef.current?.click()}>
+            <IconButton label="Import (.json backup, .txt, .md, .docx)" onClick={() => fileRef.current?.click()}>
               <Upload size={18} />
+            </IconButton>
+            <IconButton label="Help & shortcuts" onClick={() => navigate('/help')}>
+              <HelpCircle size={18} />
             </IconButton>
             <IconButton label="Settings" onClick={() => navigate('/settings')}>
               <Settings size={18} />

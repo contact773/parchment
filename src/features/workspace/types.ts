@@ -7,6 +7,8 @@ export type WorkspaceView =
   | 'threads'
   | 'timeline'
   | 'worldbuilding'
+  | 'research'
+  | 'notes'
   | 'trash'
 
 export interface CodexSelect {

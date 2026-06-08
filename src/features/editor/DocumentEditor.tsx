@@ -90,7 +90,7 @@ export function DocumentEditor({
   const toast = useUI((s) => s.toast)
   const showChrome = !distractionFree && !minimal
 
-  const language = project.language
+  const language = node.meta.language ?? project.language
   const focusActive = settings.focusMode !== 'off'
   const typewriter = settings.typewriterMode || settings.focusMode === 'typewriter'
 

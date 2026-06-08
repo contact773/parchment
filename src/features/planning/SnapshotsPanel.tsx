@@ -1,16 +1,19 @@
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { History, Camera, RotateCcw, Trash2 } from 'lucide-react'
+import { History, Camera, RotateCcw, Trash2, GitCompare } from 'lucide-react'
 import type { Snapshot, TreeNode } from '@/types'
 import { db } from '@/data/db'
 import { createSnapshot, deleteSnapshot, restoreSnapshot } from '@/data/repo'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { VersionCompareDialog } from './VersionCompareDialog'
 import { timeAgo, formatNumber } from '@/lib/format'
 import { useUI } from '@/store/useUI'
 
 export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
   const toast = useUI((s) => s.toast)
+  const [compareSnap, setCompareSnap] = useState<Snapshot | null>(null)
   const snapshots =
     useLiveQuery(
       () => (node ? db.snapshots.where('nodeId').equals(node.id).reverse().sortBy('createdAt') : Promise.resolve<Snapshot[]>([])),
@@ -53,6 +56,9 @@ export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{s.label}</span>
                   <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <IconButton size="sm" label="Compare with current" onClick={() => setCompareSnap(s)}>
+                      <GitCompare size={14} />
+                    </IconButton>
                     <IconButton
                       size="sm"
                       label="Restore this version"
@@ -79,6 +85,20 @@ export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
           </div>
         )}
       </div>
+
+      <VersionCompareDialog
+        open={!!compareSnap}
+        snapshot={compareSnap}
+        currentText={node.text ?? ''}
+        onClose={() => setCompareSnap(null)}
+        onRestore={async () => {
+          if (compareSnap) {
+            await restoreSnapshot(compareSnap.id)
+            toast('Version restored', 'success')
+            setCompareSnap(null)
+          }
+        }}
+      />
     </div>
   )
 }

@@ -25,6 +25,8 @@ export function NewProjectModal({
   const [language, setLanguage] = useState<LanguageCode>(defaultLanguage)
   const [genre, setGenre] = useState('')
   const [logline, setLogline] = useState('')
+  const [targetWords, setTargetWords] = useState('')
+  const [deadline, setDeadline] = useState('')
   const [busy, setBusy] = useState(false)
 
   const reset = () => {
@@ -33,12 +35,24 @@ export function NewProjectModal({
     setAuthor('')
     setGenre('')
     setLogline('')
+    setTargetWords('')
+    setDeadline('')
   }
 
   const submit = async () => {
     setBusy(true)
     const color = ACCENT_PALETTE[Math.floor(Math.random() * ACCENT_PALETTE.length)]
-    const project = await createProject({ title: title || 'Untitled', type, author, language, genre, logline, color })
+    const project = await createProject({
+      title: title || 'Untitled',
+      type,
+      author,
+      language,
+      genre,
+      logline,
+      color,
+      deadline: deadline || undefined,
+      targetWords: targetWords ? Number(targetWords) : undefined,
+    })
     setBusy(false)
     reset()
     onCreated(project)
@@ -111,6 +125,15 @@ export function NewProjectModal({
           </Field>
           <Field label="Logline" hint="One-sentence pitch">
             <Input value={logline} onChange={(e) => setLogline(e.target.value)} placeholder="A …, who …, must …" />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Word target" hint="Leave blank for the format default">
+            <Input type="number" value={targetWords} onChange={(e) => setTargetWords(e.target.value)} placeholder="e.g. 80000" />
+          </Field>
+          <Field label="Deadline" hint="Optional target date">
+            <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </Field>
         </div>
       </div>

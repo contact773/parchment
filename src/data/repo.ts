@@ -47,6 +47,7 @@ export interface NewProjectInput {
   targetWords?: number
   color?: string
   status?: ProjectStatus
+  deadline?: string
 }
 
 export async function createProject(input: NewProjectInput): Promise<Project> {
@@ -63,6 +64,7 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     logline: input.logline,
     targetWords: input.targetWords ?? defaultTarget(input.type),
     color: input.color,
+    deadline: input.deadline,
     defaultDocType,
     createdAt: ts,
     updatedAt: ts,

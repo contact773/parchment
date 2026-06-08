@@ -1,10 +1,11 @@
 import { useRef } from 'react'
 import { ClipboardList } from 'lucide-react'
 import type { TreeNode } from '@/types'
-import { renameNode, updateNode } from '@/data/repo'
+import { renameNode, updateNode, togglePinNode, setNodeTags } from '@/data/repo'
 import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Switch, EmptyState } from '@/components/ui/misc'
-import { NODE_STATUS_ORDER, NODE_STATUSES } from '@/lib/constants'
+import { NODE_STATUS_ORDER, NODE_STATUSES, LANGUAGES, LANGUAGE_ORDER } from '@/lib/constants'
+import type { LanguageCode } from '@/types'
 import { formatNumber } from '@/lib/format'
 
 export function InspectorPanel({ node }: { node: TreeNode | null }) {
@@ -62,6 +63,34 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
           placeholder="One-line card summary…"
           save={(v) => updateNode(node.id, { synopsis: v })}
         />
+
+        <div className="grid grid-cols-2 gap-3">
+          <AutoSelect
+            label="Language"
+            depKey={node.id}
+            value={node.meta.language ?? ''}
+            save={(v) => updateNode(node.id, { meta: { ...nodeRef.current!.meta, language: (v || undefined) as LanguageCode | undefined } })}
+          >
+            <option value="">Project default</option>
+            {LANGUAGE_ORDER.map((l) => (
+              <option key={l} value={l}>
+                {LANGUAGES[l].flag} {LANGUAGES[l].native}
+              </option>
+            ))}
+          </AutoSelect>
+          <AutoInput
+            label="Tags"
+            depKey={node.id}
+            value={(node.tags ?? []).join(', ')}
+            placeholder="comma, separated"
+            save={(v) => setNodeTags(node.id, v.split(',').map((t) => t.trim()).filter(Boolean))}
+          />
+        </div>
+
+        <label className="flex items-center justify-between rounded-lg border border-border bg-surface-2/40 px-3 py-2.5">
+          <span className="text-sm">Pin to top of binder</span>
+          <Switch checked={!!node.pinned} onChange={(v) => togglePinNode(node.id, v)} />
+        </label>
 
         <div className="space-y-1">
           <span className="label-text">Scene work</span>

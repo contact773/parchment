@@ -95,6 +95,8 @@ export interface SceneMeta {
   locationId?: string
   /** Linked characters present in the scene (Character ids). */
   characterIds?: string[]
+  /** Per-document spellcheck language override (falls back to the project's). */
+  language?: LanguageCode
 }
 
 export interface TreeNode {

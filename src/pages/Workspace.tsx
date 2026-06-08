@@ -54,6 +54,7 @@ import { CharacterManager } from '@/features/planning/CharacterManager'
 import { LocationManager } from '@/features/planning/LocationManager'
 import { ThreadManager } from '@/features/planning/ThreadManager'
 import { WorldbuildingManager } from '@/features/planning/WorldbuildingManager'
+import { NodeBoard } from '@/features/planning/NodeBoard'
 import { TrashView } from '@/features/planning/TrashView'
 import { ExportDialog } from '@/features/export/ExportDialog'
 import { CommandPalette, type Command } from '@/components/CommandPalette'
@@ -179,6 +180,8 @@ export function Workspace() {
     viewCmd('threads', 'Plot threads', <GitBranch size={15} />)
     viewCmd('timeline', 'Timeline', <Clock size={15} />)
     viewCmd('worldbuilding', 'Worldbuilding', <Globe2 size={15} />)
+    viewCmd('research', 'Research board', <StickyNote size={15} />)
+    viewCmd('notes', 'Notes board', <StickyNote size={15} />)
     viewCmd('trash', 'Trash', <Trash2 size={15} />)
 
     list.push({ id: 'new-scene', group: 'Create', label: 'New scene', icon: <Plus size={15} />, keywords: 'add', run: () => addStructure('scene') })
@@ -208,6 +211,7 @@ export function Workspace() {
     list.push({ id: 'find', group: 'Project', label: 'Find & replace', icon: <SearchIcon size={15} />, keywords: 'search', run: () => setFindOpen(true) })
     list.push({ id: 'export', group: 'Project', label: 'Export & backup', icon: <Download size={15} />, run: () => setExporting(true) })
     list.push({ id: 'settings', group: 'Project', label: 'Settings', icon: <Settings size={15} />, run: () => navigate('/settings') })
+    list.push({ id: 'help', group: 'Project', label: 'Help & shortcuts', icon: <Settings size={15} />, keywords: 'keyboard', run: () => navigate('/help') })
 
     // Jump to documents
     orderedDocuments(nodes, false).forEach(({ node }) =>
@@ -262,6 +266,10 @@ export function Workspace() {
         return <TimelineView project={project} nodes={nodes} onOpen={selectNode} />
       case 'worldbuilding':
         return <WorldbuildingManager projectId={project.id} />
+      case 'research':
+        return <NodeBoard project={project} nodes={nodes} types={['research']} title="Research" description="Reference material and research notes." onOpen={selectNode} />
+      case 'notes':
+        return <NodeBoard project={project} nodes={nodes} types={['note']} title="Notes" description="Ideas, reminders and loose notes." onOpen={selectNode} />
       case 'trash':
         return <TrashView projectId={project.id} />
       case 'editor':

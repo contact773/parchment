@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronRight, Plus, MoreHorizontal, CircleDot } from 'lucide-react'
+import { ChevronRight, Plus, MoreHorizontal, CircleDot, Pin, FileDown } from 'lucide-react'
 import { db } from '@/data/db'
 import {
   createNode,
@@ -10,8 +10,12 @@ import {
   toggleCollapse,
   updateNode,
   moveNode,
+  mergeNodes,
+  togglePinNode,
   isContainer,
+  isDocument,
 } from '@/data/repo'
+import { runExportNode } from '@/features/export/exporters'
 import { buildForest, type TreeItem, subtreeWordCount } from '@/lib/tree'
 import { NODE_STATUSES, NODE_STATUS_ORDER } from '@/lib/constants'
 import type { DocType, NodeStatus, NodeType, Project, TreeNode } from '@/types'
@@ -36,6 +40,7 @@ export function Binder({
   const allNodes = useLiveQuery(() => db.nodes.where('projectId').equals(project.id).toArray(), [project.id]) ?? []
   const nodes = allNodes.filter((n) => !n.deletedAt)
   const forest = buildForest(nodes)
+  const pinSort = (a: TreeItem, b: TreeItem) => Number(!!b.pinned) - Number(!!a.pinned)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [drag, setDrag] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<{ id: string; pos: DropPos } | null>(null)
@@ -88,31 +93,46 @@ export function Binder({
     ]
   }
 
-  const rowMenu = (node: TreeNode): MenuItem[] => [
-    { label: 'Rename', onClick: () => setRenaming(node.id) },
-    { label: 'Add inside', onClick: () => addChild(node, isContainer(node.type) ? 'scene' : 'scene') },
-    { label: 'Duplicate', onClick: () => duplicateNode(node.id) },
-    { separator: true, label: '' },
-    ...NODE_STATUS_ORDER.map((st) => ({
-      label: `Status: ${NODE_STATUSES[st].label}`,
-      icon: <CircleDot size={14} style={{ color: NODE_STATUSES[st].color }} />,
-      onClick: () => updateNode(node.id, { status: st }),
-    })),
-    { separator: true, label: '' },
-    {
-      label: node.meta.includeInCompile === false ? 'Include in compile' : 'Exclude from compile',
-      onClick: () => updateNode(node.id, { meta: { ...node.meta, includeInCompile: node.meta.includeInCompile === false } }),
-    },
-    { separator: true, label: '' },
-    {
-      label: 'Delete',
-      danger: true,
-      onClick: async () => {
-        await deleteNode(node.id)
-        toast('Deleted', 'info')
+  const siblingDoc = (node: TreeNode, dir: -1 | 1): TreeNode | null => {
+    const sibs = nodes.filter((n) => n.parentId === node.parentId).sort((a, b) => a.order - b.order)
+    const i = sibs.findIndex((s) => s.id === node.id)
+    const target = sibs[i + dir]
+    return target && isDocument(target) && isDocument(node) ? target : null
+  }
+
+  const rowMenu = (node: TreeNode): MenuItem[] => {
+    const prev = siblingDoc(node, -1)
+    const next = siblingDoc(node, 1)
+    return [
+      { label: 'Rename', onClick: () => setRenaming(node.id) },
+      { label: 'Add inside', onClick: () => addChild(node, 'scene') },
+      { label: 'Duplicate', onClick: () => duplicateNode(node.id) },
+      { label: node.pinned ? 'Unpin' : 'Pin to top', icon: <Pin size={14} />, onClick: () => togglePinNode(node.id, !node.pinned) },
+      { separator: true, label: '' },
+      ...(prev ? [{ label: 'Merge with previous', onClick: () => mergeNodes(prev.id, node.id) }] : []),
+      ...(next ? [{ label: 'Merge with next', onClick: () => mergeNodes(node.id, next.id) }] : []),
+      ...NODE_STATUS_ORDER.map((st) => ({
+        label: `Mark ${NODE_STATUSES[st].label}`,
+        icon: <CircleDot size={14} style={{ color: NODE_STATUSES[st].color }} />,
+        onClick: () => updateNode(node.id, { status: st }),
+      })),
+      { separator: true, label: '' },
+      { label: 'Export as Markdown', icon: <FileDown size={14} />, onClick: () => runExportNode('markdown', project, nodes, node.id).then((m) => toast(m, 'success')) },
+      {
+        label: node.meta.includeInCompile === false ? 'Include in compile' : 'Exclude from compile',
+        onClick: () => updateNode(node.id, { meta: { ...node.meta, includeInCompile: node.meta.includeInCompile === false } }),
       },
-    },
-  ]
+      { separator: true, label: '' },
+      {
+        label: 'Move to Trash',
+        danger: true,
+        onClick: async () => {
+          await deleteNode(node.id)
+          toast('Moved to Trash', 'info')
+        },
+      },
+    ]
+  }
 
   const renderRow = (item: TreeItem, depth: number) => {
     const isSel = item.id === selectedId
@@ -190,6 +210,7 @@ export function Binder({
             </span>
           )}
 
+          {item.pinned && <Pin size={11} className="shrink-0 text-accent" />}
           <span
             className="h-1.5 w-1.5 shrink-0 rounded-full opacity-80"
             style={{ backgroundColor: status.color }}
@@ -215,7 +236,7 @@ export function Binder({
             )}
           />
         </div>
-        {!item.collapsed && item.children.map((c) => renderRow(c, depth + 1))}
+        {!item.collapsed && [...item.children].sort(pinSort).map((c) => renderRow(c, depth + 1))}
       </div>
     )
   }
@@ -240,7 +261,7 @@ export function Binder({
         {forest.length === 0 ? (
           <p className="px-3 py-6 text-center text-xs text-muted">Empty. Use + to add a chapter.</p>
         ) : (
-          forest.map((item) => renderRow(item, 0))
+          [...forest].sort(pinSort).map((item) => renderRow(item, 0))
         )}
       </div>
     </div>
