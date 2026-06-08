@@ -367,9 +367,14 @@ export function DocumentEditor({
         onContextMenu={onContextMenu}
       >
         <div
-          className={cn('pm-editor mx-auto w-full', indent && node.docType !== 'script' && 'indent', focusActive && 'focus-active')}
+          className={cn(
+            'pm-editor mx-auto w-full',
+            indent && node.docType !== 'script' && 'indent',
+            focusActive && 'focus-active',
+            showChrome && 'paper-sheet',
+          )}
           style={{
-            maxWidth: 'var(--editor-width)',
+            maxWidth: showChrome ? 'calc(var(--editor-width) + 7rem)' : 'var(--editor-width)',
             ['--editor-zoom' as string]: editorZoom,
             paddingTop: typewriter ? '30vh' : undefined,
             paddingBottom: typewriter ? '40vh' : undefined,

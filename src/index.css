@@ -95,6 +95,21 @@
   background-color: rgb(var(--c-muted) / 0.5);
 }
 
+/* ── Paper sheet — the writing surface floats like a page ───────────────── */
+.pm-editor.paper-sheet {
+  background: rgb(var(--c-paper));
+  border: 1px solid rgb(var(--c-border) / 0.6);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 18px 50px -16px rgb(0 0 0 / 0.18);
+  padding: clamp(2.2rem, 4vw, 4.5rem) clamp(1.5rem, 3.5rem, 3.5rem);
+  margin-top: 1.75rem;
+  margin-bottom: 4rem;
+}
+:root.dark .pm-editor.paper-sheet {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 50px -16px rgb(0 0 0 / 0.5);
+  border-color: rgb(var(--c-border) / 0.8);
+}
+
 /* ── The writing surface (TipTap / ProseMirror) ─────────────────────────── */
 .pm-editor .ProseMirror {
   font-family: var(--editor-font);
