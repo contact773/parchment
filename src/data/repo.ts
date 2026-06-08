@@ -15,6 +15,7 @@ import type {
   ProjectType,
   Snapshot,
   TreeNode,
+  WorldElement,
 } from '@/types'
 import { PROJECT_TYPES } from '@/lib/constants'
 
@@ -154,7 +155,7 @@ export async function duplicateProject(id: string): Promise<Project | null> {
 export async function projectWordCount(projectId: string): Promise<number> {
   const nodes = await db.nodes.where('projectId').equals(projectId).toArray()
   return nodes
-    .filter((n) => isDocument(n) && n.meta.includeInCompile !== false)
+    .filter((n) => isDocument(n) && !n.deletedAt && n.meta.includeInCompile !== false)
     .reduce((sum, n) => sum + (n.wordCount || 0), 0)
 }
 
@@ -263,12 +264,79 @@ async function collectSubtree(rootId: string, all: TreeNode[]): Promise<TreeNode
   return result
 }
 
+/** Soft-delete (move to Trash) a node and its descendants. */
 export async function deleteNode(id: string): Promise<void> {
   const node = await db.nodes.get(id)
   if (!node) return
   const all = await db.nodes.where('projectId').equals(node.projectId).toArray()
   const subtree = await collectSubtree(id, all)
+  const ts = now()
+  await db.transaction('rw', db.nodes, async () => {
+    for (const n of subtree) await db.nodes.update(n.id, { deletedAt: ts })
+  })
+}
+
+/** Restore a trashed node (and descendants) from Trash. */
+export async function restoreNode(id: string): Promise<void> {
+  const node = await db.nodes.get(id)
+  if (!node) return
+  const all = await db.nodes.where('projectId').equals(node.projectId).toArray()
+  const subtree = await collectSubtree(id, all)
+  await db.transaction('rw', db.nodes, async () => {
+    for (const n of subtree) await db.nodes.update(n.id, { deletedAt: null })
+  })
+}
+
+/** Permanently delete a node and its descendants. */
+export async function hardDeleteNode(id: string): Promise<void> {
+  const node = await db.nodes.get(id)
+  if (!node) return
+  const all = await db.nodes.where('projectId').equals(node.projectId).toArray()
+  const subtree = await collectSubtree(id, all)
   await db.nodes.bulkDelete(subtree.map((n) => n.id))
+  await db.snapshots.where('nodeId').anyOf(subtree.map((n) => n.id)).delete()
+}
+
+export async function togglePinNode(id: string, pinned: boolean): Promise<void> {
+  await db.nodes.update(id, { pinned, updatedAt: now() })
+}
+
+export async function setNodeTags(id: string, tags: string[]): Promise<void> {
+  await db.nodes.update(id, { tags, updatedAt: now() })
+}
+
+/** Create a sibling immediately after `nodeId`. */
+export async function createSiblingAfter(
+  nodeId: string,
+  opts: { title?: string; content?: DocContent | null; type?: NodeType; docType?: DocType },
+): Promise<TreeNode | null> {
+  const node = await db.nodes.get(nodeId)
+  if (!node) return null
+  const created = await createNode({
+    projectId: node.projectId,
+    parentId: node.parentId,
+    type: opts.type ?? node.type,
+    title: opts.title ?? 'New Scene',
+    docType: opts.docType ?? node.docType,
+    content: opts.content ?? emptyDoc(),
+    order: node.order + 0.5,
+  })
+  await normalizeOrders(node.projectId, node.parentId)
+  return created
+}
+
+/** Merge `sourceId`'s content into `targetId` and remove the source. */
+export async function mergeNodes(targetId: string, sourceId: string): Promise<void> {
+  const [target, source] = await Promise.all([db.nodes.get(targetId), db.nodes.get(sourceId)])
+  if (!target || !source) return
+  const targetContent = (target.content as { content?: unknown[] } | null) ?? emptyDoc()
+  const sourceBlocks = ((source.content as { content?: unknown[] } | null)?.content ?? []) as unknown[]
+  const merged: DocContent = {
+    type: 'doc',
+    content: [...(((targetContent as { content?: unknown[] }).content ?? []) as unknown[]), ...sourceBlocks] as DocContent[],
+  }
+  await saveNodeContent(targetId, merged)
+  await hardDeleteNode(sourceId)
 }
 
 export async function duplicateNode(id: string): Promise<TreeNode | null> {
@@ -538,4 +606,52 @@ export async function restoreSnapshot(snapshotId: string): Promise<void> {
 
 export async function deleteSnapshot(id: string): Promise<void> {
   await db.snapshots.delete(id)
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Project trash & pinning
+// ──────────────────────────────────────────────────────────────────────────
+
+export async function trashProject(id: string): Promise<void> {
+  await db.projects.update(id, { deletedAt: now() })
+}
+
+export async function restoreProject(id: string): Promise<void> {
+  await db.projects.update(id, { deletedAt: null })
+}
+
+export async function togglePinProject(id: string, pinned: boolean): Promise<void> {
+  await db.projects.update(id, { pinned })
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Worldbuilding database
+// ──────────────────────────────────────────────────────────────────────────
+
+export async function createWorldElement(
+  projectId: string,
+  patch: Partial<WorldElement> = {},
+): Promise<WorldElement> {
+  const ts = now()
+  const count = await db.worldElements.where('projectId').equals(projectId).count()
+  const el: WorldElement = {
+    id: uid(),
+    projectId,
+    category: patch.category ?? 'other',
+    name: patch.name ?? 'New Element',
+    order: count,
+    createdAt: ts,
+    updatedAt: ts,
+    ...patch,
+  }
+  await db.worldElements.add(el)
+  return el
+}
+
+export async function updateWorldElement(id: string, patch: Partial<WorldElement>): Promise<void> {
+  await db.worldElements.update(id, { ...patch, updatedAt: now() })
+}
+
+export async function deleteWorldElement(id: string): Promise<void> {
+  await db.worldElements.delete(id)
 }

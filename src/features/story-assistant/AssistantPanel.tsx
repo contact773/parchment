@@ -27,12 +27,16 @@ export function AssistantPanel({
   docNodes,
   characters,
   threads,
+  seed,
+  onSeedConsumed,
 }: {
   project: Project
   node: TreeNode | null
   docNodes: TreeNode[]
   characters: Character[]
   threads: PlotThread[]
+  seed?: string
+  onSeedConsumed?: () => void
 }) {
   const ai = useSettings((s) => s.settings.ai)
   const toast = useUI((s) => s.toast)
@@ -51,6 +55,16 @@ export function AssistantPanel({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, busy])
+
+  const lastSeed = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (seed && seed !== lastSeed.current) {
+      lastSeed.current = seed
+      void send(`About this passage: “${seed.slice(0, 600)}” — what works, and how could it be stronger? Give me options.`)
+      onSeedConsumed?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed])
 
   const provider = useMemo(() => {
     const p = getProvider(ai)

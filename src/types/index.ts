@@ -43,6 +43,13 @@ export interface Project {
   color?: string
   /** Default mode for newly created documents. */
   defaultDocType: DocType
+  /** Target completion date (ISO YYYY-MM-DD). */
+  deadline?: string
+  /** Pinned to the top of the dashboard. */
+  pinned?: boolean
+  tags?: string[]
+  /** Soft-delete timestamp (in Trash). */
+  deletedAt?: number | null
   createdAt: number
   updatedAt: number
   /** ISO date of last opened, for "recent" sorting. */
@@ -82,6 +89,12 @@ export interface SceneMeta {
   targetWords?: number
   /** Whether this node is included when compiling/exporting the manuscript. */
   includeInCompile?: boolean
+  /** In-world date/time for the timeline. */
+  date?: string
+  /** Linked location (Location id). */
+  locationId?: string
+  /** Linked characters present in the scene (Character ids). */
+  characterIds?: string[]
 }
 
 export interface TreeNode {
@@ -105,6 +118,12 @@ export interface TreeNode {
   wordCount: number
   /** Prose vs screenplay formatting for this document. */
   docType: DocType
+  /** Freeform tags/labels. */
+  tags?: string[]
+  /** Pinned/favorited to the top of the binder. */
+  pinned?: boolean
+  /** Soft-delete timestamp (in Trash) — null/undefined means live. */
+  deletedAt?: number | null
   createdAt: number
   updatedAt: number
 }
@@ -114,6 +133,11 @@ export interface TreeNode {
 // ──────────────────────────────────────────────────────────────────────────
 
 export type CharacterRole = 'protagonist' | 'antagonist' | 'supporting' | 'minor' | 'mentor' | 'love-interest'
+
+export interface CharacterRelationship {
+  targetId: string
+  label: string
+}
 
 export interface Character {
   id: string
@@ -128,7 +152,27 @@ export interface Character {
   arc?: string
   appearance?: string
   backstory?: string
+  /** Voice notes — speech patterns, vocabulary, verbal tics. */
+  voice?: string
   notes?: string
+  color?: string
+  relationships?: CharacterRelationship[]
+  order: number
+  createdAt: number
+  updatedAt: number
+}
+
+/** Worldbuilding database entry (lore bible). */
+export type WorldCategory = 'culture' | 'history' | 'geography' | 'magic' | 'technology' | 'religion' | 'politics' | 'language' | 'creature' | 'item' | 'other'
+
+export interface WorldElement {
+  id: string
+  projectId: string
+  category: WorldCategory
+  name: string
+  summary?: string
+  details?: string
+  rules?: string
   color?: string
   order: number
   createdAt: number

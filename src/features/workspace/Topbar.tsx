@@ -12,6 +12,9 @@ import {
   Minus,
   Plus,
   Type,
+  Search,
+  TextSearch,
+  LayoutPanelTop,
 } from 'lucide-react'
 import type { Project, TreeNode } from '@/types'
 import { IconButton } from '@/components/ui/IconButton'
@@ -37,11 +40,19 @@ export function Topbar({
   onExport: () => void
 }) {
   const navigate = useNavigate()
-  const { leftOpen, rightOpen, toggleLeft, toggleRight, editorZoom, setEditorZoom, setDistractionFree } = useUI()
+  const { leftOpen, rightOpen, toggleLeft, toggleRight, editorZoom, setEditorZoom, setDistractionFree, setCommandOpen, setFindOpen, setWorkspaceMode, workspaceMode, ribbon, setRibbon } = useUI()
   const saving = useUI((s) => s.saving)
   const lastSavedAt = useUI((s) => s.lastSavedAt)
   const settings = useSettings((s) => s.settings)
   const setSettings = useSettings((s) => s.setSettings)
+
+  const modeItems = [
+    { label: 'Minimal mode', icon: workspaceMode === 'minimal' ? <Check size={14} /> : <span className="w-3.5" />, onClick: () => setWorkspaceMode('minimal') },
+    { label: 'Standard mode', icon: workspaceMode === 'standard' ? <Check size={14} /> : <span className="w-3.5" />, onClick: () => setWorkspaceMode('standard') },
+    { label: 'Advanced mode', icon: workspaceMode === 'advanced' ? <Check size={14} /> : <span className="w-3.5" />, onClick: () => setWorkspaceMode('advanced') },
+    { separator: true, label: '' },
+    { label: ribbon ? 'Hide formatting ribbon' : 'Show formatting ribbon', onClick: () => setRibbon(!ribbon) },
+  ]
 
   const focusItems = [
     { label: 'Focus off', icon: settings.focusMode === 'off' ? <Check size={14} /> : <span className="w-3.5" />, onClick: () => setSettings({ focusMode: 'off' }) },
@@ -94,6 +105,22 @@ export function Topbar({
           {saving ? 'Saving…' : lastSavedAt ? `Saved ${timeAgo(lastSavedAt)}` : 'All changes saved'}
         </span>
 
+        <IconButton label="Command palette (Ctrl/⌘+K)" onClick={() => setCommandOpen(true)}>
+          <Search size={18} />
+        </IconButton>
+        <IconButton label="Find & replace (Ctrl/⌘+F)" onClick={() => setFindOpen(true)}>
+          <TextSearch size={18} />
+        </IconButton>
+        <Menu
+          align="end"
+          width={210}
+          items={modeItems}
+          trigger={({ toggle, ref }) => (
+            <IconButton ref={ref} label="View mode" onClick={toggle} active={workspaceMode !== 'standard' || ribbon}>
+              <LayoutPanelTop size={18} />
+            </IconButton>
+          )}
+        />
         <Menu
           align="end"
           width={200}

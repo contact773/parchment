@@ -101,6 +101,7 @@ export function buildManuscript(nodes: TreeNode[], compileOnly = true): Manuscri
   const items: ManuscriptItem[] = []
   let prev: TreeNode | null = null
   for (const { node, depth } of flat) {
+    if (node.deletedAt) continue
     if (compileOnly && node.meta.includeInCompile === false) continue
     const isScene = node.type === 'scene'
     const isContainer = node.type === 'folder' || node.type === 'part' || node.type === 'chapter'

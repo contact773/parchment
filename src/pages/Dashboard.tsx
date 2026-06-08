@@ -14,9 +14,12 @@ import {
   Feather,
   Flame,
   Target,
+  Star,
+  RotateCcw,
+  CalendarClock,
 } from 'lucide-react'
 import { db } from '@/data/db'
-import { archiveProject, deleteProject, duplicateProject, touchProject } from '@/data/repo'
+import { archiveProject, deleteProject, duplicateProject, touchProject, trashProject, restoreProject, togglePinProject } from '@/data/repo'
 import { seedSamples } from '@/data/seed'
 import { isDocument } from '@/data/repo'
 import { PROJECT_TYPES, PROJECT_STATUSES, LANGUAGES } from '@/lib/constants'
@@ -25,7 +28,7 @@ import { ProjectIcon } from '@/components/ProjectIcon'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { Menu } from '@/components/ui/Menu'
-import { Progress, EmptyState, Badge } from '@/components/ui/misc'
+import { Progress, EmptyState, Badge, Segmented } from '@/components/ui/misc'
 import { ExportDialog } from '@/features/export/ExportDialog'
 import { NewProjectModal } from '@/features/projects/NewProjectModal'
 import { importBackup } from '@/features/export/backup'
@@ -47,7 +50,7 @@ export function Dashboard() {
   const toast = useUI((s) => s.toast)
 
   const [query, setQuery] = useState('')
-  const [showArchived, setShowArchived] = useState(false)
+  const [tab, setTab] = useState<'active' | 'archived' | 'trash'>('active')
   const [creating, setCreating] = useState(false)
   const [exportFor, setExportFor] = useState<Project | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -71,18 +74,21 @@ export function Dashboard() {
   const wordsByProject = useMemo(() => {
     const map = new Map<string, number>()
     for (const n of allNodes) {
-      if (isDocument(n) && n.meta?.includeInCompile !== false) {
+      if (isDocument(n) && !n.deletedAt && n.meta?.includeInCompile !== false) {
         map.set(n.projectId, (map.get(n.projectId) ?? 0) + (n.wordCount || 0))
       }
     }
     return map
   }, [allNodes])
 
-  const filtered = projects.filter((p) => {
-    const matchArchived = showArchived ? p.status === 'archived' : p.status !== 'archived'
-    const matchQuery = !query || p.title.toLowerCase().includes(query.toLowerCase()) || (p.genre ?? '').toLowerCase().includes(query.toLowerCase())
-    return matchArchived && matchQuery
-  })
+  const filtered = projects
+    .filter((p) => {
+      const inTab =
+        tab === 'trash' ? !!p.deletedAt : tab === 'archived' ? !p.deletedAt && p.status === 'archived' : !p.deletedAt && p.status !== 'archived'
+      const matchQuery = !query || p.title.toLowerCase().includes(query.toLowerCase()) || (p.genre ?? '').toLowerCase().includes(query.toLowerCase())
+      return inTab && matchQuery
+    })
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
 
   const open = async (p: Project) => {
     await touchProject(p.id)
@@ -173,9 +179,16 @@ export function Dashboard() {
               className="input-base pl-9"
             />
           </div>
-          <Button variant={showArchived ? 'secondary' : 'ghost'} size="sm" onClick={() => setShowArchived((v) => !v)}>
-            <Archive size={15} /> {showArchived ? 'Archived' : 'Active'}
-          </Button>
+          <Segmented
+            size="sm"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'archived', label: 'Archived' },
+              { value: 'trash', label: 'Trash' },
+            ]}
+          />
         </div>
 
         {/* Grid */}
@@ -185,9 +198,15 @@ export function Dashboard() {
           <EmptyState
             className="rounded-xl border border-dashed border-border py-20"
             icon={<Feather size={40} />}
-            title={showArchived ? 'No archived projects' : 'Begin something'}
-            description={showArchived ? 'Projects you archive will appear here.' : 'Create your first project — a novel, a screenplay, a collection of poems.'}
-            action={!showArchived && <Button variant="primary" onClick={() => setCreating(true)}><Plus size={16} /> New project</Button>}
+            title={tab === 'archived' ? 'No archived projects' : tab === 'trash' ? 'Trash is empty' : 'Begin something'}
+            description={
+              tab === 'archived'
+                ? 'Projects you archive will appear here.'
+                : tab === 'trash'
+                  ? 'Deleted projects can be restored from here.'
+                  : 'Create your first project — a novel, a screenplay, a collection of poems.'
+            }
+            action={tab === 'active' && <Button variant="primary" onClick={() => setCreating(true)}><Plus size={16} /> New project</Button>}
           />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -196,12 +215,16 @@ export function Dashboard() {
                 key={p.id}
                 project={p}
                 words={wordsByProject.get(p.id) ?? 0}
+                trashed={tab === 'trash'}
                 onOpen={() => open(p)}
+                onPin={() => togglePinProject(p.id, !p.pinned)}
                 onDuplicate={async () => { await duplicateProject(p.id); toast('Project duplicated', 'success') }}
                 onArchive={() => archiveProject(p.id, p.status !== 'archived')}
                 onExport={() => setExportFor(p)}
-                onDelete={async () => {
-                  if (confirm(`Delete “${p.title}”? This cannot be undone.`)) {
+                onTrash={async () => { await trashProject(p.id); toast('Moved to Trash', 'info') }}
+                onRestore={async () => { await restoreProject(p.id); toast('Restored', 'success') }}
+                onDeleteForever={async () => {
+                  if (confirm(`Permanently delete “${p.title}”? This cannot be undone.`)) {
                     await deleteProject(p.id)
                     toast('Project deleted', 'info')
                   }
@@ -221,24 +244,33 @@ export function Dashboard() {
 function ProjectCard({
   project: p,
   words,
+  trashed,
   onOpen,
+  onPin,
   onDuplicate,
   onArchive,
   onExport,
-  onDelete,
+  onTrash,
+  onRestore,
+  onDeleteForever,
 }: {
   project: Project
   words: number
+  trashed: boolean
   onOpen: () => void
+  onPin: () => void
   onDuplicate: () => void
   onArchive: () => void
   onExport: () => void
-  onDelete: () => void
+  onTrash: () => void
+  onRestore: () => void
+  onDeleteForever: () => void
 }) {
   const info = PROJECT_TYPES[p.type]
   const status = PROJECT_STATUSES[p.status]
   const pct = p.targetWords ? Math.min(100, (words / p.targetWords) * 100) : 0
   const accent = p.color ?? '#9a7b4f'
+  const daysLeft = p.deadline ? Math.ceil((new Date(p.deadline).getTime() - Date.now()) / 86400000) : null
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
@@ -264,22 +296,42 @@ function ProjectCard({
           {p.targetWords > 0 && <Progress value={pct} />}
           <div className="mt-2 flex items-center justify-between text-[11px] text-muted">
             <span>{LANGUAGES[p.language].flag} {LANGUAGES[p.language].native}</span>
-            <span>{timeAgo(p.updatedAt)}</span>
+            {daysLeft !== null ? (
+              <span className={cn('flex items-center gap-1', daysLeft < 7 ? 'text-danger' : daysLeft < 30 ? 'text-accent' : '')}>
+                <CalendarClock size={11} /> {daysLeft < 0 ? 'overdue' : `${daysLeft}d left`}
+              </span>
+            ) : (
+              <span>{timeAgo(p.updatedAt)}</span>
+            )}
           </div>
         </div>
       </button>
 
+      {p.pinned && !trashed && (
+        <span className="absolute left-3 top-3 text-accent" title="Pinned">
+          <Star size={14} fill="currentColor" />
+        </span>
+      )}
+
       <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
         <Menu
           align="end"
-          items={[
-            { label: 'Open', onClick: onOpen },
-            { label: 'Export / backup', icon: <Download size={14} />, onClick: onExport },
-            { label: 'Duplicate', icon: <Copy size={14} />, onClick: onDuplicate },
-            { label: p.status === 'archived' ? 'Unarchive' : 'Archive', icon: <Archive size={14} />, onClick: onArchive },
-            { separator: true, label: '' },
-            { label: 'Delete', danger: true, icon: <Trash2 size={14} />, onClick: onDelete },
-          ]}
+          items={
+            trashed
+              ? [
+                  { label: 'Restore', icon: <RotateCcw size={14} />, onClick: onRestore },
+                  { label: 'Delete forever', danger: true, icon: <Trash2 size={14} />, onClick: onDeleteForever },
+                ]
+              : [
+                  { label: 'Open', onClick: onOpen },
+                  { label: p.pinned ? 'Unpin' : 'Pin to top', icon: <Star size={14} />, onClick: onPin },
+                  { label: 'Export / backup', icon: <Download size={14} />, onClick: onExport },
+                  { label: 'Duplicate', icon: <Copy size={14} />, onClick: onDuplicate },
+                  { label: p.status === 'archived' ? 'Unarchive' : 'Archive', icon: <Archive size={14} />, onClick: onArchive },
+                  { separator: true, label: '' },
+                  { label: 'Move to Trash', danger: true, icon: <Trash2 size={14} />, onClick: onTrash },
+                ]
+          }
           trigger={({ toggle, ref }) => (
             <button
               ref={ref}

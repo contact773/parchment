@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Trash2, MapPin } from 'lucide-react'
 import type { Location } from '@/types'
@@ -11,9 +11,12 @@ import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
 import { cn } from '@/lib/utils'
 
-export function LocationManager({ projectId }: { projectId: string }) {
+export function LocationManager({ projectId, selectId }: { projectId: string; selectId?: string }) {
   const locations = useLiveQuery(() => db.locations.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
   const [selId, setSelId] = useState<string | null>(null)
+  useEffect(() => {
+    if (selectId) setSelId(selectId)
+  }, [selectId])
   const selected = locations.find((l) => l.id === selId) ?? locations[0] ?? null
 
   const add = async () => {

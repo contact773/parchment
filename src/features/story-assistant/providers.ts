@@ -1,8 +1,57 @@
 import type { AIConfig, Character, Project, StoryAnalysis, TreeNode } from '@/types'
+import { analyzeText } from '@/lib/text'
+import { checkGrammar, strongerWords, synonymsFor, simplify } from './language'
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+}
+
+export type TransformKind =
+  | 'rewrite'
+  | 'improve'
+  | 'literary'
+  | 'simpler'
+  | 'dramatic'
+  | 'emotional'
+  | 'natural'
+  | 'translate'
+  | 'synonyms'
+  | 'stronger'
+  | 'tone'
+  | 'grammar'
+  | 'ask'
+
+export interface TransformResult {
+  kind: TransformKind
+  /** Replacement prose (for rewrite-style transforms). */
+  replacement?: string
+  /** Free-text feedback / explanation. */
+  message?: string
+  /** Pickable alternatives (e.g. synonyms) that replace the selection. */
+  options?: string[]
+}
+
+export interface TransformOpts {
+  targetLang?: string
+}
+
+const REWRITE_KINDS: TransformKind[] = ['rewrite', 'improve', 'literary', 'simpler', 'dramatic', 'emotional', 'natural', 'translate']
+
+const KIND_INSTRUCTION: Record<TransformKind, string> = {
+  rewrite: 'Rewrite the passage, preserving meaning and the author’s voice, but improving flow and clarity.',
+  improve: 'Improve the passage: tighten the prose, strengthen verbs, and cut filler — keep the voice.',
+  literary: 'Rewrite the passage in a more literary, evocative register without becoming purple.',
+  simpler: 'Rewrite the passage in clearer, simpler language with shorter sentences.',
+  dramatic: 'Rewrite the passage to heighten tension and drama while staying true to the content.',
+  emotional: 'Rewrite the passage to deepen the emotional resonance and interiority.',
+  natural: 'Rewrite the passage so dialogue and narration sound more natural and human.',
+  translate: 'Translate the passage faithfully, preserving tone and register.',
+  synonyms: 'List stronger synonyms for the notable words in the passage.',
+  stronger: 'Suggest stronger word choices for weak or repeated words in the passage.',
+  tone: 'Offer three alternative tones for the passage and describe each.',
+  grammar: 'Proofread the passage and list grammar, punctuation and style issues.',
+  ask: 'Answer the user’s question about the passage as a story-development partner.',
 }
 
 export interface StoryContext {
@@ -19,6 +68,7 @@ export interface StoryProvider {
   /** True if the provider is configured and usable. */
   ready: boolean
   generate: (messages: ChatMessage[], context: StoryContext) => Promise<string>
+  transform: (kind: TransformKind, text: string, context: StoryContext, opts?: TransformOpts) => Promise<TransformResult>
 }
 
 // ── Context helpers ───────────────────────────────────────────────────────
@@ -173,11 +223,68 @@ function localGenerate(messages: ChatMessage[], ctx: StoryContext): string {
   )
 }
 
+function localTransform(kind: TransformKind, text: string): TransformResult {
+  const stats = analyzeText(text)
+  const tips = () => {
+    const t: string[] = []
+    if (stats.sentences && stats.words / stats.sentences > 22) t.push('Some long sentences — consider splitting for rhythm.')
+    const adverbs = (text.match(/\b\w+ly\b/gi) ?? []).length
+    if (adverbs > 1) t.push(`${adverbs} adverbs — stronger verbs often do the work.`)
+    const filters = (text.match(/\b(very|really|just|felt|saw|heard|seemed|suddenly)\b/gi) ?? []).length
+    if (filters) t.push(`${filters} filter words to consider cutting.`)
+    return t
+  }
+  switch (kind) {
+    case 'grammar': {
+      const issues = checkGrammar(text)
+      return {
+        kind,
+        message: issues.length
+          ? issues.map((i) => `• ${i.message}${i.excerpt ? ` — “${i.excerpt}”` : ''}`).join('\n')
+          : 'No grammar or style issues found in the selection. ✓',
+      }
+    }
+    case 'synonyms': {
+      const word = text.trim()
+      if (/^[a-z'-]+$/i.test(word)) {
+        const syns = synonymsFor(word)
+        return syns.length ? { kind, options: syns, message: `Synonyms for “${word}”:` } : { kind, message: `No built-in synonyms for “${word}”. Connect an AI model for a full thesaurus.` }
+      }
+      const strong = strongerWords(text)
+      return { kind, message: strong.length ? strong.map((s) => `• ${s.word} → ${s.alternatives.join(', ')}`).join('\n') : 'No obvious words to swap. Connect an AI model for deeper suggestions.' }
+    }
+    case 'stronger': {
+      const strong = strongerWords(text)
+      return { kind, message: strong.length ? `Stronger choices:\n${strong.map((s) => `• ${s.word} → ${s.alternatives.slice(0, 3).join(', ')}`).join('\n')}` : 'Vocabulary already varied. Connect an AI model for nuanced upgrades.' }
+    }
+    case 'simpler':
+      return { kind, replacement: simplify(text), message: 'A simpler pass (offline heuristic). Connect an AI model for a fuller rewrite.' }
+    case 'tone':
+      return {
+        kind,
+        message: [
+          'Three tonal directions for this passage:',
+          '• Restrained — strip adjectives; let plain facts carry the weight (colder, more ominous).',
+          '• Lyrical — lean into imagery and rhythm (warmer, more immersive).',
+          '• Urgent — shorten sentences, cut subordinate clauses (faster, tenser).',
+          'Connect an AI model in Settings to apply one in a click.',
+        ].join('\n'),
+      }
+    case 'ask':
+      return { kind, message: [`This selection runs ${stats.words} words across ${stats.sentences} sentence(s).`, ...tips(), 'Ask me anything specific in the Assistant panel — and connect a model for richer answers.'].join('\n') }
+    case 'translate':
+      return { kind, message: 'Translation needs a connected AI model. Add one in Settings → Story Assistant.' }
+    default:
+      return { kind, message: ['I can fully rewrite once you connect an AI model (Settings → Story Assistant). Targeted notes for this selection:', ...(tips().length ? tips() : ['Reads clean — push on specificity and subtext.'])].join('\n') }
+  }
+}
+
 export const localProvider: StoryProvider = {
   id: 'local',
   label: 'Parchment (local)',
   ready: true,
   generate: async (messages, ctx) => localGenerate(messages, ctx),
+  transform: async (kind, text) => localTransform(kind, text),
 }
 
 // ── Cloud providers (best-effort direct browser calls) ─────────────────────
@@ -251,16 +358,42 @@ async function callOllama(cfg: AIConfig, messages: ChatMessage[], ctx: StoryCont
   return data.message?.content ?? '(no response)'
 }
 
+type CallFn = (cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext) => Promise<string>
+
+async function cloudTransform(
+  call: CallFn,
+  cfg: AIConfig,
+  kind: TransformKind,
+  text: string,
+  ctx: StoryContext,
+  opts?: TransformOpts,
+): Promise<TransformResult> {
+  const instr = KIND_INSTRUCTION[kind] + (kind === 'translate' && opts?.targetLang ? ` Target language: ${opts.targetLang}.` : '')
+  const want = REWRITE_KINDS.includes(kind) ? 'rewritten passage only' : 'requested feedback'
+  const messages: ChatMessage[] = [
+    { role: 'user', content: `${instr}\n\nPassage:\n"""${text}"""\n\nReturn the ${want}, with no preamble or quotation marks.` },
+  ]
+  const out = (await call(cfg, messages, ctx)).trim()
+  return REWRITE_KINDS.includes(kind) ? { kind, replacement: out } : { kind, message: out }
+}
+
 export function getProvider(cfg: AIConfig): StoryProvider {
+  const wrap = (id: string, label: string, ready: boolean, call: CallFn): StoryProvider => ({
+    id,
+    label,
+    ready,
+    generate: (m, c) => call(cfg, m, c),
+    transform: (kind, text, ctx, opts) => cloudTransform(call, cfg, kind, text, ctx, opts),
+  })
   switch (cfg.provider) {
     case 'openai':
-      return { id: 'openai', label: 'OpenAI', ready: !!cfg.apiKey, generate: (m, c) => callOpenAI(cfg, m, c) }
+      return wrap('openai', 'OpenAI', !!cfg.apiKey, callOpenAI)
     case 'anthropic':
-      return { id: 'anthropic', label: 'Anthropic', ready: !!cfg.apiKey, generate: (m, c) => callAnthropic(cfg, m, c) }
+      return wrap('anthropic', 'Anthropic', !!cfg.apiKey, callAnthropic)
     case 'gemini':
-      return { id: 'gemini', label: 'Gemini', ready: !!cfg.apiKey, generate: (m, c) => callGemini(cfg, m, c) }
+      return wrap('gemini', 'Gemini', !!cfg.apiKey, callGemini)
     case 'ollama':
-      return { id: 'ollama', label: 'Ollama', ready: true, generate: (m, c) => callOllama(cfg, m, c) }
+      return wrap('ollama', 'Ollama', true, callOllama)
     default:
       return localProvider
   }

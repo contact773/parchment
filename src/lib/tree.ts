@@ -41,7 +41,7 @@ export function flattenForest(forest: TreeItem[], depth = 0): FlatItem[] {
 
 /** Ordered document nodes (excludes pure containers), optionally compile-only. */
 export function orderedDocuments(nodes: TreeNode[], compileOnly = true): FlatItem[] {
-  const flat = flattenForest(buildForest(nodes))
+  const flat = flattenForest(buildForest(nodes.filter((n) => !n.deletedAt)))
   return flat.filter(
     (f) =>
       f.node.type !== 'folder' &&

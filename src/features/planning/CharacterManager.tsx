@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Trash2, Users, User } from 'lucide-react'
 import type { Character, CharacterRole } from '@/types'
@@ -11,9 +11,12 @@ import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
 import { cn } from '@/lib/utils'
 
-export function CharacterManager({ projectId }: { projectId: string }) {
+export function CharacterManager({ projectId, selectId }: { projectId: string; selectId?: string }) {
   const characters = useLiveQuery(() => db.characters.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
   const [selId, setSelId] = useState<string | null>(null)
+  useEffect(() => {
+    if (selectId) setSelId(selectId)
+  }, [selectId])
   const selected = characters.find((c) => c.id === selId) ?? characters[0] ?? null
 
   const add = async () => {
@@ -76,15 +79,23 @@ export function CharacterManager({ projectId }: { projectId: string }) {
             }
           />
         ) : (
-          <CharacterDetail key={selected.id} character={selected} onDelete={() => { deleteCharacter(selected.id); setSelId(null) }} />
+          <CharacterDetail key={selected.id} character={selected} others={characters} onDelete={() => { deleteCharacter(selected.id); setSelId(null) }} onSelect={setSelId} />
         )}
       </div>
     </div>
   )
 }
 
-function CharacterDetail({ character: c, onDelete }: { character: Character; onDelete: () => void }) {
+function CharacterDetail({ character: c, others, onDelete, onSelect }: { character: Character; others: Character[]; onDelete: () => void; onSelect: (id: string) => void }) {
   const save = (patch: Partial<Character>) => updateCharacter(c.id, patch)
+  const rels = c.relationships ?? []
+  const addRel = () => {
+    const target = others.find((o) => o.id !== c.id)
+    if (!target) return
+    save({ relationships: [...rels, { targetId: target.id, label: 'knows' }] })
+  }
+  const updateRel = (i: number, patch: Partial<{ targetId: string; label: string }>) => save({ relationships: rels.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) })
+  const removeRel = (i: number) => save({ relationships: rels.filter((_, idx) => idx !== i) })
   return (
     <div className="mx-auto max-w-2xl px-8 py-6">
       <div className="mb-5 flex items-start justify-between gap-4">
@@ -129,9 +140,42 @@ function CharacterDetail({ character: c, onDelete }: { character: Character; onD
           <AutoTextarea label="Motivation" depKey={c.id} rows={2} value={c.motivation ?? ''} save={(v) => save({ motivation: v })} />
         </div>
         <AutoTextarea label="Internal / external conflict" depKey={c.id} rows={2} value={c.conflict ?? ''} save={(v) => save({ conflict: v })} />
-        <AutoTextarea label="Character arc" depKey={c.id} rows={2} value={c.arc ?? ''} save={(v) => save({ arc: v })} />
+        <AutoTextarea label="Character arc" depKey={c.id} rows={2} value={c.arc ?? ''} placeholder="Where they start → where they end." save={(v) => save({ arc: v })} />
+        <AutoTextarea label="Voice notes" depKey={c.id} rows={2} value={c.voice ?? ''} placeholder="Speech patterns, vocabulary, verbal tics." save={(v) => save({ voice: v })} />
         <AutoTextarea label="Appearance" depKey={c.id} rows={2} value={c.appearance ?? ''} save={(v) => save({ appearance: v })} />
         <AutoTextarea label="Backstory" depKey={c.id} rows={3} value={c.backstory ?? ''} save={(v) => save({ backstory: v })} />
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="label-text">Relationships</span>
+            <button onClick={addRel} disabled={others.length < 2} className="flex items-center gap-1 text-xs text-accent hover:underline disabled:opacity-40">
+              <Plus size={13} /> Add
+            </button>
+          </div>
+          {rels.length === 0 ? (
+            <p className="text-xs text-muted">No relationships yet. Map who this character knows, loves, opposes.</p>
+          ) : (
+            <div className="space-y-2">
+              {rels.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input value={r.label} onChange={(e) => updateRel(i, { label: e.target.value })} placeholder="relationship" className="input-base h-8 w-28 py-0 text-xs" />
+                  <select value={r.targetId} onChange={(e) => updateRel(i, { targetId: e.target.value })} className="input-base h-8 flex-1 py-0 text-xs">
+                    {others.filter((o) => o.id !== c.id).map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={() => onSelect(r.targetId)} className="text-xs text-muted hover:text-accent" title="Open">→</button>
+                  <button onClick={() => removeRel(i)} className="text-muted hover:text-danger">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <AutoTextarea label="Notes" depKey={c.id} rows={3} value={c.notes ?? ''} save={(v) => save({ notes: v })} />
       </div>
     </div>

@@ -33,7 +33,8 @@ export function Binder({
   selectedId: string | null
   onSelect: (node: TreeNode) => void
 }) {
-  const nodes = useLiveQuery(() => db.nodes.where('projectId').equals(project.id).toArray(), [project.id]) ?? []
+  const allNodes = useLiveQuery(() => db.nodes.where('projectId').equals(project.id).toArray(), [project.id]) ?? []
+  const nodes = allNodes.filter((n) => !n.deletedAt)
   const forest = buildForest(nodes)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [drag, setDrag] = useState<string | null>(null)

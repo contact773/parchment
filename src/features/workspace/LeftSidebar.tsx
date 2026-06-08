@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ListTree, LayoutGrid, Users, MapPin, GitBranch, Clock } from 'lucide-react'
+import { ArrowLeft, ListTree, LayoutGrid, Users, MapPin, GitBranch, Clock, Globe2, Trash2 } from 'lucide-react'
 import type { Project, TreeNode } from '@/types'
 import { Binder } from '@/features/projects/Binder'
 import { GoalsWidget } from './GoalsWidget'
@@ -13,6 +13,8 @@ const NAV: { view: WorkspaceView; label: string; icon: typeof ListTree }[] = [
   { view: 'locations', label: 'Locations', icon: MapPin },
   { view: 'threads', label: 'Plot Threads', icon: GitBranch },
   { view: 'timeline', label: 'Timeline', icon: Clock },
+  { view: 'worldbuilding', label: 'World', icon: Globe2 },
+  { view: 'trash', label: 'Trash', icon: Trash2 },
 ]
 
 export function LeftSidebar({

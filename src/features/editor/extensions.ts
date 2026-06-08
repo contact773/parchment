@@ -4,12 +4,15 @@ import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import Highlight from '@tiptap/extension-highlight'
 import Typography from '@tiptap/extension-typography'
+import { TextStyle, Color, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import type { Extensions } from '@tiptap/core'
 import type { DocType, LanguageCode } from '@/types'
 import { Spellcheck } from '../spellcheck/SpellcheckExtension'
 import { ScriptElementExt } from './ScriptElement'
 import { CommentMark } from './CommentMark'
 import { FocusBlock } from './FocusBlock'
+import { BlockStyle } from './BlockStyle'
+import { SearchExtension } from './SearchExtension'
 
 export interface BuildOptions {
   docType: DocType
@@ -22,7 +25,7 @@ export interface BuildOptions {
 export function buildExtensions(opts: BuildOptions): Extensions {
   const ext: Extensions = [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
+      heading: { levels: [1, 2, 3, 4] },
       codeBlock: { HTMLAttributes: { spellcheck: 'false' } },
     }),
     Placeholder.configure({
@@ -30,9 +33,15 @@ export function buildExtensions(opts: BuildOptions): Extensions {
       emptyEditorClass: 'is-editor-empty',
     }),
     CharacterCount,
-    Highlight,
+    Highlight.configure({ multicolor: true }),
     Typography,
+    TextStyle,
+    Color,
+    FontFamily,
+    FontSize,
+    BlockStyle,
     CommentMark,
+    SearchExtension,
     Spellcheck.configure({ enabled: opts.spellcheckEnabled, language: opts.language }),
   ]
 

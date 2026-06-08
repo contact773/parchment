@@ -1,45 +1,86 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Minimize, Loader2 } from 'lucide-react'
+import {
+  Minimize,
+  Loader2,
+  FileText,
+  ListTree,
+  LayoutGrid,
+  Users,
+  MapPin,
+  GitBranch,
+  Clock,
+  Globe2,
+  Trash2,
+  Plus,
+  BookText,
+  StickyNote,
+  Search as SearchIcon,
+  Maximize,
+  Focus,
+  PanelLeftClose,
+  PanelRightClose,
+  Download,
+  Settings,
+  Bold,
+  Italic,
+  Heading1,
+  Sparkles,
+} from 'lucide-react'
 import { db } from '@/data/db'
-import { isContainer, isDocument, touchProject } from '@/data/repo'
-import type { TreeNode } from '@/types'
+import {
+  isContainer,
+  isDocument,
+  touchProject,
+  createNode,
+  createSiblingAfter,
+  createCharacter,
+  createLocation,
+} from '@/data/repo'
+import type { DocContent, TreeNode } from '@/types'
 import { Topbar } from '@/features/workspace/Topbar'
 import { LeftSidebar } from '@/features/workspace/LeftSidebar'
 import { RightPanel } from '@/features/workspace/RightPanel'
-import type { WorkspaceView } from '@/features/workspace/types'
+import type { WorkspaceView, CodexSelect } from '@/features/workspace/types'
 import { DocumentEditor } from '@/features/editor/DocumentEditor'
+import { FindReplace } from '@/features/editor/FindReplace'
+import { getActiveEditor } from '@/features/editor/activeEditor'
+import { setTextType, toggleBold, toggleItalic, insertSceneBreak } from '@/features/editor/editorActions'
 import { Corkboard } from '@/features/planning/Corkboard'
 import { OutlineView } from '@/features/planning/OutlineView'
 import { TimelineView } from '@/features/planning/TimelineView'
 import { CharacterManager } from '@/features/planning/CharacterManager'
 import { LocationManager } from '@/features/planning/LocationManager'
 import { ThreadManager } from '@/features/planning/ThreadManager'
+import { WorldbuildingManager } from '@/features/planning/WorldbuildingManager'
+import { TrashView } from '@/features/planning/TrashView'
 import { ExportDialog } from '@/features/export/ExportDialog'
+import { CommandPalette, type Command } from '@/components/CommandPalette'
 import { EmptyState } from '@/components/ui/misc'
 import { IconButton } from '@/components/ui/IconButton'
 import { orderedDocuments } from '@/lib/tree'
 import { useUI } from '@/store/useUI'
 import { useSettings } from '@/store/useSettings'
-import { FileText } from 'lucide-react'
 
 export function Workspace() {
   const { projectId = '' } = useParams()
   const navigate = useNavigate()
   const project = useLiveQuery(() => db.projects.get(projectId), [projectId])
-  const nodes = useLiveQuery(() => db.nodes.where('projectId').equals(projectId).toArray(), [projectId]) ?? []
+  const allNodes = useLiveQuery(() => db.nodes.where('projectId').equals(projectId).toArray(), [projectId]) ?? []
+  const characters = useLiveQuery(() => db.characters.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
+  const locations = useLiveQuery(() => db.locations.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
+  const nodes = useMemo(() => allNodes.filter((n) => !n.deletedAt), [allNodes])
 
-  const leftOpen = useUI((s) => s.leftOpen)
-  const rightOpen = useUI((s) => s.rightOpen)
-  const distractionFree = useUI((s) => s.distractionFree)
-  const setDistractionFree = useUI((s) => s.setDistractionFree)
-  const startSession = useUI((s) => s.startSession)
+  const ui = useUI()
+  const { leftOpen, rightOpen, distractionFree, setDistractionFree, startSession, commandOpen, setCommandOpen, setFindOpen, setWorkspaceMode } = ui
   const lastNodeByProject = useSettings((s) => s.lastNodeByProject)
   const setLastLocation = useSettings((s) => s.setLastLocation)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<WorkspaceView>('editor')
+  const [codexSelect, setCodexSelect] = useState<CodexSelect | null>(null)
+  const [assistantSeed, setAssistantSeed] = useState<string | undefined>(undefined)
   const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
@@ -47,15 +88,11 @@ export function Workspace() {
     if (projectId) touchProject(projectId)
   }, [projectId, startSession])
 
-  // Pick an initial document when nodes load.
   useEffect(() => {
     if (selectedId && nodes.some((n) => n.id === selectedId)) return
     if (nodes.length === 0) return
     const remembered = lastNodeByProject[projectId]
-    const initial =
-      (remembered && nodes.find((n) => n.id === remembered)) ??
-      orderedDocuments(nodes, false)[0]?.node ??
-      nodes[0]
+    const initial = (remembered && nodes.find((n) => n.id === remembered)) ?? orderedDocuments(nodes, false)[0]?.node ?? nodes[0]
     if (initial) {
       setSelectedId(initial.id)
       setView(isContainer(initial.type) ? 'corkboard' : 'editor')
@@ -63,22 +100,122 @@ export function Workspace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, projectId])
 
-  // Esc exits distraction-free.
+  // Keyboard: Esc (exit DF), Cmd/Ctrl+K (palette), Cmd/Ctrl+F (find).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && distractionFree) setDistractionFree(false)
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCommandOpen(true)
+      }
+      if (mod && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setFindOpen(true)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [distractionFree, setDistractionFree])
+  }, [distractionFree, setDistractionFree, setCommandOpen, setFindOpen])
 
   const selectedNode = useMemo(() => nodes.find((n) => n.id === selectedId) ?? null, [nodes, selectedId])
 
-  const onSelect = (node: TreeNode) => {
+  const selectNode = (node: TreeNode) => {
     setSelectedId(node.id)
     setView(isContainer(node.type) ? 'corkboard' : 'editor')
     setLastLocation(projectId, node.id)
   }
+
+  // ── Structure operations ────────────────────────────────────────────────
+  const addStructure = async (kind: 'scene' | 'chapter' | 'note') => {
+    if (!project) return
+    let created: TreeNode | null = null
+    if (kind === 'chapter') {
+      created = await createNode({ projectId, parentId: null, type: 'chapter', docType: project.defaultDocType })
+    } else if (kind === 'note') {
+      created = await createNode({ projectId, parentId: null, type: 'note', docType: 'prose' })
+    } else {
+      // scene
+      if (selectedNode && isContainer(selectedNode.type)) {
+        created = await createNode({ projectId, parentId: selectedNode.id, type: 'scene', docType: project.defaultDocType })
+      } else if (selectedNode) {
+        created = await createSiblingAfter(selectedNode.id, { type: 'scene', docType: project.defaultDocType })
+      } else {
+        created = await createNode({ projectId, parentId: null, type: 'scene', docType: project.defaultDocType })
+      }
+    }
+    if (created) selectNode(created)
+  }
+
+  const splitScene = async (after: DocContent) => {
+    if (!selectedNode) return
+    const created = await createSiblingAfter(selectedNode.id, { type: 'scene', title: 'New Scene', content: after, docType: selectedNode.docType })
+    if (created) selectNode(created)
+  }
+
+  const openProfile = (kind: 'character' | 'location', id: string) => {
+    setCodexSelect({ kind, id })
+    setView(kind === 'character' ? 'characters' : 'locations')
+  }
+  const createEntry = async (kind: 'character' | 'location', name: string) => {
+    const entry = kind === 'character' ? await createCharacter(projectId, { name }) : await createLocation(projectId, { name })
+    setCodexSelect({ kind, id: entry.id })
+    setView(kind === 'character' ? 'characters' : 'locations')
+  }
+  const askAssistant = (text: string) => {
+    setAssistantSeed(text)
+    ui.openRight('assistant')
+  }
+
+  // ── Command palette ──────────────────────────────────────────────────────
+  const commands: Command[] = useMemo(() => {
+    const list: Command[] = []
+    const viewCmd = (v: WorkspaceView, label: string, icon: React.ReactNode) =>
+      list.push({ id: `view-${v}`, group: 'Go to view', label, icon, keywords: v, run: () => setView(v) })
+    viewCmd('outline', 'Outline', <ListTree size={15} />)
+    viewCmd('corkboard', 'Corkboard', <LayoutGrid size={15} />)
+    viewCmd('characters', 'Characters', <Users size={15} />)
+    viewCmd('locations', 'Locations', <MapPin size={15} />)
+    viewCmd('threads', 'Plot threads', <GitBranch size={15} />)
+    viewCmd('timeline', 'Timeline', <Clock size={15} />)
+    viewCmd('worldbuilding', 'Worldbuilding', <Globe2 size={15} />)
+    viewCmd('trash', 'Trash', <Trash2 size={15} />)
+
+    list.push({ id: 'new-scene', group: 'Create', label: 'New scene', icon: <Plus size={15} />, keywords: 'add', run: () => addStructure('scene') })
+    list.push({ id: 'new-chapter', group: 'Create', label: 'New chapter', icon: <BookText size={15} />, run: () => addStructure('chapter') })
+    list.push({ id: 'new-note', group: 'Create', label: 'New note', icon: <StickyNote size={15} />, run: () => addStructure('note') })
+    list.push({ id: 'new-character', group: 'Create', label: 'New character', icon: <Users size={15} />, run: () => createEntry('character', 'New Character') })
+    list.push({ id: 'new-location', group: 'Create', label: 'New location', icon: <MapPin size={15} />, run: () => createEntry('location', 'New Location') })
+
+    list.push({ id: 'mode-minimal', group: 'Mode', label: 'Minimal mode', icon: <Maximize size={15} />, keywords: 'focus zen', run: () => setWorkspaceMode('minimal') })
+    list.push({ id: 'mode-standard', group: 'Mode', label: 'Standard mode', icon: <PanelLeftClose size={15} />, run: () => setWorkspaceMode('standard') })
+    list.push({ id: 'mode-advanced', group: 'Mode', label: 'Advanced mode (ribbon)', icon: <PanelRightClose size={15} />, run: () => setWorkspaceMode('advanced') })
+    list.push({ id: 'distraction', group: 'Mode', label: 'Distraction-free writing', icon: <Maximize size={15} />, run: () => setDistractionFree(true) })
+    list.push({ id: 'focus-off', group: 'Mode', label: 'Focus: off', icon: <Focus size={15} />, run: () => useSettings.getState().setSettings({ focusMode: 'off' }) })
+    list.push({ id: 'focus-para', group: 'Mode', label: 'Focus: paragraph', icon: <Focus size={15} />, run: () => useSettings.getState().setSettings({ focusMode: 'paragraph' }) })
+    list.push({ id: 'focus-type', group: 'Mode', label: 'Typewriter mode', icon: <Focus size={15} />, run: () => useSettings.getState().setSettings({ focusMode: 'typewriter' }) })
+
+    // Editor formatting (when a document is open)
+    const ed = getActiveEditor()
+    if (ed) {
+      list.push({ id: 'fmt-bold', group: 'Format', label: 'Bold', icon: <Bold size={15} />, run: () => toggleBold(ed) })
+      list.push({ id: 'fmt-italic', group: 'Format', label: 'Italic', icon: <Italic size={15} />, run: () => toggleItalic(ed) })
+      list.push({ id: 'fmt-h1', group: 'Format', label: 'Heading 1', icon: <Heading1 size={15} />, run: () => setTextType(ed, 'h1') })
+      list.push({ id: 'fmt-quote', group: 'Format', label: 'Quote', icon: <Sparkles size={15} />, run: () => setTextType(ed, 'quote') })
+      list.push({ id: 'fmt-scenebreak', group: 'Format', label: 'Insert scene break', icon: <Sparkles size={15} />, run: () => insertSceneBreak(ed) })
+    }
+
+    list.push({ id: 'find', group: 'Project', label: 'Find & replace', icon: <SearchIcon size={15} />, keywords: 'search', run: () => setFindOpen(true) })
+    list.push({ id: 'export', group: 'Project', label: 'Export & backup', icon: <Download size={15} />, run: () => setExporting(true) })
+    list.push({ id: 'settings', group: 'Project', label: 'Settings', icon: <Settings size={15} />, run: () => navigate('/settings') })
+
+    // Jump to documents
+    orderedDocuments(nodes, false).forEach(({ node }) =>
+      list.push({ id: `goto-${node.id}`, group: 'Go to document', label: node.title, icon: <FileText size={15} />, keywords: node.text?.slice(0, 80) ?? '', run: () => selectNode(node) }),
+    )
+    return list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, selectedNode])
 
   if (project === undefined) {
     return (
@@ -92,7 +229,6 @@ export function Workspace() {
     return null
   }
 
-  // ── Center view ─────────────────────────────────────────────────────────
   const corkRoot =
     selectedNode && isContainer(selectedNode.type)
       ? { id: selectedNode.id, title: selectedNode.title }
@@ -100,48 +236,54 @@ export function Workspace() {
         ? { id: selectedNode.parentId, title: nodes.find((n) => n.id === selectedNode.parentId)?.title ?? project.title }
         : { id: null, title: project.title }
 
+  const editorProps = {
+    characters,
+    locations,
+    onAskAssistant: askAssistant,
+    onOpenProfile: openProfile,
+    onCreateEntry: createEntry,
+    onSplitScene: splitScene,
+    onStructure: addStructure,
+  }
+
   const center = (() => {
     switch (view) {
       case 'outline':
-        return <OutlineView project={project} nodes={nodes} onOpen={onSelect} />
+        return <OutlineView project={project} nodes={nodes} onOpen={selectNode} />
       case 'corkboard':
-        return <Corkboard project={project} nodes={nodes} rootId={corkRoot.id} rootTitle={corkRoot.title} onOpen={onSelect} />
+        return <Corkboard project={project} nodes={nodes} rootId={corkRoot.id} rootTitle={corkRoot.title} onOpen={selectNode} />
       case 'characters':
-        return <CharacterManager projectId={project.id} />
+        return <CharacterManager projectId={project.id} selectId={codexSelect?.kind === 'character' ? codexSelect.id : undefined} />
       case 'locations':
-        return <LocationManager projectId={project.id} />
+        return <LocationManager projectId={project.id} selectId={codexSelect?.kind === 'location' ? codexSelect.id : undefined} />
       case 'threads':
         return <ThreadManager projectId={project.id} />
       case 'timeline':
-        return <TimelineView project={project} nodes={nodes} onOpen={onSelect} />
+        return <TimelineView project={project} nodes={nodes} onOpen={selectNode} />
+      case 'worldbuilding':
+        return <WorldbuildingManager projectId={project.id} />
+      case 'trash':
+        return <TrashView projectId={project.id} />
       case 'editor':
       default:
-        if (selectedNode && isDocument(selectedNode)) return <DocumentEditor node={selectedNode} project={project} />
+        if (selectedNode && isDocument(selectedNode)) return <DocumentEditor node={selectedNode} project={project} {...editorProps} />
         if (selectedNode && isContainer(selectedNode.type))
-          return <Corkboard project={project} nodes={nodes} rootId={selectedNode.id} rootTitle={selectedNode.title} onOpen={onSelect} />
+          return <Corkboard project={project} nodes={nodes} rootId={selectedNode.id} rootTitle={selectedNode.title} onOpen={selectNode} />
         return (
-          <EmptyState
-            className="h-full"
-            icon={<FileText size={40} />}
-            title="Select a document"
-            description="Choose a scene or chapter from the manuscript to start writing."
-          />
+          <EmptyState className="h-full" icon={<FileText size={40} />} title="Select a document" description="Choose a scene or chapter from the manuscript to start writing." />
         )
     }
   })()
 
-  // ── Distraction-free ──────────────────────────────────────────────────
   if (distractionFree && selectedNode && isDocument(selectedNode)) {
     return (
       <div className="relative h-full bg-bg">
-        <DocumentEditor node={selectedNode} project={project} />
-        <IconButton
-          label="Exit distraction-free (Esc)"
-          onClick={() => setDistractionFree(false)}
-          className="fixed right-4 top-4 z-20 bg-surface/80 backdrop-blur"
-        >
+        <DocumentEditor node={selectedNode} project={project} {...editorProps} />
+        <FindReplace />
+        <IconButton label="Exit distraction-free (Esc)" onClick={() => setDistractionFree(false)} className="fixed right-4 top-4 z-20 bg-surface/80 backdrop-blur">
           <Minimize size={18} />
         </IconButton>
+        <CommandPalette open={commandOpen} commands={commands} onClose={() => setCommandOpen(false)} />
       </div>
     )
   }
@@ -152,17 +294,21 @@ export function Workspace() {
       <div className="flex min-h-0 flex-1">
         {leftOpen && (
           <aside className="w-[280px] shrink-0 border-r border-border">
-            <LeftSidebar project={project} selectedId={selectedId} onSelect={onSelect} view={view} onView={setView} />
+            <LeftSidebar project={project} selectedId={selectedId} onSelect={selectNode} view={view} onView={setView} />
           </aside>
         )}
-        <main className="min-w-0 flex-1 overflow-hidden bg-bg">{center}</main>
+        <main className="relative min-w-0 flex-1 overflow-hidden bg-bg">
+          {center}
+          <FindReplace />
+        </main>
         {rightOpen && (
           <aside className="w-[360px] shrink-0 border-l border-border">
-            <RightPanel project={project} node={selectedNode} allNodes={nodes} onOpen={onSelect} />
+            <RightPanel project={project} node={selectedNode} allNodes={nodes} onOpen={selectNode} assistantSeed={assistantSeed} onSeedConsumed={() => setAssistantSeed(undefined)} />
           </aside>
         )}
       </div>
       {exporting && <ExportDialog open onClose={() => setExporting(false)} project={project} />}
+      <CommandPalette open={commandOpen} commands={commands} onClose={() => setCommandOpen(false)} />
     </div>
   )
 }

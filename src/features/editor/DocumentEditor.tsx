@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { Check, Loader2 } from 'lucide-react'
-import type { Project, TreeNode } from '@/types'
+import type { Character, DocContent, Location, Project, TreeNode } from '@/types'
 import { buildExtensions } from './extensions'
 import { EditorToolbar } from './EditorToolbar'
+import { Ribbon } from './Ribbon'
 import { CommentDialog } from './CommentDialog'
+import { EditorContextMenu, type CtxTarget } from './EditorContextMenu'
+import { BubbleToolbar } from './BubbleToolbar'
+import { SlashMenu } from './SlashMenu'
+import { SelectionResultDialog } from './SelectionResultDialog'
 import { SpellPopover } from '../spellcheck/SpellPopover'
 import { spellcheckKey, misspellingAt, type Misspelling } from '../spellcheck/SpellcheckExtension'
 import { spellService } from '../spellcheck/spellService'
+import { setActiveEditor } from './activeEditor'
+import { analyzeStory } from '../story-assistant/analyzeLocal'
+import { getProvider, localProvider, type StoryContext, type TransformKind, type TransformResult } from '../story-assistant/providers'
 import { saveNodeContent, renameNode, emptyDoc } from '@/data/repo'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
-import { debounce } from '@/lib/utils'
+import { debounce, cn } from '@/lib/utils'
 import { formatReadingTime, readingMinutes, pageEstimate } from '@/lib/text'
 import { formatNumber } from '@/lib/format'
 import { BUILTIN_THEMES, findBuiltin } from '@/features/themes/themes'
-import { cn } from '@/lib/utils'
 
 interface SpellTarget extends Misspelling {
   x: number
@@ -23,11 +30,48 @@ interface SpellTarget extends Misspelling {
 }
 interface CommentView {
   text: string
+  kind: string
   x: number
   y: number
 }
 
-export function DocumentEditor({ node, project }: { node: TreeNode; project: Project }) {
+export interface DocumentEditorProps {
+  node: TreeNode
+  project: Project
+  characters?: Character[]
+  locations?: Location[]
+  onAskAssistant?: (text: string) => void
+  onOpenProfile?: (kind: 'character' | 'location', id: string) => void
+  onCreateEntry?: (kind: 'character' | 'location', name: string) => void
+  onSplitScene?: (after: DocContent) => void
+  onStructure?: (kind: 'scene' | 'chapter' | 'note') => void
+}
+
+function wordAt(view: { state: { doc: { resolve: (p: number) => { parent: { isTextblock: boolean; textContent: string }; start: () => number } } } }, pos: number) {
+  const $pos = view.state.doc.resolve(pos)
+  if (!$pos.parent.isTextblock) return null
+  const text = $pos.parent.textContent
+  const offset = pos - $pos.start()
+  const isW = (ch: string) => !!ch && /[\p{L}\p{N}'’-]/u.test(ch)
+  let start = offset
+  let end = offset
+  while (start > 0 && isW(text[start - 1])) start--
+  while (end < text.length && isW(text[end])) end++
+  const word = text.slice(start, end)
+  return word ? { word, from: $pos.start() + start, to: $pos.start() + end } : null
+}
+
+export function DocumentEditor({
+  node,
+  project,
+  characters = [],
+  locations = [],
+  onAskAssistant,
+  onOpenProfile,
+  onCreateEntry,
+  onSplitScene,
+  onStructure,
+}: DocumentEditorProps) {
   const settings = useSettings((s) => s.settings)
   const dictionary = useSettings((s) => s.dictionary)
   const addDictWord = useSettings((s) => s.addDictWord)
@@ -35,14 +79,16 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
   const recordWordCount = useSettings((s) => s.recordWordCount)
   const indent = useSettings((s) => {
     const t =
-      s.customThemes.find((x) => x.id === s.settings.activeThemeId) ??
-      findBuiltin(s.settings.activeThemeId) ??
-      BUILTIN_THEMES[0]
+      s.customThemes.find((x) => x.id === s.settings.activeThemeId) ?? findBuiltin(s.settings.activeThemeId) ?? BUILTIN_THEMES[0]
     return t.typography.paragraphIndent
   })
 
   const { addSessionWords, setSaving, markSaved, editorZoom } = useUI()
   const distractionFree = useUI((s) => s.distractionFree)
+  const ribbon = useUI((s) => s.ribbon)
+  const minimal = useUI((s) => s.workspaceMode === 'minimal')
+  const toast = useUI((s) => s.toast)
+  const showChrome = !distractionFree && !minimal
 
   const language = project.language
   const focusActive = settings.focusMode !== 'off'
@@ -52,7 +98,11 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
   const [spell, setSpell] = useState<SpellTarget | null>(null)
   const [commentView, setCommentView] = useState<CommentView | null>(null)
   const [commentOpen, setCommentOpen] = useState(false)
+  const [commentKind, setCommentKind] = useState<'comment' | 'note'>('comment')
   const [title, setTitle] = useState(node.title)
+  const [ctxMenu, setCtxMenu] = useState<CtxTarget | null>(null)
+  const transformRange = useRef<{ from: number; to: number } | null>(null)
+  const [transform, setTransform] = useState<{ label: string; loading: boolean; result: TransformResult | null } | null>(null)
 
   useEffect(() => setTitle(node.title), [node.id, node.title])
   useEffect(() => {
@@ -85,7 +135,7 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
             ? 'INT. SOMEWHERE — DAY\n\nStart your scene…'
             : node.docType === 'poetry'
               ? 'A line, and then another…'
-              : 'Begin writing…',
+              : 'Begin writing…  (type “/” for commands)',
       }),
       content: node.content ?? emptyDoc(),
       autofocus: 'end',
@@ -101,12 +151,11 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
             return false
           }
           setSpell(null)
-          // Detect a comment mark at the click position.
           const $pos = view.state.doc.resolve(Math.min(pos, view.state.doc.content.size))
           const mark = $pos.marks().find((m) => m.type.name === 'comment')
           if (mark) {
             const coords = view.coordsAtPos(pos)
-            setCommentView({ text: String(mark.attrs.text || ''), x: coords.left, y: coords.bottom })
+            setCommentView({ text: String(mark.attrs.text || ''), kind: String(mark.attrs.kind || 'comment'), x: coords.left, y: coords.bottom })
           } else {
             setCommentView(null)
           }
@@ -118,11 +167,15 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
         save(e.getJSON())
       },
     },
-    // Rebuild when switching documents or toggling structural editor options.
     [node.id, language, settings.spellcheckEnabled, focusActive, node.docType],
   )
 
-  // ── Title editing ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (editor) setActiveEditor(editor)
+    return () => setActiveEditor(null)
+  }, [editor])
+
+  // ── Title ────────────────────────────────────────────────────────────
   const saveTitle = useMemo(() => debounce((t: string) => void renameNode(node.id, t || 'Untitled'), 500), [node.id])
   const onTitleChange = (v: string) => {
     setTitle(v)
@@ -142,7 +195,7 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
         const target = coords.top - cRect.top + container.scrollTop - container.clientHeight / 2
         container.scrollTo({ top: target, behavior: 'smooth' })
       } catch {
-        /* position not in view yet */
+        /* not in view yet */
       }
     }
     editor.on('selectionUpdate', center)
@@ -156,58 +209,162 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
     if (editor) editor.view.dispatch(editor.state.tr.setMeta(spellcheckKey, true))
   }, [editor])
 
-  const replaceWord = (suggestion: string) => {
-    if (!editor || !spell) return
-    editor.chain().focus().insertContentAt({ from: spell.from, to: spell.to }, suggestion).run()
+  const replaceWordAt = (from: number, to: number, suggestion: string) => {
+    editor?.chain().focus().insertContentAt({ from, to }, suggestion).run()
     setSpell(null)
   }
-  const onAddWord = () => {
-    if (!spell) return
-    addDictWord(language, spell.word)
-    spellService.addWord(language, spell.word)
+  const addWordToDict = (word: string) => {
+    addDictWord(language, word)
+    spellService.addWord(language, word)
     refreshSpell()
     setSpell(null)
   }
-  const onIgnoreWord = () => {
-    if (!spell) return
-    ignoreWordStore(language, spell.word)
-    spellService.ignore(language, spell.word)
+  const ignoreWord = (word: string) => {
+    ignoreWordStore(language, word)
+    spellService.ignore(language, word)
     refreshSpell()
     setSpell(null)
   }
 
-  // ── Comments ──────────────────────────────────────────────────────────
-  const openComment = () => {
+  // ── Comments / notes ───────────────────────────────────────────────────
+  const openCommentDialog = (kind: 'comment' | 'note') => {
     if (!editor) return
     if (editor.state.selection.empty) {
-      useUI.getState().toast('Select some text to comment on', 'info')
+      toast('Select some text first', 'info')
       return
     }
+    setCommentKind(kind)
     setCommentOpen(true)
   }
   const addComment = (text: string) => {
-    editor?.chain().focus().setComment(text).run()
+    if (commentKind === 'note') editor?.chain().focus().setNote(text).run()
+    else editor?.chain().focus().setComment(text).run()
     setCommentOpen(false)
+  }
+
+  // ── Assistant transforms ────────────────────────────────────────────────
+  const buildContext = (): StoryContext => {
+    const analysis = analyzeStory({ project, nodes: [node], characters, threads: [], scope: 'node', nodeId: node.id })
+    return { project, node, sceneText: node.text ?? '', characters, analysis }
+  }
+
+  const runTransform = async (rawKind: string, label: string) => {
+    if (!editor) return
+    const { from, to, empty } = editor.state.selection
+    const text = empty ? node.text ?? '' : editor.state.doc.textBetween(from, to, ' ')
+    if (!text.trim()) {
+      toast('Nothing to work with — select some text', 'info')
+      return
+    }
+    let kind = rawKind as TransformKind
+    let targetLang: string | undefined
+    if (rawKind.startsWith('translate:')) {
+      kind = 'translate'
+      targetLang = rawKind.split(':')[1]
+    }
+    if (kind === 'ask') {
+      onAskAssistant?.(text)
+      return
+    }
+    transformRange.current = empty ? null : { from, to }
+    const provider = getProvider(settings.ai)
+    const active = provider.ready ? provider : localProvider
+    setTransform({ label, loading: true, result: null })
+    try {
+      const result = await active.transform(kind, text, buildContext(), { targetLang })
+      setTransform({ label, loading: false, result })
+    } catch {
+      toast(`${active.label} failed — using local assistant`, 'error')
+      const result = await localProvider.transform(kind, text, buildContext(), { targetLang })
+      setTransform({ label, loading: false, result })
+    }
+  }
+
+  const applyReplacement = (text: string, insert: boolean) => {
+    if (!editor) return
+    const range = transformRange.current
+    if (range && !insert) {
+      editor.chain().focus().insertContentAt(range, text).run()
+    } else if (range && insert) {
+      editor.chain().focus().insertContentAt(range.to, `\n\n${text}`).run()
+    } else {
+      editor.chain().focus().insertContent(`\n\n${text}`).run()
+    }
+    setTransform(null)
+  }
+
+  // ── Split scene ─────────────────────────────────────────────────────────
+  const splitHere = () => {
+    if (!editor) return
+    const idx = editor.state.selection.$from.index(0)
+    const blocks = (editor.getJSON().content ?? []) as DocContent[]
+    if (idx <= 0 || idx >= blocks.length) {
+      toast('Put the cursor at the start of a later block to split there', 'info')
+      return
+    }
+    const before = blocks.slice(0, idx)
+    const after = blocks.slice(idx)
+    editor.commands.setContent({ type: 'doc', content: before })
+    onSplitScene?.({ type: 'doc', content: after })
+    toast('Scene split', 'success')
+  }
+
+  // ── Right-click ─────────────────────────────────────────────────────────
+  const onContextMenu = (e: React.MouseEvent) => {
+    if (!editor) return
+    e.preventDefault()
+    const view = editor.view
+    const coords = view.posAtCoords({ left: e.clientX, top: e.clientY })
+    if (!coords) return
+    const pos = coords.pos
+    const sel = editor.state.selection
+    const insideSelection = !sel.empty && pos >= sel.from && pos <= sel.to
+    if (!insideSelection && sel.empty) {
+      editor.commands.setTextSelection(pos)
+    }
+    const w = wordAt(view, pos)
+    const st = spellcheckKey.getState(editor.state)
+    const miss = w ? misspellingAt(st, w.from) : null
+    const nameMatch = w ? findNameMatch(w.word, characters, locations) : null
+    const unknownName = w && !nameMatch && /^[A-ZÀ-Þ]/.test(w.word) && w.word.length > 1 && /^[\p{L}'’-]+$/u.test(w.word) ? w.word : null
+    const sel2 = editor.state.selection
+    setCtxMenu({
+      x: e.clientX,
+      y: e.clientY,
+      hasSelection: !sel2.empty,
+      selectionText: sel2.empty ? '' : editor.state.doc.textBetween(sel2.from, sel2.to, ' '),
+      spell: miss && settings.spellcheckEnabled ? { word: miss.word, from: miss.from, to: miss.to } : null,
+      nameMatch,
+      unknownName,
+      docType: node.docType,
+      language,
+    })
+    setSpell(null)
+    setCommentView(null)
+  }
+
+  const closeAll = () => {
+    setSpell(null)
+    setCommentView(null)
   }
 
   return (
     <div className="flex h-full flex-col">
-      {!distractionFree && editor && (
+      {showChrome && editor && (
         <div className="shrink-0 px-4 pb-2 pt-3">
-          <EditorToolbar editor={editor} docType={node.docType} onComment={openComment} />
+          {ribbon ? (
+            <Ribbon editor={editor} docType={node.docType} onComment={() => openCommentDialog('comment')} />
+          ) : (
+            <EditorToolbar editor={editor} docType={node.docType} onComment={() => openCommentDialog('comment')} />
+          )}
         </div>
       )}
 
       <div
         ref={scrollRef}
-        className={cn(
-          'relative flex-1 overflow-y-auto px-4 pb-32',
-          distractionFree && 'pt-[12vh]',
-        )}
-        onMouseDown={() => {
-          setSpell(null)
-          setCommentView(null)
-        }}
+        className={cn('relative flex-1 overflow-y-auto px-4 pb-32', distractionFree && 'pt-[12vh]')}
+        onMouseDown={closeAll}
+        onContextMenu={onContextMenu}
       >
         <div
           className={cn('pm-editor mx-auto w-full', indent && node.docType !== 'script' && 'indent', focusActive && 'focus-active')}
@@ -232,9 +389,9 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
           <SpellPopover
             target={spell}
             language={language}
-            onReplace={replaceWord}
-            onAdd={onAddWord}
-            onIgnore={onIgnoreWord}
+            onReplace={(s) => replaceWordAt(spell.from, spell.to, s)}
+            onAdd={() => addWordToDict(spell.word)}
+            onIgnore={() => ignoreWord(spell.word)}
             onClose={() => setSpell(null)}
           />
         )}
@@ -242,18 +399,75 @@ export function DocumentEditor({ node, project }: { node: TreeNode; project: Pro
           <div
             className="fixed z-50 max-w-xs animate-scale-in rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text shadow-panel"
             style={{ top: commentView.y + 6, left: Math.max(8, commentView.x) }}
+            onMouseDown={(ev) => ev.stopPropagation()}
           >
-            <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-accent">Comment</div>
+            <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-accent">
+              {commentView.kind === 'note' ? 'Private note' : 'Comment'}
+            </div>
             {commentView.text || <span className="text-muted">No note</span>}
           </div>
         )}
       </div>
 
+      {editor && (
+        <BubbleToolbar
+          editor={editor}
+          suppressed={!!ctxMenu || !!transform || commentOpen || !!spell}
+          onComment={() => openCommentDialog('comment')}
+          onAsk={() => runTransform('ask', 'Ask assistant')}
+          onImprove={() => runTransform('improve', 'Improve')}
+        />
+      )}
+      {editor && <SlashMenu editor={editor} docType={node.docType} onStructure={(k) => onStructure?.(k)} />}
+      {editor && ctxMenu && (
+        <EditorContextMenu
+          editor={editor}
+          target={ctxMenu}
+          onClose={() => setCtxMenu(null)}
+          onTransform={runTransform}
+          onComment={() => openCommentDialog('comment')}
+          onNote={() => openCommentDialog('note')}
+          onReplaceWord={replaceWordAt}
+          onAddWord={addWordToDict}
+          onIgnoreWord={ignoreWord}
+          onOpenProfile={(k, id) => onOpenProfile?.(k, id)}
+          onCreateEntry={(k, name) => onCreateEntry?.(k, name)}
+          onSplitScene={splitHere}
+        />
+      )}
+
       {editor && <EditorStatusBar editor={editor} />}
 
-      <CommentDialog open={commentOpen} onClose={() => setCommentOpen(false)} onSubmit={addComment} />
+      <CommentDialog
+        open={commentOpen}
+        kind={commentKind}
+        onClose={() => setCommentOpen(false)}
+        onSubmit={addComment}
+      />
+      <SelectionResultDialog
+        open={!!transform}
+        label={transform?.label ?? ''}
+        loading={transform?.loading ?? false}
+        result={transform?.result ?? null}
+        providerLabel={getProvider(settings.ai).label}
+        onReplace={(t) => applyReplacement(t, false)}
+        onInsert={(t) => applyReplacement(t, true)}
+        onClose={() => setTransform(null)}
+      />
     </div>
   )
+}
+
+function findNameMatch(word: string, characters: Character[], locations: Location[]): CtxTarget['nameMatch'] {
+  const w = word.toLowerCase()
+  for (const c of characters) {
+    const aliases = (c.aliases ?? '').toLowerCase().split(/[,;]/).map((s) => s.trim())
+    if (c.name.toLowerCase() === w || aliases.includes(w)) return { kind: 'character', id: c.id, name: c.name }
+  }
+  for (const l of locations) {
+    if (l.name.toLowerCase() === w) return { kind: 'location', id: l.id, name: l.name }
+  }
+  return null
 }
 
 function EditorStatusBar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>> }) {
@@ -262,8 +476,6 @@ function EditorStatusBar({ editor }: { editor: NonNullable<ReturnType<typeof use
   const counts = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
-      // Guard against a destroyed/initializing editor (StrictMode remount race)
-      // where storage may briefly be unavailable.
       words: e.isDestroyed ? 0 : (e.storage.characterCount?.words?.() ?? 0),
       characters: e.isDestroyed ? 0 : (e.storage.characterCount?.characters?.() ?? 0),
     }),

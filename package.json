@@ -15,9 +15,12 @@
   },
   "dependencies": {
     "@tiptap/extension-character-count": "^3.26.0",
+    "@tiptap/extension-color": "^3.26.0",
+    "@tiptap/extension-font-family": "^3.26.0",
     "@tiptap/extension-highlight": "^3.26.0",
     "@tiptap/extension-placeholder": "^3.26.0",
     "@tiptap/extension-text-align": "^3.26.0",
+    "@tiptap/extension-text-style": "^3.26.0",
     "@tiptap/extension-typography": "^3.26.0",
     "@tiptap/pm": "^3.26.0",
     "@tiptap/react": "^3.26.0",
@@ -30,10 +33,12 @@
     "dictionary-es": "^4.0.0",
     "dictionary-fr": "^3.0.0",
     "dictionary-nl": "^2.0.0",
+    "diff": "^9.0.0",
     "docx": "^9.7.1",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "lucide-react": "^1.17.0",
+    "mammoth": "^1.12.0",
     "nanoid": "^5.1.11",
     "nspell": "^2.1.5",
     "react": "^18.3.1",
@@ -43,6 +48,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/diff": "^7.0.2",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.9.2",
     "@types/react": "^18.3.31",

@@ -138,6 +138,30 @@
   font-weight: 600;
   margin: 1.2em 0 0.3em;
 }
+.pm-editor .ProseMirror h4 {
+  font-size: 1.04em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 1.1em 0 0.2em;
+}
+
+/* Prose "dialogue" and "note" block styles */
+.pm-editor .ProseMirror p[data-pstyle='dialogue'] {
+  padding-left: 1.1em;
+  border-left: 2px solid rgb(var(--c-accent) / 0.45);
+  text-indent: 0 !important;
+  margin: 0.5em 0;
+}
+.pm-editor .ProseMirror p[data-pstyle='note'] {
+  background: rgb(var(--c-accent) / 0.08);
+  border: 1px solid rgb(var(--c-accent) / 0.22);
+  border-radius: var(--radius);
+  padding: 0.6em 0.9em;
+  font-size: 0.92em;
+  color: rgb(var(--c-ink) / 0.85);
+  text-indent: 0 !important;
+  margin: 0.7em 0;
+}
 .pm-editor .ProseMirror blockquote {
   border-left: 3px solid rgb(var(--c-accent) / 0.5);
   padding-left: 1em;
@@ -248,6 +272,16 @@
   text-indent: 0 !important;
 }
 
+/* ── Find & replace highlight ───────────────────────────────────────────── */
+.search-match {
+  background: rgb(var(--c-accent) / 0.2);
+  border-radius: 2px;
+}
+.search-active {
+  background: rgb(var(--c-accent) / 0.5);
+  color: rgb(var(--c-accent-fg));
+}
+
 /* ── Spellcheck decoration ──────────────────────────────────────────────── */
 .spell-error {
   text-decoration: underline wavy rgb(var(--c-danger) / 0.85);
@@ -266,11 +300,18 @@
   opacity: 1;
 }
 
-/* Comment / annotation inline mark */
+/* Comment / annotation inline marks */
 .pm-comment {
   background: rgb(var(--c-accent) / 0.16);
   border-bottom: 2px solid rgb(var(--c-accent) / 0.55);
   border-radius: 2px;
+  cursor: help;
+}
+.pm-note {
+  background: rgb(var(--c-success) / 0.14);
+  border-bottom: 2px dotted rgb(var(--c-success) / 0.7);
+  border-radius: 2px;
+  cursor: help;
 }
 
 /* Utility animations already declared in tailwind config */

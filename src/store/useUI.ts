@@ -3,6 +3,7 @@ import { uid } from '@/lib/id'
 
 export type RightTab = 'inspector' | 'assistant' | 'notes' | 'snapshots'
 export type CenterView = 'document' | 'corkboard' | 'outline'
+export type WorkspaceMode = 'minimal' | 'standard' | 'advanced'
 
 export interface Toast {
   id: string
@@ -18,6 +19,9 @@ interface UIState {
   distractionFree: boolean
   editorZoom: number
   commandOpen: boolean
+  workspaceMode: WorkspaceMode
+  ribbon: boolean
+  findOpen: boolean
 
   // session
   sessionStartedAt: number | null
@@ -38,6 +42,9 @@ interface UIState {
   setDistractionFree: (v: boolean) => void
   setEditorZoom: (z: number) => void
   setCommandOpen: (v: boolean) => void
+  setWorkspaceMode: (m: WorkspaceMode) => void
+  setRibbon: (v: boolean) => void
+  setFindOpen: (v: boolean) => void
 
   startSession: () => void
   addSessionWords: (delta: number) => void
@@ -59,6 +66,9 @@ export const useUI = create<UIState>((set, get) => ({
   distractionFree: false,
   editorZoom: 1,
   commandOpen: false,
+  workspaceMode: 'standard',
+  ribbon: false,
+  findOpen: false,
 
   sessionStartedAt: null,
   sessionWords: 0,
@@ -77,6 +87,16 @@ export const useUI = create<UIState>((set, get) => ({
   setDistractionFree: (v) => set({ distractionFree: v }),
   setEditorZoom: (z) => set({ editorZoom: Math.min(1.8, Math.max(0.7, z)) }),
   setCommandOpen: (v) => set({ commandOpen: v }),
+  setWorkspaceMode: (m) =>
+    set(
+      m === 'minimal'
+        ? { workspaceMode: m, leftOpen: false, rightOpen: false, ribbon: false }
+        : m === 'advanced'
+          ? { workspaceMode: m, leftOpen: true, rightOpen: true, ribbon: true }
+          : { workspaceMode: m, leftOpen: true, rightOpen: true, ribbon: false },
+    ),
+  setRibbon: (v) => set({ ribbon: v }),
+  setFindOpen: (v) => set({ findOpen: v }),
 
   startSession: () => {
     if (get().sessionStartedAt === null) set({ sessionStartedAt: Date.now(), sessionWords: 0, sessionElapsedMs: 0 })

@@ -7,22 +7,25 @@ export function CommentDialog({
   open,
   onClose,
   onSubmit,
+  kind = 'comment',
 }: {
   open: boolean
   onClose: () => void
   onSubmit: (text: string) => void
+  kind?: 'comment' | 'note'
 }) {
   const [text, setText] = useState('')
   useEffect(() => {
     if (open) setText('')
   }, [open])
+  const isNote = kind === 'note'
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Add comment"
-      description="Annotate the selected text with a private note."
+      title={isNote ? 'Add private note' : 'Add comment'}
+      description={isNote ? 'Attach a private note to the selected text.' : 'Annotate the selected text with a comment.'}
       size="sm"
       footer={
         <>
@@ -30,7 +33,7 @@ export function CommentDialog({
             Cancel
           </Button>
           <Button variant="primary" onClick={() => onSubmit(text.trim())} disabled={!text.trim()}>
-            Add comment
+            {isNote ? 'Add note' : 'Add comment'}
           </Button>
         </>
       }

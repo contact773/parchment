@@ -10,6 +10,7 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     comment: {
       setComment: (text: string) => ReturnType
+      setNote: (text: string) => ReturnType
       unsetComment: () => ReturnType
     }
   }
@@ -25,6 +26,7 @@ export const CommentMark = Mark.create({
     return {
       id: { default: null },
       text: { default: '' },
+      kind: { default: 'comment' },
     }
   },
 
@@ -33,11 +35,15 @@ export const CommentMark = Mark.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const kind = HTMLAttributes.kind === 'note' ? 'note' : 'comment'
     return [
       'span',
-      mergeAttributes(
-        { 'data-comment-id': HTMLAttributes.id, 'data-comment-text': HTMLAttributes.text, class: 'pm-comment' },
-      ),
+      mergeAttributes({
+        'data-comment-id': HTMLAttributes.id,
+        'data-comment-text': HTMLAttributes.text,
+        'data-comment-kind': kind,
+        class: `pm-comment pm-${kind}`,
+      }),
       0,
     ]
   },
@@ -47,7 +53,11 @@ export const CommentMark = Mark.create({
       setComment:
         (text: string) =>
         ({ commands }) =>
-          commands.setMark(this.name, { id: uid(8), text }),
+          commands.setMark(this.name, { id: uid(8), text, kind: 'comment' }),
+      setNote:
+        (text: string) =>
+        ({ commands }) =>
+          commands.setMark(this.name, { id: uid(8), text, kind: 'note' }),
       unsetComment:
         () =>
         ({ commands }) =>

@@ -23,11 +23,15 @@ export function RightPanel({
   node,
   allNodes,
   onOpen,
+  assistantSeed,
+  onSeedConsumed,
 }: {
   project: Project
   node: TreeNode | null
   allNodes: TreeNode[]
   onOpen: (node: TreeNode) => void
+  assistantSeed?: string
+  onSeedConsumed?: () => void
 }) {
   const tab = useUI((s) => s.rightTab)
   const setTab = useUI((s) => s.setRightTab)
@@ -59,7 +63,15 @@ export function RightPanel({
       <div className="min-h-0 flex-1">
         {tab === 'inspector' && <InspectorPanel node={node} />}
         {tab === 'assistant' && (
-          <AssistantPanel project={project} node={node} docNodes={docNodes} characters={characters} threads={threads} />
+          <AssistantPanel
+            project={project}
+            node={node}
+            docNodes={docNodes}
+            characters={characters}
+            threads={threads}
+            seed={assistantSeed}
+            onSeedConsumed={onSeedConsumed}
+          />
         )}
         {tab === 'notes' && <NotesPanel node={node} noteNodes={noteNodes} onOpen={onOpen} />}
         {tab === 'snapshots' && <SnapshotsPanel node={node} />}

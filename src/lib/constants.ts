@@ -6,6 +6,7 @@ import type {
   PlotThreadStatus,
   ProjectStatus,
   ProjectType,
+  WorldCategory,
 } from '@/types'
 
 export interface ProjectTypeInfo {
@@ -156,6 +157,22 @@ export const PLOT_THREAD_STATUSES: Record<PlotThreadStatus, { label: string; col
   developing: { label: 'Developing', color: '#d49a4a' },
   resolved: { label: 'Resolved', color: '#5aa06f' },
 }
+
+export const WORLD_CATEGORIES: Record<WorldCategory, { label: string; icon: string; color: string }> = {
+  culture: { label: 'Culture', icon: 'Users', color: '#b3704a' },
+  history: { label: 'History', icon: 'Clock', color: '#9a7b4f' },
+  geography: { label: 'Geography', icon: 'Map', color: '#5f7d6e' },
+  magic: { label: 'Magic', icon: 'Sparkles', color: '#8a6fa6' },
+  technology: { label: 'Technology', icon: 'Cpu', color: '#557a8a' },
+  religion: { label: 'Religion', icon: 'Sun', color: '#c2924a' },
+  politics: { label: 'Politics', icon: 'Landmark', color: '#5b7aa6' },
+  language: { label: 'Language', icon: 'Languages', color: '#a85d6e' },
+  creature: { label: 'Creatures', icon: 'PawPrint', color: '#6a8c5f' },
+  item: { label: 'Items', icon: 'Gem', color: '#9a5d5d' },
+  other: { label: 'Other', icon: 'Globe2', color: '#8b8b8b' },
+}
+
+export const WORLD_CATEGORY_ORDER: WorldCategory[] = ['culture', 'history', 'geography', 'magic', 'technology', 'religion', 'politics', 'language', 'creature', 'item', 'other']
 
 /** Accent palette for project covers, characters, locations, threads. */
 export const ACCENT_PALETTE = [
