@@ -83,10 +83,16 @@ export function checkGrammar(text: string): GrammarIssue[] {
   for (const m of text.matchAll(/[a-z]([.!?])[A-Z]/g)) add(`Missing space after "${m[1]}"`, m[0])
   // Lowercase sentence start.
   for (const m of text.matchAll(/[.!?]\s+([a-z])/g)) add('Sentence may start with a lowercase letter.', m[0].trim())
-  // a / an.
-  for (const m of text.matchAll(/\ba\s+([aeiouAEIOU]\w+)/g)) add(`Consider "an ${m[1]}" instead of "a ${m[1]}".`)
+  // a / an. Heuristic — guard the common consonant-sound-vowel and
+  // vowel-sound-consonant (acronym / silent-h) exceptions to cut false positives.
+  const consonantSoundVowel = /^(uni|use|usu|util|ubiq|euro|eu|one|once|u[bcdfghjklmnpqrstvwxz][aeiou])/i
+  for (const m of text.matchAll(/\ba\s+([aeiouAEIOU]\w+)/g)) {
+    if (!consonantSoundVowel.test(m[1])) add(`Consider "an ${m[1]}" instead of "a ${m[1]}".`)
+  }
+  const vowelSoundConsonant = (w: string) =>
+    /^[hH](onest|our|eir|ono)/.test(w) || (/^[A-Z]{2,}$/.test(w) && 'AEFHILMNORSX'.includes(w[0]))
   for (const m of text.matchAll(/\ban\s+([^aeiouAEIOU\s]\w+)/g)) {
-    if (!/^[hH](onest|our|eir)/.test(m[1])) add(`Consider "a ${m[1]}" instead of "an ${m[1]}".`)
+    if (!vowelSoundConsonant(m[1])) add(`Consider "a ${m[1]}" instead of "an ${m[1]}".`)
   }
   // Common typos.
   const typos: Record<string, string> = { teh: 'the', recieve: 'receive', alot: 'a lot', occured: 'occurred', wich: 'which', thier: 'their', definately: 'definitely', seperate: 'separate' }

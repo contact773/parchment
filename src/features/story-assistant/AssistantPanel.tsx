@@ -62,6 +62,9 @@ export function AssistantPanel({
       lastSeed.current = seed
       void send(`About this passage: “${seed.slice(0, 600)}” — what works, and how could it be stronger? Give me options.`)
       onSeedConsumed?.()
+    } else if (!seed) {
+      // Reset once consumed so the same passage can be asked about again.
+      lastSeed.current = undefined
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed])

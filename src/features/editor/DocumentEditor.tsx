@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
+import type { EditorView } from '@tiptap/pm/view'
 import { Check, Loader2 } from 'lucide-react'
 import type { Character, DocContent, Location, Project, TreeNode } from '@/types'
 import { buildExtensions } from './extensions'
@@ -47,18 +48,30 @@ export interface DocumentEditorProps {
   onStructure?: (kind: 'scene' | 'chapter' | 'note') => void
 }
 
-function wordAt(view: { state: { doc: { resolve: (p: number) => { parent: { isTextblock: boolean; textContent: string }; start: () => number } } } }, pos: number) {
+/** Find the word at a document position, mapping string offsets back to true
+ *  document positions (so non-text inline nodes like hard breaks don't desync). */
+function wordAt(view: EditorView, pos: number): { word: string; from: number; to: number } | null {
   const $pos = view.state.doc.resolve(pos)
   if (!$pos.parent.isTextblock) return null
-  const text = $pos.parent.textContent
-  const offset = pos - $pos.start()
+  const blockStart = $pos.start()
+  const chars: { ch: string; pos: number }[] = []
+  $pos.parent.forEach((child, offset) => {
+    if (child.isText && child.text) {
+      for (let i = 0; i < child.text.length; i++) chars.push({ ch: child.text[i], pos: blockStart + offset + i })
+    } else {
+      chars.push({ ch: '\n', pos: blockStart + offset }) // boundary for inline atoms (e.g. hardBreak)
+    }
+  })
+  const s = chars.map((c) => c.ch).join('')
+  let clickIdx = chars.findIndex((c) => c.pos >= pos)
+  if (clickIdx === -1) clickIdx = chars.length
   const isW = (ch: string) => !!ch && /[\p{L}\p{N}'’-]/u.test(ch)
-  let start = offset
-  let end = offset
-  while (start > 0 && isW(text[start - 1])) start--
-  while (end < text.length && isW(text[end])) end++
-  const word = text.slice(start, end)
-  return word ? { word, from: $pos.start() + start, to: $pos.start() + end } : null
+  let start = clickIdx
+  let end = clickIdx
+  while (start > 0 && isW(s[start - 1])) start--
+  while (end < s.length && isW(s[end])) end++
+  if (end <= start || start >= chars.length) return null
+  return { word: s.slice(start, end), from: chars[start].pos, to: chars[end - 1].pos + 1 }
 }
 
 export function DocumentEditor({
@@ -244,14 +257,15 @@ export function DocumentEditor({
 
   // ── Assistant transforms ────────────────────────────────────────────────
   const buildContext = (): StoryContext => {
+    const liveText = editor?.getText() ?? node.text ?? ''
     const analysis = analyzeStory({ project, nodes: [node], characters, threads: [], scope: 'node', nodeId: node.id })
-    return { project, node, sceneText: node.text ?? '', characters, analysis }
+    return { project, node, sceneText: liveText, characters, analysis }
   }
 
   const runTransform = async (rawKind: string, label: string) => {
     if (!editor) return
     const { from, to, empty } = editor.state.selection
-    const text = empty ? node.text ?? '' : editor.state.doc.textBetween(from, to, ' ')
+    const text = empty ? editor.getText() : editor.state.doc.textBetween(from, to, ' ')
     if (!text.trim()) {
       toast('Nothing to work with — select some text', 'info')
       return
@@ -282,13 +296,21 @@ export function DocumentEditor({
 
   const applyReplacement = (text: string, insert: boolean) => {
     if (!editor) return
+    const size = editor.state.doc.content.size
+    const blocks = text.split(/\n{2,}/).map((p) => p.trim())
+    // Single paragraph → inline string (keeps inline replacements clean);
+    // multi-paragraph → paragraph nodes (preserves structure).
+    const asBlocks = blocks.map((p) => ({ type: 'paragraph', content: p ? [{ type: 'text', text: p }] : [] }))
+    const inlineContent = text.trim()
     const range = transformRange.current
     if (range && !insert) {
-      editor.chain().focus().insertContentAt(range, text).run()
+      const from = Math.min(range.from, size)
+      const to = Math.min(range.to, size)
+      editor.chain().focus().insertContentAt({ from, to }, blocks.length > 1 ? asBlocks : inlineContent).run()
     } else if (range && insert) {
-      editor.chain().focus().insertContentAt(range.to, `\n\n${text}`).run()
+      editor.chain().focus().insertContentAt(Math.min(range.to, size), asBlocks).run()
     } else {
-      editor.chain().focus().insertContent(`\n\n${text}`).run()
+      editor.chain().focus().insertContent(asBlocks).run()
     }
     setTransform(null)
   }

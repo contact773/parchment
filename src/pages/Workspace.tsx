@@ -45,7 +45,8 @@ import { RightPanel } from '@/features/workspace/RightPanel'
 import type { WorkspaceView, CodexSelect } from '@/features/workspace/types'
 import { DocumentEditor } from '@/features/editor/DocumentEditor'
 import { FindReplace } from '@/features/editor/FindReplace'
-import { getActiveEditor } from '@/features/editor/activeEditor'
+import { getActiveEditor, subscribeActiveEditor } from '@/features/editor/activeEditor'
+import type { Editor } from '@tiptap/react'
 import { setTextType, toggleBold, toggleItalic, insertSceneBreak } from '@/features/editor/editorActions'
 import { Corkboard } from '@/features/planning/Corkboard'
 import { OutlineView } from '@/features/planning/OutlineView'
@@ -83,6 +84,8 @@ export function Workspace() {
   const [codexSelect, setCodexSelect] = useState<CodexSelect | null>(null)
   const [assistantSeed, setAssistantSeed] = useState<string | undefined>(undefined)
   const [exporting, setExporting] = useState(false)
+  const [activeEd, setActiveEd] = useState<Editor | null>(() => getActiveEditor())
+  useEffect(() => subscribeActiveEditor(() => setActiveEd(getActiveEditor())), [])
 
   useEffect(() => {
     startSession()
@@ -106,11 +109,18 @@ export function Workspace() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && distractionFree) setDistractionFree(false)
       const mod = e.metaKey || e.ctrlKey
-      if (mod && e.key.toLowerCase() === 'k') {
+      if (!mod) return
+      const t = e.target as HTMLElement | null
+      const inEditor = !!t?.closest?.('.ProseMirror')
+      const editable = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
+      // Fire from the writing surface or non-editable chrome, but never steal
+      // keystrokes from a form field / the assistant textarea.
+      if (editable && !inEditor) return
+      const k = e.key.toLowerCase()
+      if (k === 'k') {
         e.preventDefault()
         setCommandOpen(true)
-      }
-      if (mod && e.key.toLowerCase() === 'f') {
+      } else if (k === 'f') {
         e.preventDefault()
         setFindOpen(true)
       }
@@ -198,14 +208,18 @@ export function Workspace() {
     list.push({ id: 'focus-para', group: 'Mode', label: 'Focus: paragraph', icon: <Focus size={15} />, run: () => useSettings.getState().setSettings({ focusMode: 'paragraph' }) })
     list.push({ id: 'focus-type', group: 'Mode', label: 'Typewriter mode', icon: <Focus size={15} />, run: () => useSettings.getState().setSettings({ focusMode: 'typewriter' }) })
 
-    // Editor formatting (when a document is open)
-    const ed = getActiveEditor()
-    if (ed) {
-      list.push({ id: 'fmt-bold', group: 'Format', label: 'Bold', icon: <Bold size={15} />, run: () => toggleBold(ed) })
-      list.push({ id: 'fmt-italic', group: 'Format', label: 'Italic', icon: <Italic size={15} />, run: () => toggleItalic(ed) })
-      list.push({ id: 'fmt-h1', group: 'Format', label: 'Heading 1', icon: <Heading1 size={15} />, run: () => setTextType(ed, 'h1') })
-      list.push({ id: 'fmt-quote', group: 'Format', label: 'Quote', icon: <Sparkles size={15} />, run: () => setTextType(ed, 'quote') })
-      list.push({ id: 'fmt-scenebreak', group: 'Format', label: 'Insert scene break', icon: <Sparkles size={15} />, run: () => insertSceneBreak(ed) })
+    // Editor formatting (when a document is open). Resolve the editor at call
+    // time so a swapped/destroyed instance is never used.
+    if (activeEd) {
+      const withEd = (fn: (e: Editor) => void) => () => {
+        const e = getActiveEditor()
+        if (e) fn(e)
+      }
+      list.push({ id: 'fmt-bold', group: 'Format', label: 'Bold', icon: <Bold size={15} />, run: withEd(toggleBold) })
+      list.push({ id: 'fmt-italic', group: 'Format', label: 'Italic', icon: <Italic size={15} />, run: withEd(toggleItalic) })
+      list.push({ id: 'fmt-h1', group: 'Format', label: 'Heading 1', icon: <Heading1 size={15} />, run: withEd((e) => setTextType(e, 'h1')) })
+      list.push({ id: 'fmt-quote', group: 'Format', label: 'Quote', icon: <Sparkles size={15} />, run: withEd((e) => setTextType(e, 'quote')) })
+      list.push({ id: 'fmt-scenebreak', group: 'Format', label: 'Insert scene break', icon: <Sparkles size={15} />, run: withEd(insertSceneBreak) })
     }
 
     list.push({ id: 'find', group: 'Project', label: 'Find & replace', icon: <SearchIcon size={15} />, keywords: 'search', run: () => setFindOpen(true) })
@@ -219,7 +233,7 @@ export function Workspace() {
     )
     return list
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, selectedNode])
+  }, [nodes, selectedNode, activeEd])
 
   if (project === undefined) {
     return (

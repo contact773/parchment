@@ -1,5 +1,6 @@
 import { db } from '@/data/db'
 import { createProject } from '@/data/repo'
+import { docToText, countWords } from '@/lib/text'
 import type { DocContent, LanguageCode, Project } from '@/types'
 
 function para(text: string): DocContent {
@@ -114,9 +115,8 @@ export async function importDocumentFile(file: File, language: LanguageCode = 'e
   const scene = nodes.find((n) => n.type === 'scene')
   if (scene) {
     const content: DocContent = { type: 'doc', content: blocks }
-    const text = blocks.map((b) => (b.content ?? []).map((c) => c.text ?? '').join('')).join('\n')
-    const words = text.split(/\s+/).filter(Boolean).length
-    await db.nodes.update(scene.id, { title: 'Imported text', content, text, wordCount: words })
+    const text = docToText(content)
+    await db.nodes.update(scene.id, { title: 'Imported text', content, text, wordCount: countWords(text) })
   }
   return project
 }

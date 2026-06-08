@@ -14,8 +14,13 @@ export function FindReplace() {
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [, force] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const termRef = useRef(term)
+  termRef.current = term
+  const caseRef = useRef(caseSensitive)
+  caseRef.current = caseSensitive
 
-  // Re-render when the active editor or its transactions change.
+  // Re-render when the active editor or its transactions change, and re-seed the
+  // search term into a freshly-mounted editor (e.g. after switching documents).
   useEffect(() => {
     let off = () => {}
     const attach = () => {
@@ -24,6 +29,7 @@ export function FindReplace() {
       const handler = () => force((n) => n + 1)
       e.on('transaction', handler)
       off = () => e.off('transaction', handler)
+      if (termRef.current) e.commands.setSearchTerm(termRef.current, caseRef.current)
     }
     attach()
     const unsub = subscribeActiveEditor(() => {

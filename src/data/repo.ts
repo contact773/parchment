@@ -109,12 +109,13 @@ export async function touchProject(id: string): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots], async () => {
+  await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements], async () => {
     await db.nodes.where('projectId').equals(id).delete()
     await db.characters.where('projectId').equals(id).delete()
     await db.locations.where('projectId').equals(id).delete()
     await db.threads.where('projectId').equals(id).delete()
     await db.snapshots.where('projectId').equals(id).delete()
+    await db.worldElements.where('projectId').equals(id).delete()
     await db.projects.delete(id)
   })
 }
@@ -133,6 +134,8 @@ export async function duplicateProject(id: string): Promise<Project | null> {
   const chars = await db.characters.where('projectId').equals(id).toArray()
   const locs = await db.locations.where('projectId').equals(id).toArray()
   const threads = await db.threads.where('projectId').equals(id).toArray()
+  const snaps = await db.snapshots.where('projectId').equals(id).toArray()
+  const elems = await db.worldElements.where('projectId').equals(id).toArray()
 
   // Remap node ids while preserving parent relationships.
   const idMap = new Map<string, string>()
@@ -144,13 +147,23 @@ export async function duplicateProject(id: string): Promise<Project | null> {
     parentId: n.parentId ? (idMap.get(n.parentId) ?? null) : null,
   }))
 
-  await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads], async () => {
-    await db.projects.add(copy)
-    await db.nodes.bulkAdd(newNodes)
-    if (chars.length) await db.characters.bulkAdd(chars.map((c) => ({ ...c, id: uid(), projectId: newId })))
-    if (locs.length) await db.locations.bulkAdd(locs.map((l) => ({ ...l, id: uid(), projectId: newId })))
-    if (threads.length) await db.threads.bulkAdd(threads.map((t) => ({ ...t, id: uid(), projectId: newId, sceneIds: [] })))
-  })
+  await db.transaction(
+    'rw',
+    [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements],
+    async () => {
+      await db.projects.add(copy)
+      await db.nodes.bulkAdd(newNodes)
+      if (chars.length) await db.characters.bulkAdd(chars.map((c) => ({ ...c, id: uid(), projectId: newId })))
+      if (locs.length) await db.locations.bulkAdd(locs.map((l) => ({ ...l, id: uid(), projectId: newId })))
+      if (threads.length)
+        await db.threads.bulkAdd(
+          threads.map((t) => ({ ...t, id: uid(), projectId: newId, sceneIds: (t.sceneIds ?? []).map((s) => idMap.get(s)).filter(Boolean) as string[] })),
+        )
+      if (snaps.length)
+        await db.snapshots.bulkAdd(snaps.map((s) => ({ ...s, id: uid(), projectId: newId, nodeId: idMap.get(s.nodeId) ?? s.nodeId })))
+      if (elems.length) await db.worldElements.bulkAdd(elems.map((e) => ({ ...e, id: uid(), projectId: newId })))
+    },
+  )
   return copy
 }
 
@@ -278,14 +291,25 @@ export async function deleteNode(id: string): Promise<void> {
   })
 }
 
-/** Restore a trashed node (and descendants) from Trash. */
+/** Restore a trashed node (and descendants) from Trash. Also un-trashes any
+ *  still-trashed ancestors so the restored node never becomes orphaned. */
 export async function restoreNode(id: string): Promise<void> {
   const node = await db.nodes.get(id)
   if (!node) return
   const all = await db.nodes.where('projectId').equals(node.projectId).toArray()
   const subtree = await collectSubtree(id, all)
+  const ids = new Set(subtree.map((n) => n.id))
+  // Walk up the ancestor chain, restoring any trashed ancestors too.
+  let parentId = node.parentId
+  const byId = new Map(all.map((n) => [n.id, n]))
+  while (parentId) {
+    const parent = byId.get(parentId)
+    if (!parent) break
+    if (parent.deletedAt) ids.add(parent.id)
+    parentId = parent.parentId
+  }
   await db.transaction('rw', db.nodes, async () => {
-    for (const n of subtree) await db.nodes.update(n.id, { deletedAt: null })
+    for (const nid of ids) await db.nodes.update(nid, { deletedAt: null })
   })
 }
 
@@ -295,8 +319,11 @@ export async function hardDeleteNode(id: string): Promise<void> {
   if (!node) return
   const all = await db.nodes.where('projectId').equals(node.projectId).toArray()
   const subtree = await collectSubtree(id, all)
-  await db.nodes.bulkDelete(subtree.map((n) => n.id))
-  await db.snapshots.where('nodeId').anyOf(subtree.map((n) => n.id)).delete()
+  const ids = subtree.map((n) => n.id)
+  await db.transaction('rw', [db.nodes, db.snapshots], async () => {
+    await db.nodes.bulkDelete(ids)
+    await db.snapshots.where('nodeId').anyOf(ids).delete()
+  })
 }
 
 export async function togglePinNode(id: string, pinned: boolean): Promise<void> {
@@ -327,18 +354,42 @@ export async function createSiblingAfter(
   return created
 }
 
-/** Merge `sourceId`'s content into `targetId` and remove the source. */
+/** Merge `sourceId`'s content into `targetId`, reparent the source's children
+ *  onto the target (so nothing is lost), then remove the now-childless source.
+ *  Runs atomically. */
 export async function mergeNodes(targetId: string, sourceId: string): Promise<void> {
-  const [target, source] = await Promise.all([db.nodes.get(targetId), db.nodes.get(sourceId)])
-  if (!target || !source) return
-  const targetContent = (target.content as { content?: unknown[] } | null) ?? emptyDoc()
-  const sourceBlocks = ((source.content as { content?: unknown[] } | null)?.content ?? []) as unknown[]
-  const merged: DocContent = {
-    type: 'doc',
-    content: [...(((targetContent as { content?: unknown[] }).content ?? []) as unknown[]), ...sourceBlocks] as DocContent[],
-  }
-  await saveNodeContent(targetId, merged)
-  await hardDeleteNode(sourceId)
+  await db.transaction('rw', [db.nodes, db.snapshots, db.projects], async () => {
+    const [target, source] = await Promise.all([db.nodes.get(targetId), db.nodes.get(sourceId)])
+    if (!target || !source) return
+
+    const targetBlocks = ((target.content as { content?: DocContent[] } | null)?.content ?? []) as DocContent[]
+    const sourceBlocks = ((source.content as { content?: DocContent[] } | null)?.content ?? []) as DocContent[]
+    const merged: DocContent = { type: 'doc', content: [...targetBlocks, ...sourceBlocks] }
+    const text = docToText(merged)
+    await db.nodes.update(targetId, { content: merged, text, wordCount: countWords(text), updatedAt: now() })
+
+    // Reparent the source's direct children onto the target so their content survives.
+    const projNodes = await db.nodes.where('projectId').equals(target.projectId).toArray()
+    const targetChildren = projNodes.filter((n) => n.parentId === targetId && n.id !== sourceId)
+    let order = targetChildren.length ? Math.max(...targetChildren.map((s) => s.order)) + 1 : 0
+    const sourceChildren = projNodes.filter((n) => n.parentId === sourceId).sort((a, b) => a.order - b.order)
+    for (const c of sourceChildren) await db.nodes.update(c.id, { parentId: targetId, order: order++ })
+
+    await db.nodes.delete(sourceId)
+    await db.snapshots.where('nodeId').equals(sourceId).delete()
+    await db.projects.update(target.projectId, { updatedAt: now() })
+  })
+}
+
+/** Atomic per-field merge of a node's `meta` (avoids last-write-wins clobbering). */
+export async function patchNodeMeta(id: string, partial: Partial<TreeNode['meta']>): Promise<void> {
+  await db.nodes
+    .where(':id')
+    .equals(id)
+    .modify((n) => {
+      n.meta = { ...n.meta, ...partial }
+      n.updatedAt = now()
+    })
 }
 
 export async function duplicateNode(id: string): Promise<TreeNode | null> {
@@ -507,6 +558,17 @@ export async function createCharacter(projectId: string, patch: Partial<Characte
 
 export async function updateCharacter(id: string, patch: Partial<Character>): Promise<void> {
   await db.characters.update(id, { ...patch, updatedAt: now() })
+}
+
+/** Atomic read-modify-write for a character (use for array fields like relationships). */
+export async function modifyCharacter(id: string, recipe: (c: Character) => void): Promise<void> {
+  await db.characters
+    .where(':id')
+    .equals(id)
+    .modify((c) => {
+      recipe(c)
+      c.updatedAt = now()
+    })
 }
 
 export async function deleteCharacter(id: string): Promise<void> {

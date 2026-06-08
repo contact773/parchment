@@ -41,11 +41,6 @@ export function CommandPalette({ open, commands, onClose }: { open: boolean; com
       .map((x) => x.c)
   }, [query, commands])
 
-  useEffect(() => setIndex(0), [query])
-  useEffect(() => {
-    if (index >= filtered.length) setIndex(Math.max(0, filtered.length - 1))
-  }, [filtered.length, index])
-
   if (!open) return null
 
   const run = (c?: Command) => {
@@ -54,7 +49,8 @@ export function CommandPalette({ open, commands, onClose }: { open: boolean; com
     c.run()
   }
 
-  // Group in original order.
+  // Group in first-appearance order; `ordered` is the flat render order so the
+  // visual highlight and keyboard selection always reference the same command.
   const groups: { name: string; items: Command[] }[] = []
   for (const c of filtered) {
     let g = groups.find((x) => x.name === c.group)
@@ -64,6 +60,8 @@ export function CommandPalette({ open, commands, onClose }: { open: boolean; com
     }
     g.items.push(c)
   }
+  const ordered = groups.flatMap((g) => g.items)
+  const activeIndex = Math.min(index, Math.max(0, ordered.length - 1))
   let flatIdx = -1
 
   return createPortal(
@@ -78,19 +76,22 @@ export function CommandPalette({ open, commands, onClose }: { open: boolean; com
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setIndex(0)
+            }}
             placeholder="Search actions, documents…"
             className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') {
                 e.preventDefault()
-                setIndex((i) => Math.min(filtered.length - 1, i + 1))
+                setIndex((i) => Math.min(ordered.length - 1, i + 1))
               } else if (e.key === 'ArrowUp') {
                 e.preventDefault()
                 setIndex((i) => Math.max(0, i - 1))
               } else if (e.key === 'Enter') {
                 e.preventDefault()
-                run(filtered[index])
+                run(ordered[activeIndex])
               } else if (e.key === 'Escape') {
                 onClose()
               }
@@ -107,7 +108,7 @@ export function CommandPalette({ open, commands, onClose }: { open: boolean; com
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted/60">{g.name}</div>
                 {g.items.map((c) => {
                   flatIdx++
-                  const active = flatIdx === index
+                  const active = flatIdx === activeIndex
                   const myIdx = flatIdx
                   return (
                     <button

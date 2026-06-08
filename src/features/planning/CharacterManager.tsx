@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Trash2, Users, User } from 'lucide-react'
 import type { Character, CharacterRole } from '@/types'
 import { db } from '@/data/db'
-import { createCharacter, deleteCharacter, updateCharacter } from '@/data/repo'
+import { createCharacter, deleteCharacter, updateCharacter, modifyCharacter } from '@/data/repo'
 import { CHARACTER_ROLES, ACCENT_PALETTE } from '@/lib/constants'
 import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Button } from '@/components/ui/Button'
@@ -89,13 +89,24 @@ export function CharacterManager({ projectId, selectId }: { projectId: string; s
 function CharacterDetail({ character: c, others, onDelete, onSelect }: { character: Character; others: Character[]; onDelete: () => void; onSelect: (id: string) => void }) {
   const save = (patch: Partial<Character>) => updateCharacter(c.id, patch)
   const rels = c.relationships ?? []
+  // Atomic read-modify-write so editing one row never clobbers another's pending edit.
   const addRel = () => {
     const target = others.find((o) => o.id !== c.id)
     if (!target) return
-    save({ relationships: [...rels, { targetId: target.id, label: 'knows' }] })
+    modifyCharacter(c.id, (ch) => {
+      ch.relationships = [...(ch.relationships ?? []), { targetId: target.id, label: 'knows' }]
+    })
   }
-  const updateRel = (i: number, patch: Partial<{ targetId: string; label: string }>) => save({ relationships: rels.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) })
-  const removeRel = (i: number) => save({ relationships: rels.filter((_, idx) => idx !== i) })
+  const updateRel = (i: number, patch: Partial<{ targetId: string; label: string }>) =>
+    modifyCharacter(c.id, (ch) => {
+      const r = ch.relationships ?? []
+      if (r[i]) r[i] = { ...r[i], ...patch }
+      ch.relationships = r
+    })
+  const removeRel = (i: number) =>
+    modifyCharacter(c.id, (ch) => {
+      ch.relationships = (ch.relationships ?? []).filter((_, idx) => idx !== i)
+    })
   return (
     <div className="mx-auto max-w-2xl px-8 py-6">
       <div className="mb-5 flex items-start justify-between gap-4">

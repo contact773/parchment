@@ -29,13 +29,26 @@ function findMatches(doc: PMNode, term: string, caseSensitive: boolean): { from:
   const matches: { from: number; to: number }[] = []
   const needle = caseSensitive ? term : term.toLowerCase()
   doc.descendants((node, pos) => {
-    if (!node.isText || !node.text) return
-    const hay = caseSensitive ? node.text : node.text.toLowerCase()
+    if (!node.isTextblock) return undefined // descend into containers to reach textblocks
+    // Concatenate the textblock's inline text so matches can span mark boundaries.
+    let text = ''
+    const positions: number[] = []
+    node.forEach((child, offset) => {
+      if (child.isText && child.text) {
+        for (let i = 0; i < child.text.length; i++) {
+          text += child.text[i]
+          positions.push(pos + 1 + offset + i)
+        }
+      }
+    })
+    const hay = caseSensitive ? text : text.toLowerCase()
     let idx = hay.indexOf(needle)
     while (idx !== -1) {
-      matches.push({ from: pos + idx, to: pos + idx + term.length })
+      const last = positions[idx + term.length - 1]
+      if (last !== undefined) matches.push({ from: positions[idx], to: last + 1 })
       idx = hay.indexOf(needle, idx + Math.max(1, term.length))
     }
+    return false // handled inline content ourselves
   })
   return matches
 }

@@ -1,17 +1,12 @@
-import { useRef } from 'react'
 import { ClipboardList } from 'lucide-react'
-import type { TreeNode } from '@/types'
-import { renameNode, updateNode, togglePinNode, setNodeTags } from '@/data/repo'
+import type { LanguageCode, TreeNode } from '@/types'
+import { renameNode, updateNode, togglePinNode, setNodeTags, patchNodeMeta } from '@/data/repo'
 import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Switch, EmptyState } from '@/components/ui/misc'
 import { NODE_STATUS_ORDER, NODE_STATUSES, LANGUAGES, LANGUAGE_ORDER } from '@/lib/constants'
-import type { LanguageCode } from '@/types'
 import { formatNumber } from '@/lib/format'
 
 export function InspectorPanel({ node }: { node: TreeNode | null }) {
-  const nodeRef = useRef<TreeNode | null>(node)
-  nodeRef.current = node
-
   if (!node) {
     return (
       <EmptyState
@@ -24,10 +19,8 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
   }
 
   const patchMeta = (key: keyof TreeNode['meta']) => (v: string) => {
-    const cur = nodeRef.current
-    if (!cur) return
     const value = key === 'targetWords' ? Number(v) || 0 : v
-    updateNode(cur.id, { meta: { ...cur.meta, [key]: value } })
+    patchNodeMeta(node.id, { [key]: value })
   }
 
   return (
@@ -69,7 +62,7 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
             label="Language"
             depKey={node.id}
             value={node.meta.language ?? ''}
-            save={(v) => updateNode(node.id, { meta: { ...nodeRef.current!.meta, language: (v || undefined) as LanguageCode | undefined } })}
+            save={(v) => patchNodeMeta(node.id, { language: (v || undefined) as LanguageCode | undefined })}
           >
             <option value="">Project default</option>
             {LANGUAGE_ORDER.map((l) => (
@@ -107,7 +100,7 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
           <span className="text-sm">Include in compile / export</span>
           <Switch
             checked={node.meta.includeInCompile !== false}
-            onChange={(v) => updateNode(node.id, { meta: { ...node.meta, includeInCompile: v } })}
+            onChange={(v) => patchNodeMeta(node.id, { includeInCompile: v })}
           />
         </label>
 
