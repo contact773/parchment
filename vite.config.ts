@@ -14,4 +14,16 @@ export default defineConfig({
   optimizeDeps: {
     include: ['nspell'],
   },
+  // ── Tauri desktop integration ───────────────────────────────────────────
+  // Keep Vite quiet so Tauri's CLI output stays readable, and pin the dev
+  // server to a fixed port matching tauri.conf.json's devUrl.
+  clearScreen: false,
+  server: {
+    // Tauri never sets PORT, so it keeps the pinned 5173 (strict) that
+    // tauri.conf.json's devUrl expects. Tooling that injects PORT (e.g. the
+    // preview harness) can run the web build on any free port instead.
+    port: Number(process.env.PORT) || 5173,
+    strictPort: !process.env.PORT,
+  },
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
 })
