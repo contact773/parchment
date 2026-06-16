@@ -25,6 +25,15 @@ export interface SpellcheckOptions {
   language: LanguageCode
 }
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    spellcheck: {
+      /** Update spellcheck language/enabled in place (no editor rebuild) and re-scan. */
+      configureSpellcheck: (opts: Partial<SpellcheckOptions>) => ReturnType
+    }
+  }
+}
+
 function scan(doc: PMNode, enabled: boolean, language: LanguageCode): SpellState {
   if (!enabled) return { decorations: DecorationSet.empty, misspellings: [] }
   const decorations: Decoration[] = []
@@ -70,6 +79,7 @@ export const Spellcheck = Extension.create<SpellcheckOptions>({
 
   addProseMirrorPlugins() {
     const extension = this
+    let rescanTimer: ReturnType<typeof setTimeout> | null = null
     return [
       new Plugin<SpellState>({
         key: spellcheckKey,
@@ -77,11 +87,36 @@ export const Spellcheck = Extension.create<SpellcheckOptions>({
           init: (_, state) => scan(state.doc, extension.options.enabled, extension.options.language),
           apply(tr, value, _old, newState) {
             const forced = tr.getMeta(spellcheckKey)
-            if (tr.docChanged || forced) {
-              return scan(newState.doc, extension.options.enabled, extension.options.language)
+            if (forced) return scan(newState.doc, extension.options.enabled, extension.options.language)
+            if (tr.docChanged && extension.options.enabled) {
+              // Keep existing markers roughly in place by mapping them through the
+              // change; a debounced full re-scan (see view()) corrects them once
+              // typing pauses. This avoids a full O(doc) scan on every keystroke,
+              // which janks large chapters.
+              return {
+                decorations: value.decorations.map(tr.mapping, tr.doc),
+                misspellings: value.misspellings
+                  .map((mm) => ({ word: mm.word, from: tr.mapping.map(mm.from), to: tr.mapping.map(mm.to) }))
+                  .filter((mm) => mm.to > mm.from),
+              }
             }
             return value
           },
+        },
+        view() {
+          return {
+            update(view, prev) {
+              if (view.state.doc === prev.doc || !extension.options.enabled) return
+              if (rescanTimer) clearTimeout(rescanTimer)
+              rescanTimer = setTimeout(() => {
+                rescanTimer = null
+                if (!view.isDestroyed) view.dispatch(view.state.tr.setMeta(spellcheckKey, true))
+              }, 400)
+            },
+            destroy() {
+              if (rescanTimer) clearTimeout(rescanTimer)
+            },
+          }
         },
         props: {
           decorations(state) {
@@ -90,6 +125,20 @@ export const Spellcheck = Extension.create<SpellcheckOptions>({
         },
       }),
     ]
+  },
+
+  addCommands() {
+    return {
+      configureSpellcheck:
+        (opts) =>
+        ({ editor, dispatch }) => {
+          if (opts.language !== undefined) this.options.language = opts.language
+          if (opts.enabled !== undefined) this.options.enabled = opts.enabled
+          if (this.options.enabled) void spellService.load(this.options.language)
+          if (dispatch) editor.view.dispatch(editor.state.tr.setMeta(spellcheckKey, true))
+          return true
+        },
+    }
   },
 
   onCreate() {

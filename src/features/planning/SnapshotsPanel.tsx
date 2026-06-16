@@ -7,12 +7,14 @@ import { createSnapshot, deleteSnapshot, restoreSnapshot } from '@/data/repo'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
 import { VersionCompareDialog } from './VersionCompareDialog'
 import { timeAgo, formatNumber } from '@/lib/format'
 import { useUI } from '@/store/useUI'
 
 export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
   const toast = useUI((s) => s.toast)
+  const reloadEditor = useUI((s) => s.reloadEditor)
   const [compareSnap, setCompareSnap] = useState<Snapshot | null>(null)
   const snapshots =
     useLiveQuery(
@@ -55,7 +57,7 @@ export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
               <div key={s.id} className="group rounded-lg border border-border bg-surface px-3 py-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{s.label}</span>
-                  <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton size="sm" label="Compare with current" onClick={() => setCompareSnap(s)}>
                       <GitCompare size={14} />
                     </IconButton>
@@ -64,12 +66,22 @@ export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
                       label="Restore this version"
                       onClick={async () => {
                         await restoreSnapshot(s.id)
+                        reloadEditor(node.id)
                         toast('Version restored', 'success')
                       }}
                     >
                       <RotateCcw size={14} />
                     </IconButton>
-                    <IconButton size="sm" label="Delete snapshot" onClick={() => deleteSnapshot(s.id)}>
+                    <IconButton
+                      size="sm"
+                      label="Delete snapshot"
+                      onClick={async () => {
+                        if (await confirmDialog({ title: 'Delete snapshot?', message: `Delete the snapshot “${s.label}”? This can't be undone.`, confirmLabel: 'Delete', danger: true })) {
+                          await deleteSnapshot(s.id)
+                          toast('Snapshot deleted', 'info')
+                        }
+                      }}
+                    >
                       <Trash2 size={14} />
                     </IconButton>
                   </div>
@@ -94,6 +106,7 @@ export function SnapshotsPanel({ node }: { node: TreeNode | null }) {
         onRestore={async () => {
           if (compareSnap) {
             await restoreSnapshot(compareSnap.id)
+            reloadEditor(compareSnap.nodeId)
             toast('Version restored', 'success')
             setCompareSnap(null)
           }

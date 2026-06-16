@@ -18,6 +18,7 @@ import { setActiveEditor } from './activeEditor'
 import { analyzeStory } from '../story-assistant/analyzeLocal'
 import { getProvider, localProvider, type StoryContext, type TransformKind, type TransformResult } from '../story-assistant/providers'
 import { saveNodeContent, renameNode, emptyDoc } from '@/data/repo'
+import { db } from '@/data/db'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
 import { debounce, cn } from '@/lib/utils'
@@ -114,7 +115,7 @@ export function DocumentEditor({
   const [commentKind, setCommentKind] = useState<'comment' | 'note'>('comment')
   const [title, setTitle] = useState(node.title)
   const [ctxMenu, setCtxMenu] = useState<CtxTarget | null>(null)
-  const transformRange = useRef<{ from: number; to: number } | null>(null)
+  const transformRange = useRef<{ from: number; to: number; text: string } | null>(null)
   const [transform, setTransform] = useState<{ label: string; loading: boolean; result: TransformResult | null } | null>(null)
 
   useEffect(() => setTitle(node.title), [node.id, node.title])
@@ -135,6 +136,22 @@ export function DocumentEditor({
     [node.id, recordWordCount, addSessionWords, markSaved],
   )
   useEffect(() => () => save.flush(), [save])
+  // Flush the last pending save when the tab/app is hidden or closing, so the
+  // final <700ms of typing is never lost on a quick quit ("your work is safe").
+  useEffect(() => {
+    const flush = () => save.flush()
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') save.flush()
+    }
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('beforeunload', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('beforeunload', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [save])
 
   const editor = useEditor(
     {
@@ -142,7 +159,6 @@ export function DocumentEditor({
         docType: node.docType,
         language,
         spellcheckEnabled: settings.spellcheckEnabled,
-        focus: focusActive,
         placeholder:
           node.docType === 'script'
             ? 'INT. SOMEWHERE — DAY\n\nStart your scene…'
@@ -154,6 +170,17 @@ export function DocumentEditor({
       autofocus: 'end',
       editorProps: {
         attributes: { class: 'min-h-[60vh] focus:outline-none', spellcheck: 'false' },
+        handleKeyDown: (_view, event) => {
+          // ⌘/Ctrl+S — flush the pending autosave now and confirm. Writers expect
+          // Save to "do something"; this also prevents the browser save dialog.
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+            event.preventDefault()
+            save.flush()
+            toast('Saved', 'success')
+            return true
+          }
+          return false
+        },
         handleClick: (view, pos) => {
           const st = spellcheckKey.getState(view.state)
           const miss = misspellingAt(st, pos)
@@ -180,13 +207,37 @@ export function DocumentEditor({
         save(e.getJSON())
       },
     },
-    [node.id, language, settings.spellcheckEnabled, focusActive, node.docType],
+    // Keep the editor instance stable across focus-mode / spellcheck / language
+    // changes (those are applied live below) — only a new document or a schema
+    // change (docType) rebuilds it, so undo history & cursor survive.
+    [node.id, node.docType],
   )
 
   useEffect(() => {
     if (editor) setActiveEditor(editor)
     return () => setActiveEditor(null)
   }, [editor])
+
+  // Apply spellcheck enabled/language live without rebuilding the editor.
+  useEffect(() => {
+    editor?.commands.configureSpellcheck({ enabled: settings.spellcheckEnabled, language })
+  }, [editor, settings.spellcheckEnabled, language])
+
+  // When something overwrites this node underneath the editor (e.g. a snapshot
+  // restore), re-read it from the DB so the change actually shows — and cancel
+  // any pending autosave first so it can't clobber the restored content.
+  const editorReloadToken = useUI((s) => s.editorReloadToken)
+  const editorReloadNodeId = useUI((s) => s.editorReloadNodeId)
+  useEffect(() => {
+    if (editorReloadToken === 0 || !editor) return
+    if (editorReloadNodeId && editorReloadNodeId !== node.id) return
+    save.cancel()
+    void db.nodes.get(node.id).then((fresh) => {
+      if (fresh && !editor.isDestroyed) editor.commands.setContent(fresh.content ?? emptyDoc())
+    })
+    // Only react to explicit reload requests; node/editor are read fresh at fire time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorReloadToken])
 
   // ── Title ────────────────────────────────────────────────────────────
   const saveTitle = useMemo(() => debounce((t: string) => void renameNode(node.id, t || 'Untitled'), 500), [node.id])
@@ -259,7 +310,7 @@ export function DocumentEditor({
   const buildContext = (): StoryContext => {
     const liveText = editor?.getText() ?? node.text ?? ''
     const analysis = analyzeStory({ project, nodes: [node], characters, threads: [], scope: 'node', nodeId: node.id })
-    return { project, node, sceneText: liveText, characters, analysis }
+    return { project, node, sceneText: liveText, characters, locations, analysis }
   }
 
   const runTransform = async (rawKind: string, label: string) => {
@@ -280,7 +331,7 @@ export function DocumentEditor({
       onAskAssistant?.(text)
       return
     }
-    transformRange.current = empty ? null : { from, to }
+    transformRange.current = empty ? null : { from, to, text }
     const provider = getProvider(settings.ai)
     const active = provider.ready ? provider : localProvider
     setTransform({ label, loading: true, result: null })
@@ -306,7 +357,17 @@ export function DocumentEditor({
     if (range && !insert) {
       const from = Math.min(range.from, size)
       const to = Math.min(range.to, size)
-      editor.chain().focus().insertContentAt({ from, to }, blocks.length > 1 ? asBlocks : inlineContent).run()
+      // The provider call is async; if the user edited the selected span while
+      // waiting, the stored range may now point at different text. Only replace
+      // when the span still matches what we sent — otherwise insert at the cursor
+      // so we never silently clobber unrelated text.
+      const current = editor.state.doc.textBetween(from, to, ' ')
+      if (current === range.text) {
+        editor.chain().focus().insertContentAt({ from, to }, blocks.length > 1 ? asBlocks : inlineContent).run()
+      } else {
+        editor.chain().focus().insertContent(blocks.length > 1 ? asBlocks : inlineContent).run()
+        toast('Text changed while the assistant was working — inserted at the cursor instead', 'info')
+      }
     } else if (range && insert) {
       editor.chain().focus().insertContentAt(Math.min(range.to, size), asBlocks).run()
     } else {

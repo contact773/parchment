@@ -18,7 +18,6 @@ export interface BuildOptions {
   docType: DocType
   language: LanguageCode
   spellcheckEnabled: boolean
-  focus: boolean
   placeholder?: string
 }
 
@@ -51,7 +50,10 @@ export function buildExtensions(opts: BuildOptions): Extensions {
     ext.push(TextAlign.configure({ types: ['heading', 'paragraph'] }))
   }
 
-  if (opts.focus) ext.push(FocusBlock)
+  // FocusBlock is always present; it only paints the dimming when the editor
+  // container carries the `focus-active` class, so focus mode toggles via CSS
+  // alone — no editor rebuild (which would wipe undo history & cursor).
+  ext.push(FocusBlock)
 
   return ext
 }
