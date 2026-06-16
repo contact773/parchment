@@ -46,7 +46,124 @@ export function Binder({
   const cancelRename = useRef(false)
   const [drag, setDrag] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<{ id: string; pos: DropPos } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [anchor, setAnchor] = useState<string | null>(null)
+  const [focusId, setFocusId] = useState<string | null>(null)
+  const treeRef = useRef<HTMLDivElement>(null)
   const toast = useUI((s) => s.toast)
+
+  // Flattened list of currently-visible rows (respects collapse + pin sort) —
+  // drives keyboard navigation and shift-range selection.
+  const visible: { item: TreeItem; depth: number }[] = []
+  const walkVisible = (items: TreeItem[], depth: number) => {
+    for (const it of [...items].sort(pinSort)) {
+      visible.push({ item: it, depth })
+      if (!it.collapsed && it.children.length) walkVisible(it.children, depth + 1)
+    }
+  }
+  walkVisible(forest, 0)
+
+  const focusRow = (id: string | undefined) => {
+    if (!id) return
+    setFocusId(id)
+    requestAnimationFrame(() => treeRef.current?.querySelector<HTMLElement>(`[data-node-id="${id}"]`)?.focus())
+  }
+
+  const bulkTrash = async (ids: string[]) => {
+    for (const id of ids) await deleteNode(id)
+    setSelectedIds(new Set())
+    toast(ids.length > 1 ? `${ids.length} items moved to Trash` : 'Moved to Trash', 'info')
+  }
+
+  const onTreeKeyDown = (e: React.KeyboardEvent) => {
+    if (renaming) return
+    const ids = visible.map((v) => v.item.id)
+    if (!ids.length) return
+    const curId = focusId && ids.includes(focusId) ? focusId : selectedId && ids.includes(selectedId) ? selectedId : ids[0]
+    const idx = ids.indexOf(curId)
+    const cur = visible[idx]?.item
+    const isCont = cur ? isContainer(cur.type) || cur.children.length > 0 : false
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        focusRow(ids[Math.min(ids.length - 1, idx + 1)])
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        focusRow(ids[Math.max(0, idx - 1)])
+        break
+      case 'ArrowRight':
+        e.preventDefault()
+        if (cur && isCont && cur.collapsed) toggleCollapse(cur.id, false)
+        else focusRow(ids[Math.min(ids.length - 1, idx + 1)])
+        break
+      case 'ArrowLeft':
+        e.preventDefault()
+        if (cur && isCont && !cur.collapsed) toggleCollapse(cur.id, true)
+        else if (cur?.parentId && ids.includes(cur.parentId)) focusRow(cur.parentId)
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (cur) {
+          onSelect(cur)
+          setSelectedIds(new Set([cur.id]))
+          setAnchor(cur.id)
+        }
+        break
+      case 'F2':
+        e.preventDefault()
+        if (cur) setRenaming(cur.id)
+        break
+      case ' ':
+        e.preventDefault()
+        if (cur) {
+          setSelectedIds((prev) => {
+            const n = new Set(prev)
+            if (n.has(cur.id)) n.delete(cur.id)
+            else n.add(cur.id)
+            return n
+          })
+          setAnchor(cur.id)
+        }
+        break
+      case 'Delete':
+      case 'Backspace': {
+        e.preventDefault()
+        const sel = selectedIds.has(curId) && selectedIds.size > 1 ? [...selectedIds] : cur ? [cur.id] : []
+        if (sel.length) {
+          const neighbour = ids[idx + 1] && !sel.includes(ids[idx + 1]) ? ids[idx + 1] : ids[idx - 1]
+          void bulkTrash(sel)
+          if (neighbour) setFocusId(neighbour)
+        }
+        break
+      }
+    }
+  }
+
+  const clickSelect = (e: React.MouseEvent, id: string, openOnPlain = true) => {
+    const ids = visible.map((v) => v.item.id)
+    if (e.shiftKey && anchor && ids.includes(anchor)) {
+      const a = ids.indexOf(anchor)
+      const b = ids.indexOf(id)
+      setSelectedIds(new Set(ids.slice(Math.min(a, b), Math.max(a, b) + 1)))
+      setFocusId(id)
+    } else if (e.metaKey || e.ctrlKey) {
+      setSelectedIds((prev) => {
+        const n = new Set(prev)
+        if (n.has(id)) n.delete(id)
+        else n.add(id)
+        return n
+      })
+      setAnchor(id)
+      setFocusId(id)
+    } else {
+      setSelectedIds(new Set([id]))
+      setAnchor(id)
+      setFocusId(id)
+      const item = visible.find((v) => v.item.id === id)?.item
+      if (openOnPlain && item) onSelect(item)
+    }
+  }
 
   const addAtRoot = async (type: NodeType) => {
     const node = await createNode({ projectId: project.id, parentId: null, type, docType: project.defaultDocType })
@@ -63,25 +180,34 @@ export function Binder({
   }
 
   const handleDrop = async (targetId: string, pos: DropPos) => {
-    if (!drag || drag === targetId) return
+    if (!drag) return
+    // Move the whole multi-selection if the dragged row is part of it, in visible order.
+    const movers =
+      selectedIds.has(drag) && selectedIds.size > 1
+        ? visible.map((v) => v.item.id).filter((id) => selectedIds.has(id))
+        : [drag]
+    if (movers.includes(targetId)) {
+      setDrag(null)
+      setDropTarget(null)
+      return
+    }
     const target = nodes.find((n) => n.id === targetId)
     if (!target) return
-    let parentId: string | null
-    let siblings: TreeNode[]
     // Index against the FULL (unfiltered) sibling order so it matches what moveNode
     // reorders — otherwise a hidden notes-folder among the siblings shifts the drop.
     if (pos === 'inside') {
-      parentId = target.id
-      siblings = liveNodes.filter((n) => n.parentId === target.id && n.id !== drag).sort((a, b) => a.order - b.order)
-      await moveNode(drag, parentId, siblings.length)
+      const parentId = target.id
+      let base = liveNodes.filter((n) => n.parentId === parentId && !movers.includes(n.id)).length
+      for (const id of movers) await moveNode(id, parentId, base++)
       // Expand the container so the moved child is visible — otherwise it silently
       // "disappears" into a collapsed parent with no feedback.
       if (target.collapsed) await toggleCollapse(target.id, false)
     } else {
-      parentId = target.parentId
-      siblings = liveNodes.filter((n) => n.parentId === parentId && n.id !== drag).sort((a, b) => a.order - b.order)
-      const idx = siblings.findIndex((s) => s.id === targetId)
-      await moveNode(drag, parentId, pos === 'before' ? idx : idx + 1)
+      const parentId = target.parentId
+      const siblings = liveNodes.filter((n) => n.parentId === parentId && !movers.includes(n.id)).sort((a, b) => a.order - b.order)
+      const at = siblings.findIndex((s) => s.id === targetId)
+      let base = pos === 'before' ? at : at + 1
+      for (const id of movers) await moveNode(id, parentId, base++)
     }
     setDrag(null)
     setDropTarget(null)
@@ -128,11 +254,11 @@ export function Binder({
       },
       { separator: true, label: '' },
       {
-        label: 'Move to Trash',
+        label: selectedIds.has(node.id) && selectedIds.size > 1 ? `Move ${selectedIds.size} to Trash` : 'Move to Trash',
         danger: true,
-        onClick: async () => {
-          await deleteNode(node.id)
-          toast('Moved to Trash', 'info')
+        onClick: () => {
+          const ids = selectedIds.has(node.id) && selectedIds.size > 1 ? [...selectedIds] : [node.id]
+          void bulkTrash(ids)
         },
       },
     ]
@@ -148,10 +274,18 @@ export function Binder({
     const isDropTarget = dropTarget?.id === item.id
 
     return (
-      <div key={item.id}>
+      <div key={item.id} role="treeitem" aria-level={depth + 1} aria-selected={isSel || selectedIds.has(item.id)} aria-expanded={container ? !item.collapsed : undefined}>
         <div
+          data-node-id={item.id}
+          tabIndex={(focusId ?? selectedId) === item.id ? 0 : -1}
+          onFocus={() => setFocusId(item.id)}
           draggable={renaming !== item.id}
           onDragStart={(e) => {
+            // Dragging an unselected row drags just it; otherwise the whole selection.
+            if (!selectedIds.has(item.id)) {
+              setSelectedIds(new Set([item.id]))
+              setAnchor(item.id)
+            }
             setDrag(item.id)
             e.dataTransfer.effectAllowed = 'move'
             // Setting drag data makes some browsers / the WebView reliably start the drag.
@@ -170,15 +304,20 @@ export function Binder({
           }}
           onDragLeave={() => setDropTarget((d) => (d?.id === item.id ? null : d))}
           onDrop={() => handleDrop(item.id, dropTarget?.pos ?? 'after')}
-          onClick={() => onSelect(item)}
+          onClick={(e) => clickSelect(e, item.id)}
           onContextMenu={(e) => {
             if (renaming === item.id) return // let the rename input keep its native text menu
             e.preventDefault()
+            // Right-clicking a row outside the current selection selects just it.
+            if (!selectedIds.has(item.id)) {
+              setSelectedIds(new Set([item.id]))
+              setAnchor(item.id)
+            }
             openRowMenu?.()
           }}
           className={cn(
-            'binder-row group relative flex cursor-pointer items-center gap-1 rounded-md py-1 pr-1 text-sm transition-colors',
-            isSel ? 'bg-accent/15 text-text' : 'text-text/85 hover:bg-surface-2',
+            'binder-row group relative flex cursor-pointer items-center gap-1 rounded-md py-1 pr-1 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50',
+            isSel || selectedIds.has(item.id) ? 'bg-accent/15 text-text' : 'text-text/85 hover:bg-surface-2',
             isDropTarget && dropTarget?.pos === 'inside' && 'ring-1 ring-inset ring-accent/60',
           )}
           style={{ paddingLeft: depth * 12 + 4 }}
@@ -280,8 +419,13 @@ export function Binder({
         />
       </div>
       <div
+        ref={treeRef}
+        role="tree"
+        aria-label="Manuscript"
+        aria-multiselectable="true"
         className="flex-1 overflow-y-auto px-1.5 pb-3"
         onDragOver={(e) => e.preventDefault()}
+        onKeyDown={onTreeKeyDown}
       >
         {forest.length === 0 ? (
           <p className="px-3 py-6 text-center text-xs text-muted">Empty. Use + to add a chapter.</p>
