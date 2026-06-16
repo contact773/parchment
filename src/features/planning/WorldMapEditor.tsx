@@ -16,11 +16,15 @@ import {
   Eye,
   EyeOff,
   X,
+  Download,
 } from 'lucide-react'
 import type { MapMarker, MapPoint, MapRegion, MarkerKind, RegionKind, WorldMap } from '@/types'
 import { getOrCreateMap, updateMap } from '@/data/repo'
 import { uid } from '@/lib/id'
 import { cn } from '@/lib/utils'
+import { Menu } from '@/components/ui/Menu'
+import { saveBlob } from '@/lib/desktop'
+import { useUI } from '@/store/useUI'
 
 type Tool = 'select' | 'draw' | 'cut' | 'city' | 'place'
 type Sel = { kind: 'region' | 'marker'; id: string } | null
@@ -128,6 +132,7 @@ export function WorldMapEditor({ projectId }: { projectId: string }) {
   const [showMarkerLabels, setShowMarkerLabels] = useState(true)
   const [showLegend, setShowLegend] = useState(true)
 
+  const toast = useUI((s) => s.toast)
   const svgRef = useRef<SVGSVGElement>(null)
   const mapRef = useRef<WorldMap | null>(null)
   const drawRef = useRef<MapPoint[]>([])
@@ -469,6 +474,48 @@ export function WorldMapEditor({ projectId }: { projectId: string }) {
     )
   }
 
+  // Serialize the map to a standalone SVG (full canvas, regardless of zoom) and
+  // optionally rasterize to PNG so the map can leave the app — share/print/embed.
+  const exportMap = async (format: 'svg' | 'png') => {
+    const svg = svgRef.current
+    if (!svg) return
+    const clone = svg.cloneNode(true) as SVGSVGElement
+    clone.setAttribute('viewBox', `0 0 ${map.width} ${map.height}`)
+    clone.setAttribute('width', String(map.width))
+    clone.setAttribute('height', String(map.height))
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    clone.style.cursor = ''
+    const svgStr = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone)
+    const base = (map.name || 'world-map').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'world-map'
+    try {
+      if (format === 'svg') {
+        await saveBlob(new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' }), `${base}.svg`, [{ name: 'SVG image', extensions: ['svg'] }])
+        toast('Map exported (SVG)', 'success')
+        return
+      }
+      const scale = 2
+      const canvas = document.createElement('canvas')
+      canvas.width = map.width * scale
+      canvas.height = map.height * scale
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Canvas unavailable')
+      const img = new Image()
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr)
+      await new Promise<void>((res, rej) => {
+        img.onload = () => res()
+        img.onerror = () => rej(new Error('Could not render the map'))
+      })
+      ctx.scale(scale, scale)
+      ctx.drawImage(img, 0, 0)
+      const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'))
+      if (!blob) throw new Error('Could not encode PNG')
+      await saveBlob(blob, `${base}.png`, [{ name: 'PNG image', extensions: ['png'] }])
+      toast('Map exported (PNG)', 'success')
+    } catch (e) {
+      toast(`Map export failed: ${(e as Error).message}`, 'error')
+    }
+  }
+
   const cursor = tool === 'draw' ? 'crosshair' : tool === 'cut' ? 'crosshair' : tool === 'city' || tool === 'place' ? 'copy' : gesture.current?.kind === 'pan' ? 'grabbing' : 'grab'
 
   return (
@@ -515,6 +562,25 @@ export function WorldMapEditor({ projectId }: { projectId: string }) {
           <IconBtn onClick={() => zoomBy(1.25)} icon={<ZoomOut size={16} />} label="Zoom out" />
           <IconBtn onClick={fit} icon={<Maximize2 size={16} />} label="Fit map" />
           <IconBtn onClick={() => setShowLegend((v) => !v)} icon={<List size={16} />} label="Toggle legend" active={showLegend} />
+          <Menu
+            align="end"
+            width={170}
+            items={[
+              { label: 'Export as PNG', onClick: () => exportMap('png') },
+              { label: 'Export as SVG', onClick: () => exportMap('svg') },
+            ]}
+            trigger={({ toggle, ref }) => (
+              <button
+                ref={ref}
+                onClick={toggle}
+                aria-label="Export map"
+                title="Export map (PNG / SVG)"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface transition-colors hover:bg-surface-2"
+              >
+                <Download size={16} />
+              </button>
+            )}
+          />
         </div>
       </div>
 
