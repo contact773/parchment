@@ -23,7 +23,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        serif: ['"Iowan Old Style"', '"Palatino Linotype"', 'Palatino', 'Georgia', 'serif'],
+        serif: ['"Iowan Old Style"', '"Palatino Linotype"', 'Palatino', '"Lora"', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       borderRadius: {

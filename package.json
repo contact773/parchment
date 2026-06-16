@@ -11,9 +11,20 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/lora": "^5.2.8",
+    "@fontsource/source-serif-4": "^5.2.9",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "@tiptap/extension-character-count": "^3.26.0",
     "@tiptap/extension-color": "^3.26.0",
     "@tiptap/extension-font-family": "^3.26.0",
@@ -48,6 +59,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
     "@types/diff": "^7.0.2",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.9.2",
