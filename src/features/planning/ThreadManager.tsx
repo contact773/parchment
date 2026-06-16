@@ -8,8 +8,11 @@ import { AutoInput, AutoTextarea } from '@/components/ui/Auto'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
+import { useUI } from '@/store/useUI'
 
 export function ThreadManager({ projectId }: { projectId: string }) {
+  const toast = useUI((s) => s.toast)
   const threads = useLiveQuery(() => db.threads.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
 
   const add = () => createThread(projectId, { name: 'New Plot Thread', color: ACCENT_PALETTE[Math.floor(Math.random() * 7)] })
@@ -71,7 +74,17 @@ export function ThreadManager({ projectId }: { projectId: string }) {
                     </div>
                   </div>
                 </div>
-                <IconButton size="sm" label="Delete thread" onClick={() => deleteThread(t.id)} className="text-danger">
+                <IconButton
+                  size="sm"
+                  label="Delete thread"
+                  onClick={async () => {
+                    if (await confirmDialog({ title: 'Delete plot thread?', message: `Delete “${t.name}”? This can't be undone.`, confirmLabel: 'Delete', danger: true })) {
+                      await deleteThread(t.id)
+                      toast('Thread deleted', 'info')
+                    }
+                  }}
+                  className="text-danger"
+                >
                   <Trash2 size={15} />
                 </IconButton>
               </div>

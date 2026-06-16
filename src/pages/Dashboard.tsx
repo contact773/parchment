@@ -6,6 +6,7 @@ import {
   Settings,
   Search,
   MoreHorizontal,
+  PenLine,
   Copy,
   Archive,
   Trash2,
@@ -30,10 +31,12 @@ import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { Menu } from '@/components/ui/Menu'
 import { Progress, EmptyState, Badge, Segmented } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
 import { ExportDialog } from '@/features/export/ExportDialog'
 import { NewProjectModal } from '@/features/projects/NewProjectModal'
 import { importBackup } from '@/features/export/backup'
 import { importDocumentFile } from '@/features/export/importDoc'
+import { isDesktop, openFileNative } from '@/lib/desktop'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
 import { timeAgo, formatNumber, formatCompact } from '@/lib/format'
@@ -55,6 +58,7 @@ export function Dashboard() {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState<'active' | 'archived' | 'trash'>('active')
   const [creating, setCreating] = useState(false)
+  const [editProject, setEditProject] = useState<Project | null>(null)
   const [exportFor, setExportFor] = useState<Project | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [seeding, setSeeding] = useState(false)
@@ -139,7 +143,17 @@ export function Dashboard() {
                 e.target.value = ''
               }}
             />
-            <IconButton label="Import (.json backup, .txt, .md, .docx)" onClick={() => fileRef.current?.click()}>
+            <IconButton
+              label="Import (.json backup, .txt, .md, .docx)"
+              onClick={async () => {
+                if (isDesktop()) {
+                  const f = await openFileNative([{ name: 'Parchment files', extensions: ['json', 'txt', 'md', 'markdown', 'docx'] }])
+                  if (f) onImport(f)
+                } else {
+                  fileRef.current?.click()
+                }
+              }}
+            >
               <Upload size={18} />
             </IconButton>
             <IconButton label="Help & shortcuts" onClick={() => navigate('/help')}>
@@ -161,8 +175,10 @@ export function Dashboard() {
           <div>
             <h1 className="font-serif text-3xl font-semibold text-ink">Your writing</h1>
             <p className="mt-1 text-sm text-muted">
-              {projects.filter((p) => p.status !== 'archived').length} active project
-              {projects.filter((p) => p.status !== 'archived').length === 1 ? '' : 's'}.
+              {(() => {
+                const n = projects.filter((p) => !p.deletedAt && p.status !== 'archived').length
+                return `${n} active project${n === 1 ? '' : 's'}.`
+              })()}
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-soft">
@@ -230,6 +246,7 @@ export function Dashboard() {
                 words={wordsByProject.get(p.id) ?? 0}
                 trashed={tab === 'trash'}
                 onOpen={() => open(p)}
+                onEdit={() => setEditProject(p)}
                 onPin={() => togglePinProject(p.id, !p.pinned)}
                 onDuplicate={async () => { await duplicateProject(p.id); toast('Project duplicated', 'success') }}
                 onArchive={() => archiveProject(p.id, p.status !== 'archived')}
@@ -237,7 +254,7 @@ export function Dashboard() {
                 onTrash={async () => { await trashProject(p.id); toast('Moved to Trash', 'info') }}
                 onRestore={async () => { await restoreProject(p.id); toast('Restored', 'success') }}
                 onDeleteForever={async () => {
-                  if (confirm(`Permanently delete “${p.title}”? This cannot be undone.`)) {
+                  if (await confirmDialog({ title: 'Delete project forever?', message: `Permanently delete “${p.title}” and everything in it? This cannot be undone.`, confirmLabel: 'Delete forever', danger: true })) {
                     await deleteProject(p.id)
                     toast('Project deleted', 'info')
                   }
@@ -249,6 +266,7 @@ export function Dashboard() {
       </main>
 
       <NewProjectModal open={creating} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); navigate(`/project/${p.id}`) }} />
+      <NewProjectModal open={!!editProject} project={editProject ?? undefined} onClose={() => setEditProject(null)} />
       {exportFor && <ExportDialog open onClose={() => setExportFor(null)} project={exportFor} />}
     </div>
   )
@@ -259,6 +277,7 @@ function ProjectCard({
   words,
   trashed,
   onOpen,
+  onEdit,
   onPin,
   onDuplicate,
   onArchive,
@@ -271,6 +290,7 @@ function ProjectCard({
   words: number
   trashed: boolean
   onOpen: () => void
+  onEdit: () => void
   onPin: () => void
   onDuplicate: () => void
   onArchive: () => void
@@ -281,6 +301,7 @@ function ProjectCard({
 }) {
   const info = PROJECT_TYPES[p.type]
   const status = PROJECT_STATUSES[p.status]
+  const lang = LANGUAGES[p.language] ?? { flag: '🌐', native: p.language }
   const pct = p.targetWords ? Math.min(100, (words / p.targetWords) * 100) : 0
   const accent = p.color ?? '#9a7b4f'
   const daysLeft = p.deadline ? Math.ceil((new Date(p.deadline).getTime() - Date.now()) / 86400000) : null
@@ -308,7 +329,7 @@ function ProjectCard({
           </div>
           {p.targetWords > 0 && <Progress value={pct} />}
           <div className="mt-2 flex items-center justify-between text-[11px] text-muted">
-            <span>{LANGUAGES[p.language].flag} {LANGUAGES[p.language].native}</span>
+            <span>{lang.flag} {lang.native}</span>
             {daysLeft !== null ? (
               <span className={cn('flex items-center gap-1', daysLeft < 7 ? 'text-danger' : daysLeft < 30 ? 'text-accent' : '')}>
                 <CalendarClock size={11} /> {daysLeft < 0 ? 'overdue' : `${daysLeft}d left`}
@@ -337,6 +358,7 @@ function ProjectCard({
                 ]
               : [
                   { label: 'Open', onClick: onOpen },
+                  { label: 'Edit details', icon: <PenLine size={14} />, onClick: onEdit },
                   { label: p.pinned ? 'Unpin' : 'Pin to top', icon: <Star size={14} />, onClick: onPin },
                   { label: 'Export / backup', icon: <Download size={14} />, onClick: onExport },
                   { label: 'Duplicate', icon: <Copy size={14} />, onClick: onDuplicate },
@@ -348,6 +370,7 @@ function ProjectCard({
           trigger={({ toggle, ref }) => (
             <button
               ref={ref}
+              aria-label="Project actions"
               onClick={(e) => { e.stopPropagation(); toggle() }}
               className={cn('rounded-md bg-surface/80 p-1 text-muted backdrop-blur hover:bg-surface-2 hover:text-text')}
             >

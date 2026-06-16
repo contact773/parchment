@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Slider, Switch } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
+import { useUI } from '@/store/useUI'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
@@ -28,6 +30,7 @@ const COLOR_LABELS: { key: keyof ThemeColors; label: string }[] = [
 ]
 
 export function ThemePanel() {
+  const toast = useUI((s) => s.toast)
   const settings = useSettings((s) => s.settings)
   const customThemes = useSettings((s) => s.customThemes)
   const setActiveTheme = useSettings((s) => s.setActiveTheme)
@@ -39,11 +42,11 @@ export function ThemePanel() {
   const [editingId, setEditingId] = useState<string | null>(customThemes[0]?.id ?? null)
   const editing = customThemes.find((t) => t.id === editingId) ?? null
 
-  const duplicate = (base: Theme) => {
+  const duplicate = (base: Theme, name = `${base.name} Copy`, apply = true) => {
     const copy: Theme = {
       ...base,
       id: uid(),
-      name: `${base.name} Copy`,
+      name,
       builtin: false,
       createdAt: Date.now(),
       colors: { ...base.colors },
@@ -51,10 +54,22 @@ export function ThemePanel() {
     }
     saveCustomTheme(copy)
     setEditingId(copy.id)
-    setActiveTheme(copy.id)
+    if (apply) setActiveTheme(copy.id)
   }
 
-  const blank = () => duplicate(BUILTIN_THEMES[0])
+  // Start a fresh custom theme from the CURRENT look (so the screen doesn't jump)
+  // with a clear name — not a confusingly-named copy of Classic Paper.
+  const blank = () => {
+    const base = allThemes.find((t) => t.id === settings.activeThemeId) ?? BUILTIN_THEMES[0]
+    duplicate(base, 'My Theme')
+  }
+
+  const resetAppearance = async () => {
+    if (!(await confirmDialog({ title: 'Reset appearance?', message: 'Switch back to the default theme and reset interface scale and density. Your custom themes are kept.', confirmLabel: 'Reset', danger: false }))) return
+    setActiveTheme(BUILTIN_THEMES[0].id)
+    setSettings({ interfaceScale: 1, sidebarDensity: 'cozy' })
+    toast('Appearance reset', 'success')
+  }
 
   const update = (patch: Partial<Theme>) => {
     if (!editing) return
@@ -89,7 +104,17 @@ export function ThemePanel() {
               onSelect={() => setActiveTheme(t.id)}
               onEdit={t.builtin ? () => duplicate(t) : () => setEditingId(t.id)}
               onDuplicate={() => duplicate(t)}
-              onDelete={t.builtin ? undefined : () => { deleteCustomTheme(t.id); if (editingId === t.id) setEditingId(null) }}
+              onDelete={
+                t.builtin
+                  ? undefined
+                  : async () => {
+                      if (await confirmDialog({ title: 'Delete theme?', message: `Delete the theme “${t.name}”?${settings.activeThemeId === t.id ? ' You’ll switch back to Classic Paper.' : ''}`, confirmLabel: 'Delete', danger: true })) {
+                        deleteCustomTheme(t.id)
+                        if (editingId === t.id) setEditingId(null)
+                        toast(settings.activeThemeId === t.id ? 'Theme deleted — switched to Classic Paper' : 'Theme deleted', 'info')
+                      }
+                    }
+              }
             />
           ))}
         </div>
@@ -168,7 +193,12 @@ export function ThemePanel() {
 
       {/* Interface scale & density live here too */}
       <section className="space-y-4 rounded-xl border border-border bg-surface-2/30 p-5">
-        <h3 className="font-serif text-lg font-semibold text-ink">Interface</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif text-lg font-semibold text-ink">Interface</h3>
+          <Button size="sm" variant="ghost" onClick={resetAppearance}>
+            Reset to defaults
+          </Button>
+        </div>
         <SliderRow label="Interface scale" value={settings.interfaceScale} min={0.85} max={1.25} step={0.05} unit="×" onChange={(v) => setSettings({ interfaceScale: v })} />
         <Field label="Sidebar density">
           <Select value={settings.sidebarDensity} onChange={(e) => setSettings({ sidebarDensity: e.target.value as typeof settings.sidebarDensity })}>

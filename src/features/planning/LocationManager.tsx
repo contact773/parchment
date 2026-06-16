@@ -9,9 +9,12 @@ import { AutoInput, AutoTextarea } from '@/components/ui/Auto'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
+import { useUI } from '@/store/useUI'
 import { cn } from '@/lib/utils'
 
 export function LocationManager({ projectId, selectId }: { projectId: string; selectId?: string }) {
+  const toast = useUI((s) => s.toast)
   const locations = useLiveQuery(() => db.locations.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
   const [selId, setSelId] = useState<string | null>(null)
   useEffect(() => {
@@ -71,7 +74,17 @@ export function LocationManager({ projectId, selectId }: { projectId: string; se
             }
           />
         ) : (
-          <LocationDetail key={selected.id} location={selected} onDelete={() => { deleteLocation(selected.id); setSelId(null) }} />
+          <LocationDetail
+            key={selected.id}
+            location={selected}
+            onDelete={async () => {
+              if (await confirmDialog({ title: 'Delete location?', message: `Delete “${selected.name}”? This can't be undone.`, confirmLabel: 'Delete', danger: true })) {
+                await deleteLocation(selected.id)
+                setSelId(null)
+                toast('Location deleted', 'info')
+              }
+            }}
+          />
         )}
       </div>
     </div>

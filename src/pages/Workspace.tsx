@@ -58,6 +58,7 @@ import { WorldbuildingManager } from '@/features/planning/WorldbuildingManager'
 import { NodeBoard } from '@/features/planning/NodeBoard'
 import { TrashView } from '@/features/planning/TrashView'
 import { ExportDialog } from '@/features/export/ExportDialog'
+import { NewProjectModal } from '@/features/projects/NewProjectModal'
 import { CommandPalette, type Command } from '@/components/CommandPalette'
 import { EmptyState } from '@/components/ui/misc'
 import { IconButton } from '@/components/ui/IconButton'
@@ -84,6 +85,7 @@ export function Workspace() {
   const [codexSelect, setCodexSelect] = useState<CodexSelect | null>(null)
   const [assistantSeed, setAssistantSeed] = useState<string | undefined>(undefined)
   const [exporting, setExporting] = useState(false)
+  const [editingDetails, setEditingDetails] = useState(false)
   const [activeEd, setActiveEd] = useState<Editor | null>(() => getActiveEditor())
   useEffect(() => subscribeActiveEditor(() => setActiveEd(getActiveEditor())), [])
 
@@ -91,6 +93,21 @@ export function Workspace() {
     startSession()
     if (projectId) touchProject(projectId)
   }, [projectId, startSession])
+
+  // Redirect away from a missing project in an effect (never navigate during render).
+  useEffect(() => {
+    if (project === null) navigate('/')
+  }, [project, navigate])
+
+  // On a narrow/mobile viewport, start with both side panels collapsed so the
+  // editor is usable (they open as overlay drawers — see layout below).
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      const s = useUI.getState()
+      if (s.leftOpen) s.toggleLeft()
+      if (s.rightOpen) s.toggleRight()
+    }
+  }, [])
 
   useEffect(() => {
     if (selectedId && nodes.some((n) => n.id === selectedId)) return
@@ -223,6 +240,7 @@ export function Workspace() {
     }
 
     list.push({ id: 'find', group: 'Project', label: 'Find & replace', icon: <SearchIcon size={15} />, keywords: 'search', run: () => setFindOpen(true) })
+    list.push({ id: 'project-details', group: 'Project', label: 'Edit project details', icon: <BookText size={15} />, keywords: 'rename deadline target metadata', run: () => setEditingDetails(true) })
     list.push({ id: 'export', group: 'Project', label: 'Export & backup', icon: <Download size={15} />, run: () => setExporting(true) })
     list.push({ id: 'settings', group: 'Project', label: 'Settings', icon: <Settings size={15} />, run: () => navigate('/settings') })
     list.push({ id: 'help', group: 'Project', label: 'Help & shortcuts', icon: <Settings size={15} />, keywords: 'keyboard', run: () => navigate('/help') })
@@ -242,10 +260,7 @@ export function Workspace() {
       </div>
     )
   }
-  if (project === null) {
-    navigate('/')
-    return null
-  }
+  if (project === null) return null
 
   const corkRoot =
     selectedNode && isContainer(selectedNode.type)
@@ -313,23 +328,40 @@ export function Workspace() {
   return (
     <div className="flex h-full flex-col bg-bg">
       <Topbar project={project} node={selectedNode} view={view} onView={setView} onExport={() => setExporting(true)} />
-      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1">
         {leftOpen && (
-          <aside className="w-[280px] shrink-0 border-r border-border">
-            <LeftSidebar project={project} selectedId={selectedId} onSelect={selectNode} view={view} onView={setView} />
-          </aside>
+          <>
+            <button
+              type="button"
+              aria-label="Close sidebar"
+              onClick={ui.toggleLeft}
+              className="fixed inset-0 z-20 hidden bg-black/40 max-md:block"
+            />
+            <aside className="z-30 w-[280px] shrink-0 border-r border-border bg-surface max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:shadow-panel">
+              <LeftSidebar project={project} selectedId={selectedId} onSelect={selectNode} view={view} onView={setView} />
+            </aside>
+          </>
         )}
         <main className="relative min-w-0 flex-1 overflow-hidden bg-bg">
           {center}
           <FindReplace />
         </main>
         {rightOpen && (
-          <aside className="w-[360px] shrink-0 border-l border-border">
-            <RightPanel project={project} node={selectedNode} allNodes={nodes} onOpen={selectNode} assistantSeed={assistantSeed} onSeedConsumed={() => setAssistantSeed(undefined)} />
-          </aside>
+          <>
+            <button
+              type="button"
+              aria-label="Close inspector"
+              onClick={ui.toggleRight}
+              className="fixed inset-0 z-20 hidden bg-black/40 max-md:block"
+            />
+            <aside className="z-30 w-[360px] shrink-0 border-l border-border bg-surface max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:w-[88vw] max-md:max-w-[360px] max-md:shadow-panel">
+              <RightPanel project={project} node={selectedNode} allNodes={nodes} onOpen={selectNode} assistantSeed={assistantSeed} onSeedConsumed={() => setAssistantSeed(undefined)} />
+            </aside>
+          </>
         )}
       </div>
       {exporting && <ExportDialog open onClose={() => setExporting(false)} project={project} />}
+      <NewProjectModal open={editingDetails} project={project} onClose={() => setEditingDetails(false)} />
       <CommandPalette open={commandOpen} commands={commands} onClose={() => setCommandOpen(false)} />
     </div>
   )

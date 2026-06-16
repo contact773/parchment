@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import type { Project, TreeNode } from '@/types'
 import { orderedDocuments } from '@/lib/tree'
 import { NODE_STATUSES } from '@/lib/constants'
 import { formatCompact } from '@/lib/format'
 import { Clock } from 'lucide-react'
-import { EmptyState } from '@/components/ui/misc'
+import { EmptyState, Segmented } from '@/components/ui/misc'
 
 export function TimelineView({
   project,
@@ -14,15 +15,39 @@ export function TimelineView({
   nodes: TreeNode[]
   onOpen: (node: TreeNode) => void
 }) {
-  const docs = orderedDocuments(nodes, false)
+  const [sort, setSort] = useState<'reading' | 'date'>('reading')
+  const reading = orderedDocuments(nodes, false)
+  // "By date" keeps reading order as the tiebreaker and pushes undated scenes last.
+  const docs =
+    sort === 'date'
+      ? [...reading].sort((a, b) => {
+          const da = a.node.meta.date?.trim() ?? ''
+          const db_ = b.node.meta.date?.trim() ?? ''
+          if (!da && !db_) return 0
+          if (!da) return 1
+          if (!db_) return -1
+          return da.localeCompare(db_, undefined, { numeric: true, sensitivity: 'base' })
+        })
+      : reading
 
   return (
     <div className="mx-auto h-full w-full max-w-3xl overflow-y-auto px-6 py-6">
-      <div className="mb-6">
-        <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-ink">
-          <Clock size={20} /> Timeline
-        </h2>
-        <p className="text-sm text-muted">{project.title} · scenes in reading order</p>
+      <div className="mb-6 flex items-end justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold text-ink">
+            <Clock size={20} /> Timeline
+          </h2>
+          <p className="text-sm text-muted">{project.title} · {sort === 'date' ? 'by in-world date' : 'scenes in reading order'}</p>
+        </div>
+        <Segmented
+          size="sm"
+          value={sort}
+          onChange={setSort}
+          options={[
+            { value: 'reading', label: 'Reading order' },
+            { value: 'date', label: 'By date' },
+          ]}
+        />
       </div>
 
       {docs.length === 0 ? (
@@ -38,8 +63,11 @@ export function TimelineView({
                   style={{ backgroundColor: status.color }}
                 />
                 <button onClick={() => onOpen(node)} className="text-left">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-text hover:text-accent">{node.title}</span>
+                    {node.meta.date && (
+                      <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted">{node.meta.date}</span>
+                    )}
                     {node.meta.label && (
                       <span className="rounded-full bg-accent/10 px-1.5 py-0.5 text-[10px] text-accent">{node.meta.label}</span>
                     )}

@@ -1,12 +1,21 @@
 import { ClipboardList } from 'lucide-react'
-import type { LanguageCode, TreeNode } from '@/types'
+import type { Character, LanguageCode, Location, TreeNode } from '@/types'
 import { renameNode, updateNode, togglePinNode, setNodeTags, patchNodeMeta } from '@/data/repo'
 import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Switch, EmptyState } from '@/components/ui/misc'
 import { NODE_STATUS_ORDER, NODE_STATUSES, LANGUAGES, LANGUAGE_ORDER } from '@/lib/constants'
 import { formatNumber } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
-export function InspectorPanel({ node }: { node: TreeNode | null }) {
+export function InspectorPanel({
+  node,
+  characters = [],
+  locations = [],
+}: {
+  node: TreeNode | null
+  characters?: Character[]
+  locations?: Location[]
+}) {
   if (!node) {
     return (
       <EmptyState
@@ -21,6 +30,11 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
   const patchMeta = (key: keyof TreeNode['meta']) => (v: string) => {
     const value = key === 'targetWords' ? Number(v) || 0 : v
     patchNodeMeta(node.id, { [key]: value })
+  }
+  const sceneCharacters = node.meta.characterIds ?? []
+  const toggleCharacter = (id: string) => {
+    const next = sceneCharacters.includes(id) ? sceneCharacters.filter((x) => x !== id) : [...sceneCharacters, id]
+    patchNodeMeta(node.id, { characterIds: next })
   }
 
   return (
@@ -93,6 +107,48 @@ export function InspectorPanel({ node }: { node: TreeNode | null }) {
             <AutoTextarea label="Conflict" depKey={node.id} rows={2} value={node.meta.conflict ?? ''} placeholder="What's in the way?" save={patchMeta('conflict')} />
             <AutoTextarea label="Outcome" depKey={node.id} rows={2} value={node.meta.outcome ?? ''} placeholder="How does it change things?" save={patchMeta('outcome')} />
             <AutoInput label="Label / Beat" depKey={node.id} value={node.meta.label ?? ''} placeholder="e.g. Inciting incident" save={patchMeta('label')} />
+            <AutoInput label="In-world date / time" depKey={node.id} value={node.meta.date ?? ''} placeholder="e.g. Day 3 · dusk" save={patchMeta('date')} />
+            {locations.length > 0 && (
+              <AutoSelect
+                label="Location"
+                depKey={node.id}
+                value={node.meta.locationId ?? ''}
+                save={(v) => patchNodeMeta(node.id, { locationId: v || undefined })}
+              >
+                <option value="">—</option>
+                {locations.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </AutoSelect>
+            )}
+            <div>
+              <span className="label-text mb-1.5 block">Characters in this scene</span>
+              {characters.length === 0 ? (
+                <p className="text-xs text-muted">Add characters in the Characters view to link them here.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {characters.map((c) => {
+                    const on = sceneCharacters.includes(c.id)
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleCharacter(c.id)}
+                        className={cn(
+                          'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                          on ? 'border-accent bg-accent/15 text-accent' : 'border-border text-muted hover:bg-surface-2',
+                        )}
+                      >
+                        {c.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

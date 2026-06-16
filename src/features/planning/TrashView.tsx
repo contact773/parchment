@@ -6,6 +6,7 @@ import { NodeIcon } from '@/features/projects/nodeIcons'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
 import { timeAgo } from '@/lib/format'
 import { useUI } from '@/store/useUI'
 
@@ -19,7 +20,7 @@ export function TrashView({ projectId }: { projectId: string }) {
 
   const emptyTrash = async () => {
     if (!trashed.length) return
-    if (!confirm(`Permanently delete ${trashed.length} item(s)? This cannot be undone.`)) return
+    if (!(await confirmDialog({ title: 'Empty trash?', message: `Permanently delete ${trashed.length} item(s) and their version history? This cannot be undone.`, confirmLabel: 'Delete forever', danger: true }))) return
     for (const n of trashed) await hardDeleteNode(n.id)
     toast('Trash emptied', 'info')
   }
@@ -54,7 +55,17 @@ export function TrashView({ projectId }: { projectId: string }) {
               <IconButton size="sm" label="Restore" onClick={async () => { await restoreNode(n.id); toast('Restored', 'success') }}>
                 <RotateCcw size={15} />
               </IconButton>
-              <IconButton size="sm" label="Delete forever" className="text-danger" onClick={() => hardDeleteNode(n.id)}>
+              <IconButton
+                size="sm"
+                label="Delete forever"
+                className="text-danger"
+                onClick={async () => {
+                  if (await confirmDialog({ title: 'Delete forever?', message: `Permanently delete “${n.title}” and its version history? This cannot be undone.`, confirmLabel: 'Delete forever', danger: true })) {
+                    await hardDeleteNode(n.id)
+                    toast('Deleted permanently', 'info')
+                  }
+                }}
+              >
                 <Trash2 size={15} />
               </IconButton>
             </div>

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { LanguageCode, Project, ProjectType } from '@/types'
-import { createProject } from '@/data/repo'
+import { createProject, updateProject } from '@/data/repo'
 import { PROJECT_TYPES, PROJECT_TYPE_ORDER, LANGUAGES, LANGUAGE_ORDER, ACCENT_PALETTE } from '@/lib/constants'
 import { ProjectIcon } from '@/components/ProjectIcon'
 import { Modal } from '@/components/ui/Modal'
@@ -13,11 +13,15 @@ export function NewProjectModal({
   open,
   onClose,
   onCreated,
+  project,
 }: {
   open: boolean
   onClose: () => void
-  onCreated: (p: Project) => void
+  onCreated?: (p: Project) => void
+  /** When provided, the modal edits this project's metadata instead of creating a new one. */
+  project?: Project
 }) {
+  const editing = !!project
   const defaultLanguage = useSettings((s) => s.settings.defaultLanguage)
   const [title, setTitle] = useState('')
   const [type, setType] = useState<ProjectType>('novel')
@@ -29,41 +33,60 @@ export function NewProjectModal({
   const [deadline, setDeadline] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const reset = () => {
-    setTitle('')
-    setType('novel')
-    setAuthor('')
-    setGenre('')
-    setLogline('')
-    setTargetWords('')
-    setDeadline('')
-  }
+  // Sync fields whenever the modal opens (prefill in edit mode, fresh otherwise).
+  useEffect(() => {
+    if (!open) return
+    if (project) {
+      setTitle(project.title)
+      setType(project.type)
+      setAuthor(project.author ?? '')
+      setLanguage(project.language)
+      setGenre(project.genre ?? '')
+      setLogline(project.logline ?? '')
+      setTargetWords(project.targetWords ? String(project.targetWords) : '')
+      setDeadline(project.deadline ?? '')
+    } else {
+      setTitle('')
+      setType('novel')
+      setAuthor('')
+      setLanguage(defaultLanguage)
+      setGenre('')
+      setLogline('')
+      setTargetWords('')
+      setDeadline('')
+    }
+  }, [open, project, defaultLanguage])
 
   const submit = async () => {
     setBusy(true)
-    const color = ACCENT_PALETTE[Math.floor(Math.random() * ACCENT_PALETTE.length)]
-    const project = await createProject({
-      title: title || 'Untitled',
-      type,
+    const meta = {
+      title: title.trim() || 'Untitled',
       author,
       language,
       genre,
       logline,
-      color,
       deadline: deadline || undefined,
-      targetWords: targetWords ? Number(targetWords) : undefined,
-    })
+      targetWords: targetWords ? Number(targetWords) : 0,
+    }
+    if (project) {
+      await updateProject(project.id, meta)
+      setBusy(false)
+      onClose()
+      return
+    }
+    const color = ACCENT_PALETTE[Math.floor(Math.random() * ACCENT_PALETTE.length)]
+    const created = await createProject({ ...meta, type, color, targetWords: targetWords ? Number(targetWords) : undefined })
     setBusy(false)
-    reset()
-    onCreated(project)
+    onClose()
+    onCreated?.(created)
   }
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="New project"
-      description="Pick a format — Parchment sets up a sensible structure you can reshape."
+      title={editing ? 'Project details' : 'New project'}
+      description={editing ? 'Update the title, deadline, target and other details.' : 'Pick a format — Parchment sets up a sensible structure you can reshape.'}
       size="lg"
       footer={
         <>
@@ -71,7 +94,7 @@ export function NewProjectModal({
             Cancel
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            Create project
+            {editing ? 'Save changes' : 'Create project'}
           </Button>
         </>
       }
@@ -81,28 +104,30 @@ export function NewProjectModal({
           <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Name of Your Work" />
         </Field>
 
-        <div>
-          <span className="label-text mb-2 block">Format</span>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {PROJECT_TYPE_ORDER.map((t) => {
-              const info = PROJECT_TYPES[t]
-              return (
-                <button
-                  key={t}
-                  onClick={() => setType(t)}
-                  className={cn(
-                    'flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition-all',
-                    type === t ? 'border-accent bg-accent/10 ring-1 ring-accent/30' : 'border-border hover:border-accent/40 hover:bg-surface-2',
-                  )}
-                >
-                  <ProjectIcon type={t} size={18} className={type === t ? 'text-accent' : 'text-muted'} />
-                  <span className="text-sm font-medium">{info.label}</span>
-                  <span className="text-[11px] leading-tight text-muted">{info.structure}</span>
-                </button>
-              )
-            })}
+        {!editing && (
+          <div>
+            <span className="label-text mb-2 block">Format</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {PROJECT_TYPE_ORDER.map((t) => {
+                const info = PROJECT_TYPES[t]
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setType(t)}
+                    className={cn(
+                      'flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition-all',
+                      type === t ? 'border-accent bg-accent/10 ring-1 ring-accent/30' : 'border-border hover:border-accent/40 hover:bg-surface-2',
+                    )}
+                  >
+                    <ProjectIcon type={t} size={18} className={type === t ? 'text-accent' : 'text-muted'} />
+                    <span className="text-sm font-medium">{info.label}</span>
+                    <span className="text-[11px] leading-tight text-muted">{info.structure}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <Field label="Author">
@@ -129,8 +154,8 @@ export function NewProjectModal({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Word target" hint="Leave blank for the format default">
-            <Input type="number" value={targetWords} onChange={(e) => setTargetWords(e.target.value)} placeholder="e.g. 80000" />
+          <Field label="Word target" hint={editing ? 'Leave blank to clear' : 'Leave blank for the format default'}>
+            <Input type="number" min={0} value={targetWords} onChange={(e) => setTargetWords(e.target.value)} placeholder="e.g. 80000" />
           </Field>
           <Field label="Deadline" hint="Optional target date">
             <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />

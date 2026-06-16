@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ChevronRight, Plus, MoreHorizontal, CircleDot, Pin, FileDown } from 'lucide-react'
 import { db } from '@/data/db'
@@ -16,7 +16,7 @@ import {
   isDocument,
 } from '@/data/repo'
 import { runExportNode } from '@/features/export/exporters'
-import { buildForest, type TreeItem, subtreeWordCount } from '@/lib/tree'
+import { buildForest, manuscriptNodes, type TreeItem, subtreeWordCount } from '@/lib/tree'
 import { NODE_STATUSES, NODE_STATUS_ORDER } from '@/lib/constants'
 import type { DocType, NodeStatus, NodeType, Project, TreeNode } from '@/types'
 import { NodeIcon } from './nodeIcons'
@@ -38,10 +38,12 @@ export function Binder({
   onSelect: (node: TreeNode) => void
 }) {
   const allNodes = useLiveQuery(() => db.nodes.where('projectId').equals(project.id).toArray(), [project.id]) ?? []
-  const nodes = allNodes.filter((n) => !n.deletedAt)
+  const liveNodes = allNodes.filter((n) => !n.deletedAt)
+  const nodes = manuscriptNodes(liveNodes)
   const forest = buildForest(nodes)
   const pinSort = (a: TreeItem, b: TreeItem) => Number(!!b.pinned) - Number(!!a.pinned)
   const [renaming, setRenaming] = useState<string | null>(null)
+  const cancelRename = useRef(false)
   const [drag, setDrag] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<{ id: string; pos: DropPos } | null>(null)
   const toast = useUI((s) => s.toast)
@@ -66,13 +68,18 @@ export function Binder({
     if (!target) return
     let parentId: string | null
     let siblings: TreeNode[]
+    // Index against the FULL (unfiltered) sibling order so it matches what moveNode
+    // reorders — otherwise a hidden notes-folder among the siblings shifts the drop.
     if (pos === 'inside') {
       parentId = target.id
-      siblings = nodes.filter((n) => n.parentId === target.id && n.id !== drag).sort((a, b) => a.order - b.order)
+      siblings = liveNodes.filter((n) => n.parentId === target.id && n.id !== drag).sort((a, b) => a.order - b.order)
       await moveNode(drag, parentId, siblings.length)
+      // Expand the container so the moved child is visible — otherwise it silently
+      // "disappears" into a collapsed parent with no feedback.
+      if (target.collapsed) await toggleCollapse(target.id, false)
     } else {
       parentId = target.parentId
-      siblings = nodes.filter((n) => n.parentId === parentId && n.id !== drag).sort((a, b) => a.order - b.order)
+      siblings = liveNodes.filter((n) => n.parentId === parentId && n.id !== drag).sort((a, b) => a.order - b.order)
       const idx = siblings.findIndex((s) => s.id === targetId)
       await moveNode(drag, parentId, pos === 'before' ? idx : idx + 1)
     }
@@ -87,9 +94,6 @@ export function Binder({
       { label: 'Scene', icon: <NodeIcon type="scene" size={15} />, onClick: () => fn('scene') },
       { label: 'Part / Act', icon: <NodeIcon type="part" size={15} />, onClick: () => fn('part') },
       { label: 'Folder', icon: <NodeIcon type="folder" size={15} />, onClick: () => fn('folder') },
-      { separator: true, label: '' },
-      { label: 'Note', icon: <NodeIcon type="note" size={15} />, onClick: () => fn('note') },
-      { label: 'Research', icon: <NodeIcon type="research" size={15} />, onClick: () => fn('research') },
     ]
   }
 
@@ -135,6 +139,8 @@ export function Binder({
   }
 
   const renderRow = (item: TreeItem, depth: number) => {
+    // Captured from this row's <Menu> trigger so a right-click can open the very same dropdown.
+    let openRowMenu: (() => void) | null = null
     const isSel = item.id === selectedId
     const container = isContainer(item.type) || item.children.length > 0
     const status = NODE_STATUSES[item.status as NodeStatus] ?? NODE_STATUSES.idea
@@ -148,6 +154,8 @@ export function Binder({
           onDragStart={(e) => {
             setDrag(item.id)
             e.dataTransfer.effectAllowed = 'move'
+            // Setting drag data makes some browsers / the WebView reliably start the drag.
+            e.dataTransfer.setData('text/plain', item.id)
           }}
           onDragOver={(e) => {
             e.preventDefault()
@@ -163,8 +171,13 @@ export function Binder({
           onDragLeave={() => setDropTarget((d) => (d?.id === item.id ? null : d))}
           onDrop={() => handleDrop(item.id, dropTarget?.pos ?? 'after')}
           onClick={() => onSelect(item)}
+          onContextMenu={(e) => {
+            if (renaming === item.id) return // let the rename input keep its native text menu
+            e.preventDefault()
+            openRowMenu?.()
+          }}
           className={cn(
-            'group relative flex cursor-pointer items-center gap-1 rounded-md py-1 pr-1 text-sm transition-colors',
+            'binder-row group relative flex cursor-pointer items-center gap-1 rounded-md py-1 pr-1 text-sm transition-colors',
             isSel ? 'bg-accent/15 text-text' : 'text-text/85 hover:bg-surface-2',
             isDropTarget && dropTarget?.pos === 'inside' && 'ring-1 ring-inset ring-accent/60',
           )}
@@ -194,12 +207,21 @@ export function Binder({
               autoFocus
               defaultValue={item.title}
               onBlur={(e) => {
+                // Escape sets the cancel flag; unmounting fires this blur, so skip the save.
+                if (cancelRename.current) {
+                  cancelRename.current = false
+                  setRenaming(null)
+                  return
+                }
                 renameNode(item.id, e.target.value.trim() || 'Untitled')
                 setRenaming(null)
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                if (e.key === 'Escape') setRenaming(null)
+                if (e.key === 'Escape') {
+                  cancelRename.current = true
+                  ;(e.target as HTMLInputElement).blur()
+                }
               }}
               onClick={(e) => e.stopPropagation()}
               className="min-w-0 flex-1 rounded border border-accent/50 bg-surface px-1 py-0 text-sm outline-none"
@@ -222,18 +244,21 @@ export function Binder({
             align="end"
             items={rowMenu(item)}
             width={210}
-            trigger={({ toggle, ref }) => (
-              <button
-                ref={ref}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toggle()
-                }}
-                className="shrink-0 rounded p-0.5 text-muted opacity-0 transition-opacity hover:bg-border/50 group-hover:opacity-100"
-              >
-                <MoreHorizontal size={15} />
-              </button>
-            )}
+            trigger={({ toggle, ref }) => {
+              openRowMenu = toggle
+              return (
+                <button
+                  ref={ref}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggle()
+                  }}
+                  className="shrink-0 rounded p-0.5 text-muted opacity-0 transition-opacity hover:bg-border/50 group-hover:opacity-100"
+                >
+                  <MoreHorizontal size={15} />
+                </button>
+              )
+            }}
           />
         </div>
         {!item.collapsed && [...item.children].sort(pinSort).map((c) => renderRow(c, depth + 1))}

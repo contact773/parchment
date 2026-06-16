@@ -9,9 +9,12 @@ import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
+import { useUI } from '@/store/useUI'
 import { cn } from '@/lib/utils'
 
 export function CharacterManager({ projectId, selectId }: { projectId: string; selectId?: string }) {
+  const toast = useUI((s) => s.toast)
   const characters = useLiveQuery(() => db.characters.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
   const [selId, setSelId] = useState<string | null>(null)
   useEffect(() => {
@@ -79,7 +82,19 @@ export function CharacterManager({ projectId, selectId }: { projectId: string; s
             }
           />
         ) : (
-          <CharacterDetail key={selected.id} character={selected} others={characters} onDelete={() => { deleteCharacter(selected.id); setSelId(null) }} onSelect={setSelId} />
+          <CharacterDetail
+            key={selected.id}
+            character={selected}
+            others={characters}
+            onDelete={async () => {
+              if (await confirmDialog({ title: 'Delete character?', message: `Delete “${selected.name}”? This permanently removes their profile and can't be undone.`, confirmLabel: 'Delete', danger: true })) {
+                await deleteCharacter(selected.id)
+                setSelId(null)
+                toast('Character deleted', 'info')
+              }
+            }}
+            onSelect={setSelId}
+          />
         )}
       </div>
     </div>

@@ -19,6 +19,7 @@ import type { AIProviderId, LanguageCode } from '@/types'
 import { LANGUAGES, LANGUAGE_ORDER } from '@/lib/constants'
 import { ThemePanel } from '@/features/themes/ThemePanel'
 import { exportFullBackup, importBackup } from '@/features/export/backup'
+import { isDesktop, openFileNative } from '@/lib/desktop'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Switch } from '@/components/ui/misc'
@@ -126,8 +127,8 @@ function WritingSettings() {
       <Row label="Spellcheck" desc="Underline misspellings as you write.">
         <Switch checked={settings.spellcheckEnabled} onChange={(v) => setSettings({ spellcheckEnabled: v })} />
       </Row>
-      <Row label="Autosave" desc="Save changes automatically while you type.">
-        <Switch checked={settings.autosave} onChange={(v) => setSettings({ autosave: v })} />
+      <Row label="Autosave" desc="Your work saves automatically as you type. Press ⌘/Ctrl+S to save right now.">
+        <span className="text-xs font-medium text-success">Always on</span>
       </Row>
       <Row label="Default focus mode">
         <Select value={settings.focusMode} onChange={(e) => setSettings({ focusMode: e.target.value as typeof settings.focusMode })} className="w-44">
@@ -137,7 +138,7 @@ function WritingSettings() {
         </Select>
       </Row>
       <Row label="Daily word goal" desc="Your target words per day.">
-        <Input type="number" value={dailyGoal} onChange={(e) => setDailyGoal(Number(e.target.value))} className="w-28" />
+        <Input type="number" min={0} step={50} value={dailyGoal} onChange={(e) => setDailyGoal(Number(e.target.value))} className="w-28" />
       </Row>
     </div>
   )
@@ -148,7 +149,7 @@ const PROVIDERS: { id: AIProviderId; label: string; needsKey: boolean; modelHint
   { id: 'openai', label: 'OpenAI', needsKey: true, modelHint: 'gpt-4o-mini' },
   { id: 'anthropic', label: 'Anthropic (Claude)', needsKey: true, modelHint: 'claude-opus-4-8' },
   { id: 'gemini', label: 'Google Gemini', needsKey: true, modelHint: 'gemini-1.5-flash' },
-  { id: 'ollama', label: 'Ollama (local server)', needsKey: false, modelHint: 'llama3.1', note: 'Runs against your local Ollama server.' },
+  { id: 'ollama', label: 'Ollama (local, recommended)', needsKey: false, modelHint: 'llama3.1:8b', note: 'Runs fully offline against your local Ollama server. Install Ollama from ollama.com, then run:  ollama pull llama3.1:8b' },
 ]
 
 function AssistantSettings() {
@@ -160,7 +161,7 @@ function AssistantSettings() {
     <div className="space-y-4">
       <SectionTitle
         title="Story Assistant"
-        desc="The assistant works offline with no setup. Connect a model for richer, context-aware suggestions. Keys are stored only on this device."
+        desc="Defaults to a local Ollama model (llama3.1:8b) — private, offline and free. Install Ollama to use it, or switch to OpenAI, Anthropic or Gemini. If no model is reachable, Parchment falls back to its built-in offline assistant. Keys are stored only on this device."
       />
       <Field label="Provider">
         <Select value={ai.provider} onChange={(e) => setAI({ provider: e.target.value as AIProviderId })}>
@@ -278,8 +279,10 @@ function DataSettings() {
 
   const clearAll = async () => {
     if (!confirm('Delete ALL projects and content from this device? This cannot be undone. Export a backup first!')) return
-    await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots], async () => {
-      await Promise.all([db.projects.clear(), db.nodes.clear(), db.characters.clear(), db.locations.clear(), db.threads.clear(), db.snapshots.clear()])
+    // Clear every table (including worldElements + maps, and any added later) so
+    // nothing private is silently left behind in IndexedDB.
+    await db.transaction('rw', db.tables, async () => {
+      await Promise.all(db.tables.map((t) => t.clear()))
     })
     toast('All projects deleted', 'info')
   }
@@ -310,7 +313,23 @@ function DataSettings() {
             e.target.value = ''
           }}
         />
-        <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            if (isDesktop()) {
+              const f = await openFileNative([{ name: 'Parchment backup', extensions: ['json'] }])
+              if (!f) return
+              try {
+                const res = await importBackup(f)
+                toast(res.kind === 'full' ? `Restored ${res.projects} project(s)` : 'Project imported', 'success')
+              } catch (err) {
+                toast(`Import failed: ${(err as Error).message}`, 'error')
+              }
+            } else {
+              fileRef.current?.click()
+            }
+          }}
+        >
           <Upload size={15} /> Import
         </Button>
       </Row>

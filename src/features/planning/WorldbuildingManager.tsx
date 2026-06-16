@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Trash2, Globe2 } from 'lucide-react'
+import { Plus, Trash2, Globe2, Map as MapIcon } from 'lucide-react'
 import type { WorldCategory, WorldElement } from '@/types'
 import { db } from '@/data/db'
 import { createWorldElement, deleteWorldElement, updateWorldElement } from '@/data/repo'
@@ -9,11 +9,16 @@ import { AutoInput, AutoSelect, AutoTextarea } from '@/components/ui/Auto'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
 import { EmptyState } from '@/components/ui/misc'
+import { confirmDialog } from '@/components/ui/confirm'
+import { useUI } from '@/store/useUI'
+import { WorldMapEditor } from './WorldMapEditor'
 import { cn } from '@/lib/utils'
 
 export function WorldbuildingManager({ projectId }: { projectId: string }) {
+  const toast = useUI((s) => s.toast)
   const elements = useLiveQuery(() => db.worldElements.where('projectId').equals(projectId).sortBy('order'), [projectId]) ?? []
   const [selId, setSelId] = useState<string | null>(null)
+  const [tab, setTab] = useState<'lore' | 'map'>('lore')
   const selected = elements.find((e) => e.id === selId) ?? elements[0] ?? null
 
   const add = async (category: WorldCategory) => {
@@ -24,7 +29,27 @@ export function WorldbuildingManager({ projectId }: { projectId: string }) {
   const byCat = WORLD_CATEGORY_ORDER.map((cat) => ({ cat, items: elements.filter((e) => e.category === cat) })).filter((g) => g.items.length)
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-1 border-b border-border px-3 py-2">
+        <button
+          onClick={() => setTab('lore')}
+          className={cn('rounded-md px-3 py-1.5 text-sm font-medium transition-colors', tab === 'lore' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-text')}
+        >
+          <Globe2 size={14} className="mr-1.5 inline" /> Lore
+        </button>
+        <button
+          onClick={() => setTab('map')}
+          className={cn('rounded-md px-3 py-1.5 text-sm font-medium transition-colors', tab === 'map' ? 'bg-accent/15 text-accent' : 'text-muted hover:text-text')}
+        >
+          <MapIcon size={14} className="mr-1.5 inline" /> Map
+        </button>
+      </div>
+      {tab === 'map' ? (
+        <div className="min-h-0 flex-1">
+          <WorldMapEditor projectId={projectId} />
+        </div>
+      ) : (
+      <div className="flex min-h-0 flex-1">
       <aside className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="flex items-center gap-2 font-serif text-lg font-semibold text-ink">
@@ -73,9 +98,21 @@ export function WorldbuildingManager({ projectId }: { projectId: string }) {
             }
           />
         ) : (
-          <WorldDetail key={selected.id} element={selected} onDelete={() => { deleteWorldElement(selected.id); setSelId(null) }} />
+          <WorldDetail
+            key={selected.id}
+            element={selected}
+            onDelete={async () => {
+              if (await confirmDialog({ title: 'Delete element?', message: `Delete “${selected.name}”? This can't be undone.`, confirmLabel: 'Delete', danger: true })) {
+                await deleteWorldElement(selected.id)
+                setSelId(null)
+                toast('Element deleted', 'info')
+              }
+            }}
+          />
         )}
       </div>
+      </div>
+      )}
     </div>
   )
 }
