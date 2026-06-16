@@ -46,8 +46,46 @@ export function orderedDocuments(nodes: TreeNode[], compileOnly = true): FlatIte
     (f) =>
       f.node.type !== 'folder' &&
       f.node.type !== 'part' &&
+      f.node.type !== 'chapter' &&
       (!compileOnly || f.node.meta.includeInCompile !== false),
   )
+}
+
+const isNoteType = (t: TreeNode['type']) => t === 'note' || t === 'research'
+const isContainerType = (t: TreeNode['type']) => t === 'folder' || t === 'part' || t === 'chapter'
+
+/**
+ * Nodes for the manuscript binder: hides note/research documents and any container
+ * whose entire subtree is notes (e.g. the legacy auto "Notes" folder), so notes live
+ * only in the Notes tab — not in the left sidebar. Empty manuscript folders are kept.
+ */
+export function manuscriptNodes(nodes: TreeNode[]): TreeNode[] {
+  const byParent = new Map<string | null, TreeNode[]>()
+  nodes.forEach((n) => {
+    const a = byParent.get(n.parentId) ?? []
+    a.push(n)
+    byParent.set(n.parentId, a)
+  })
+  const hasManuscriptDesc = (id: string): boolean => {
+    for (const k of byParent.get(id) ?? []) {
+      if (isNoteType(k.type)) continue
+      if (!isContainerType(k.type)) return true
+      if (hasManuscriptDesc(k.id)) return true
+    }
+    return false
+  }
+  const hasNoteDesc = (id: string): boolean => {
+    for (const k of byParent.get(id) ?? []) {
+      if (isNoteType(k.type)) return true
+      if (isContainerType(k.type) && hasNoteDesc(k.id)) return true
+    }
+    return false
+  }
+  return nodes.filter((n) => {
+    if (isNoteType(n.type)) return false
+    if (isContainerType(n.type) && hasNoteDesc(n.id) && !hasManuscriptDesc(n.id)) return false
+    return true
+  })
 }
 
 /** Count direct + nested document words under a node id. */

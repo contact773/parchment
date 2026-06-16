@@ -16,6 +16,7 @@ import type {
   Snapshot,
   TreeNode,
   WorldElement,
+  WorldMap,
 } from '@/types'
 import { PROJECT_TYPES } from '@/lib/constants'
 
@@ -23,7 +24,10 @@ const now = () => Date.now()
 
 export const emptyDoc = (): DocContent => ({ type: 'doc', content: [{ type: 'paragraph' }] })
 
-const CONTAINER_TYPES: NodeType[] = ['folder', 'part']
+// Chapters are containers (they hold scenes); a chapter is not itself a writable
+// page. Any legacy prose typed directly into a chapter is moved into a scene by
+// migrateChapterContentToScenes() on startup.
+const CONTAINER_TYPES: NodeType[] = ['folder', 'part', 'chapter']
 
 export function isContainer(type: NodeType): boolean {
   return CONTAINER_TYPES.includes(type)
@@ -109,13 +113,14 @@ export async function touchProject(id: string): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements], async () => {
+  await db.transaction('rw', [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements, db.maps], async () => {
     await db.nodes.where('projectId').equals(id).delete()
     await db.characters.where('projectId').equals(id).delete()
     await db.locations.where('projectId').equals(id).delete()
     await db.threads.where('projectId').equals(id).delete()
     await db.snapshots.where('projectId').equals(id).delete()
     await db.worldElements.where('projectId').equals(id).delete()
+    await db.maps.where('projectId').equals(id).delete()
     await db.projects.delete(id)
   })
 }
@@ -136,6 +141,7 @@ export async function duplicateProject(id: string): Promise<Project | null> {
   const threads = await db.threads.where('projectId').equals(id).toArray()
   const snaps = await db.snapshots.where('projectId').equals(id).toArray()
   const elems = await db.worldElements.where('projectId').equals(id).toArray()
+  const maps = await db.maps.where('projectId').equals(id).toArray()
 
   // Remap node ids while preserving parent relationships.
   const idMap = new Map<string, string>()
@@ -149,7 +155,7 @@ export async function duplicateProject(id: string): Promise<Project | null> {
 
   await db.transaction(
     'rw',
-    [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements],
+    [db.projects, db.nodes, db.characters, db.locations, db.threads, db.snapshots, db.worldElements, db.maps],
     async () => {
       await db.projects.add(copy)
       await db.nodes.bulkAdd(newNodes)
@@ -162,6 +168,7 @@ export async function duplicateProject(id: string): Promise<Project | null> {
       if (snaps.length)
         await db.snapshots.bulkAdd(snaps.map((s) => ({ ...s, id: uid(), projectId: newId, nodeId: idMap.get(s.nodeId) ?? s.nodeId })))
       if (elems.length) await db.worldElements.bulkAdd(elems.map((e) => ({ ...e, id: uid(), projectId: newId })))
+      if (maps.length) await db.maps.bulkAdd(maps.map((m) => ({ ...m, id: uid(), projectId: newId })))
     },
   )
   return copy
@@ -207,7 +214,7 @@ export async function createNode(input: NewNodeInput): Promise<TreeNode> {
     projectId: input.projectId,
     parentId: input.parentId,
     type: input.type,
-    title: input.title ?? defaultTitle(input.type),
+    title: input.title ?? (input.type === 'chapter' ? await nextChapterTitle(input.projectId) : defaultTitle(input.type)),
     order,
     collapsed: false,
     synopsis: input.synopsis ?? '',
@@ -246,6 +253,62 @@ function defaultTitle(type: NodeType): string {
     default:
       return 'New Folder'
   }
+}
+
+const ONES = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+function numberToWords(n: number): string {
+  if (n < 0 || n >= 100) return String(n)
+  if (n < 20) return ONES[n]
+  const t = Math.floor(n / 10)
+  const o = n % 10
+  return TENS[t] + (o ? `-${ONES[o]}` : '')
+}
+
+function wordToNumber(s: string): number | null {
+  const w = s.trim().toLowerCase()
+  const oneIdx = ONES.findIndex((x) => x.toLowerCase() === w)
+  if (oneIdx >= 0) return oneIdx
+  const tenIdx = TENS.findIndex((x) => x && x.toLowerCase() === w)
+  if (tenIdx > 0) return tenIdx * 10
+  const parts = w.split(/[\s-]+/)
+  if (parts.length === 2) {
+    const t = TENS.findIndex((x) => x && x.toLowerCase() === parts[0])
+    const o = ONES.findIndex((x) => x.toLowerCase() === parts[1])
+    if (t > 0 && o > 0) return t * 10 + o
+  }
+  return null
+}
+
+/**
+ * Generate the next chapter title, matching how existing chapters are numbered:
+ * "Chapter Three" if they spell numbers out, "Chapter 3" if they use digits.
+ */
+export async function nextChapterTitle(projectId: string): Promise<string> {
+  const all = await db.nodes.where('projectId').equals(projectId).toArray()
+  const chapters = all.filter((n) => n.type === 'chapter' && !n.deletedAt)
+  let useDigits = false
+  let maxNum = 0
+  let parsedAny = false
+  for (const c of chapters) {
+    const m = c.title.match(/^chapter\s+(.+)$/i)
+    if (!m) continue
+    const token = m[1].trim()
+    let num: number | null = null
+    if (/^\d+$/.test(token)) {
+      num = parseInt(token, 10)
+      useDigits = true
+    } else {
+      num = wordToNumber(token)
+    }
+    if (num !== null) {
+      parsedAny = true
+      maxNum = Math.max(maxNum, num)
+    }
+  }
+  const next = (parsedAny ? maxNum : chapters.length) + 1
+  return `Chapter ${useDigits ? next : numberToWords(next)}`
 }
 
 export async function updateNode(id: string, patch: Partial<TreeNode>): Promise<void> {
@@ -473,7 +536,6 @@ function structureFor(type: ProjectType, docType: DocType): StructSpec[] {
           title: 'Chapter One',
           children: [{ type: 'scene', title: 'Opening Scene', docType, synopsis: 'Establish the world and the hook.' }],
         },
-        { type: 'folder', title: 'Notes', children: [{ type: 'note', title: 'Premise & Themes' }] },
       ]
     case 'short-story':
       return [{ type: 'scene', title: 'The Story', docType, synopsis: 'One sitting, one arc.' }]
@@ -535,6 +597,38 @@ async function createDefaultStructure(project: Project): Promise<void> {
   for (let i = 0; i < specs.length; i++) await create(specs[i], null, i)
 }
 
+let chapterMigrationRan = false
+
+/**
+ * One-time data fix for the chapters-are-containers model: move any prose typed
+ * directly into a chapter (from when chapters were writable pages) into a new
+ * scene at the top of that chapter, then clear the chapter's own content — so the
+ * text stays editable and counted. Idempotent and guarded to run at most once per
+ * session; only touches chapters that still hold text.
+ */
+export async function migrateChapterContentToScenes(): Promise<void> {
+  if (chapterMigrationRan) return
+  chapterMigrationRan = true
+  const all = await db.nodes.toArray()
+  const chapters = all.filter((n) => n.type === 'chapter' && !n.deletedAt && (n.text ?? '').trim().length > 0)
+  for (const ch of chapters) {
+    const siblings = all.filter((n) => n.parentId === ch.id)
+    const minOrder = siblings.length ? Math.min(...siblings.map((s) => s.order)) : 0
+    const firstWords = (ch.text ?? '').trim().split(/\s+/).slice(0, 6).join(' ')
+    const title = firstWords ? (firstWords.length > 42 ? `${firstWords.slice(0, 42)}…` : firstWords) : 'Scene'
+    await createNode({
+      projectId: ch.projectId,
+      parentId: ch.id,
+      type: 'scene',
+      title,
+      docType: ch.docType ?? 'prose',
+      content: ch.content ?? null,
+      order: minOrder - 1,
+    })
+    await db.nodes.update(ch.id, { content: null, text: '', wordCount: 0, updatedAt: now() })
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Codex: characters, locations, threads
 // ──────────────────────────────────────────────────────────────────────────
@@ -572,7 +666,27 @@ export async function modifyCharacter(id: string, recipe: (c: Character) => void
 }
 
 export async function deleteCharacter(id: string): Promise<void> {
-  await db.characters.delete(id)
+  const c = await db.characters.get(id)
+  await db.transaction('rw', [db.characters, db.nodes], async () => {
+    await db.characters.delete(id)
+    if (!c) return
+    // Drop relationships in other characters that pointed at this one (no dangles).
+    await db.characters
+      .where('projectId')
+      .equals(c.projectId)
+      .modify((other) => {
+        if (other.relationships?.some((r) => r.targetId === id)) {
+          other.relationships = other.relationships.filter((r) => r.targetId !== id)
+        }
+      })
+    // Unlink from any scene's character list.
+    await db.nodes
+      .where('projectId')
+      .equals(c.projectId)
+      .modify((n) => {
+        if (n.meta?.characterIds?.includes(id)) n.meta.characterIds = n.meta.characterIds.filter((x) => x !== id)
+      })
+  })
 }
 
 export async function createLocation(projectId: string, patch: Partial<Location> = {}): Promise<Location> {
@@ -596,7 +710,18 @@ export async function updateLocation(id: string, patch: Partial<Location>): Prom
 }
 
 export async function deleteLocation(id: string): Promise<void> {
-  await db.locations.delete(id)
+  const l = await db.locations.get(id)
+  await db.transaction('rw', [db.locations, db.nodes], async () => {
+    await db.locations.delete(id)
+    if (!l) return
+    // Clear the scene→location link wherever it pointed here.
+    await db.nodes
+      .where('projectId')
+      .equals(l.projectId)
+      .modify((n) => {
+        if (n.meta?.locationId === id) n.meta.locationId = undefined
+      })
+  })
 }
 
 export async function createThread(projectId: string, patch: Partial<PlotThread> = {}): Promise<PlotThread> {
@@ -718,4 +843,34 @@ export async function updateWorldElement(id: string, patch: Partial<WorldElement
 
 export async function deleteWorldElement(id: string): Promise<void> {
   await db.worldElements.delete(id)
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// World map
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Return the project's world map, creating an empty one on first access. */
+export async function getOrCreateMap(projectId: string): Promise<WorldMap> {
+  const existing = await db.maps.where('projectId').equals(projectId).first()
+  if (existing) return existing
+  const ts = now()
+  const map: WorldMap = {
+    id: uid(),
+    projectId,
+    name: 'World Map',
+    width: 1000,
+    height: 640,
+    background: '#cfe3ef',
+    regions: [],
+    markers: [],
+    order: 0,
+    createdAt: ts,
+    updatedAt: ts,
+  }
+  await db.maps.add(map)
+  return map
+}
+
+export async function updateMap(id: string, patch: Partial<WorldMap>): Promise<void> {
+  await db.maps.update(id, { ...patch, updatedAt: now() })
 }

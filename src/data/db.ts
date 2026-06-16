@@ -7,6 +7,7 @@ import type {
   Snapshot,
   TreeNode,
   WorldElement,
+  WorldMap,
 } from '@/types'
 
 /**
@@ -22,6 +23,7 @@ export class ParchmentDB extends Dexie {
   threads!: Table<PlotThread, string>
   snapshots!: Table<Snapshot, string>
   worldElements!: Table<WorldElement, string>
+  maps!: Table<WorldMap, string>
 
   constructor() {
     super('parchment')
@@ -35,6 +37,9 @@ export class ParchmentDB extends Dexie {
     })
     this.version(2).stores({
       worldElements: 'id, projectId, category, order',
+    })
+    this.version(3).stores({
+      maps: 'id, projectId, order',
     })
   }
 }

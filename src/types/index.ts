@@ -196,6 +196,58 @@ export interface Location {
   updatedAt: number
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// World map (visual world-builder)
+// ──────────────────────────────────────────────────────────────────────────
+
+export interface MapPoint {
+  x: number
+  y: number
+}
+
+/** continent = a landmass; country = a subdivision of one (e.g. created by a cut). */
+export type RegionKind = 'continent' | 'country'
+/** city = a settlement; place = a mountain range / point of interest. */
+export type MarkerKind = 'city' | 'place'
+
+/** A landmass / region drawn on the world map. */
+export interface MapRegion {
+  id: string
+  name: string
+  color: string
+  kind?: RegionKind
+  /** Polygon vertices in map coordinate space; rendered as a smooth closed blob. */
+  points: MapPoint[]
+}
+
+/** A labelled marker (city / place) on the world map. */
+export interface MapMarker {
+  id: string
+  name: string
+  x: number
+  y: number
+  color: string
+  kind?: MarkerKind
+  /** Optional link to a Location codex entry. */
+  locationId?: string
+}
+
+export interface WorldMap {
+  id: string
+  projectId: string
+  name: string
+  /** Map coordinate space; the SVG viewBox is "0 0 width height". */
+  width: number
+  height: number
+  /** Ocean / background fill color. */
+  background: string
+  regions: MapRegion[]
+  markers: MapMarker[]
+  order: number
+  createdAt: number
+  updatedAt: number
+}
+
 export type PlotThreadStatus = 'open' | 'developing' | 'resolved'
 
 export interface PlotThread {

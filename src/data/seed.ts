@@ -62,7 +62,7 @@ export async function seedSamples(): Promise<void> {
     })
   }
   if (ch1) {
-    const ch2 = await createNode({ projectId: novel.id, parentId: null, type: 'chapter', title: 'Chapter Two', docType: 'prose', order: 1 })
+    const ch2 = await createNode({ projectId: novel.id, parentId: null, type: 'chapter', title: 'Chapter Two', docType: 'prose', order: 0.5 })
     const s2 = await createNode({ projectId: novel.id, parentId: ch2.id, type: 'scene', title: 'Stairs', docType: 'prose' })
     await saveNodeContent(s2.id, NOVEL_CH2)
     await db.nodes.update(s2.id, { synopsis: 'Mara wakes having dreamed of the climb.', status: 'outline' })
