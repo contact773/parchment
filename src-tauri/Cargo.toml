@@ -16,8 +16,14 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
+# Desktop-only: focus the existing window instead of opening a second instance
+# (two windows on the same IndexedDB would risk last-write-wins data loss).
+tauri-plugin-single-instance = "2"
 # Pin transitive `time`: 0.3.48 added `impl From<HourBase> for <HourBase as ModifierValue>::Type`,
 # which current rustc's coherence checker can't normalize — producing spurious E0119 conflicts in
 # `cookie` and `tauri-utils`. 0.3.47 is the last good release. Remove once time/rustc resolve this.

@@ -30,6 +30,8 @@
     "active": true,
     "targets": "all",
     "category": "Productivity",
+    "publisher": "GRIN Media",
+    "copyright": "© 2026 GRIN Media",
     "shortDescription": "A local-first writing studio",
     "longDescription": "Parchment — a serious local-first writing studio for novels, scripts, poetry and worldbuilding.",
     "icon": [
