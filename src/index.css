@@ -364,3 +364,21 @@
 /* Native color input cleanup */
 input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
 input[type='color']::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+/* ── Sidebar / binder density (driven by [data-density] on :root) ──────────── */
+[data-density='comfortable'] .binder-row { padding-top: 0.3rem; padding-bottom: 0.3rem; }
+[data-density='cozy'] .binder-row { padding-top: 0.2rem; padding-bottom: 0.2rem; }
+[data-density='compact'] .binder-row { padding-top: 0.05rem; padding-bottom: 0.05rem; }
+[data-density='compact'] .binder-row { font-size: 0.8125rem; }
+
+/* ── Respect reduced-motion: tone down animations/transitions globally ─────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

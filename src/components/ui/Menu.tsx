@@ -44,12 +44,14 @@ export function Menu({
       setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onScroll = () => setOpen(false)
     window.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey)
-    window.addEventListener('scroll', () => setOpen(false), true)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       window.removeEventListener('mousedown', onDown)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open])
 

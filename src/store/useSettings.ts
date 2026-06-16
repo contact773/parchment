@@ -12,9 +12,13 @@ import { BUILTIN_THEMES, DEFAULT_THEME_ID, findBuiltin } from '@/features/themes
 import { todayKey } from '@/lib/format'
 
 const defaultAI: AIConfig = {
-  provider: 'local',
+  // Ships connected to a local Ollama model by default — private, offline, free, and proven
+  // for writing on a regular PC (~8 GB RAM). Users can switch to OpenAI/Anthropic/Gemini in
+  // Settings. If Ollama isn't reachable, the assistant falls back to the built-in offline
+  // heuristic automatically (see AssistantPanel.send / DocumentEditor transform).
+  provider: 'ollama',
   apiKey: '',
-  model: '',
+  model: 'llama3.1:8b',
   baseUrl: 'http://localhost:11434',
 }
 
@@ -131,7 +135,11 @@ export const useSettings = create<SettingsState>()(
           dictionary: { ...s.dictionary, ignored: { ...s.dictionary.ignored, [lang]: s.dictionary.ignored[lang].filter((x) => x !== word) } },
         })),
 
-      setDailyGoal: (n) => set((s) => ({ stats: { ...s.stats, dailyGoal: Math.max(0, Math.round(n)) } })),
+      setDailyGoal: (n) =>
+        set((s) => ({
+          // Ignore non-finite input (empty/NaN field) so the dashboard never shows "NaN".
+          stats: { ...s.stats, dailyGoal: Number.isFinite(n) ? Math.max(0, Math.round(n)) : s.stats.dailyGoal },
+        })),
       recordWordCount: (nodeId, words) => {
         const s = get()
         const baseline = s.stats.lastSnapshotCounts[nodeId] ?? words
@@ -183,7 +191,40 @@ export const useSettings = create<SettingsState>()(
     {
       name: 'parchment-settings',
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      // Deep-merge persisted state over current defaults. Zustand's default merge
+      // is shallow, which would drop any field added after a user's last save
+      // (e.g. a new Settings flag rehydrating as `undefined` → broken UI/feature).
+      merge: (persisted, current) => {
+        const c = current as SettingsState
+        const p = (persisted ?? {}) as Partial<SettingsState>
+        const ps = (p.settings ?? {}) as Partial<Settings>
+        const pd = (p.dictionary ?? {}) as Partial<UserDictionary>
+        return {
+          ...c,
+          ...p,
+          settings: { ...c.settings, ...ps, ai: { ...c.settings.ai, ...(ps.ai ?? {}) } },
+          stats: { ...c.stats, ...(p.stats ?? {}) },
+          dictionary: {
+            added: { ...c.dictionary.added, ...(pd.added ?? {}) },
+            ignored: { ...c.dictionary.ignored, ...(pd.ignored ?? {}) },
+          },
+        }
+      },
+      // v2: graduate the old zero-config 'local' default to the standard local Ollama model.
+      // Only touches users still on the old default — an explicit choice (openai/anthropic/
+      // gemini, or a deliberately-kept 'local') made before this is left untouched.
+      migrate: (persisted: any, version: number) => {
+        if (persisted?.settings?.ai && version < 2 && persisted.settings.ai.provider === 'local') {
+          persisted.settings.ai = {
+            ...persisted.settings.ai,
+            provider: 'ollama',
+            model: persisted.settings.ai.model || 'llama3.1:8b',
+            baseUrl: persisted.settings.ai.baseUrl || 'http://localhost:11434',
+          }
+        }
+        return persisted
+      },
     },
   ),
 )

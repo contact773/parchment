@@ -14,17 +14,23 @@ export function Toaster() {
   const dismiss = useUI((s) => s.dismissToast)
 
   return createPortal(
-    <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-2">
+    <div
+      role="region"
+      aria-label="Notifications"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-2"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
+          role={t.kind === 'error' ? 'alert' : 'status'}
           className={cn(
             'pointer-events-auto flex items-center gap-2.5 rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-panel animate-fade-up',
           )}
         >
           {icons[t.kind]}
           <span className="text-sm text-text">{t.message}</span>
-          <button onClick={() => dismiss(t.id)} className="ml-1 text-muted hover:text-text">
+          <button onClick={() => dismiss(t.id)} aria-label="Dismiss notification" className="ml-1 text-muted hover:text-text">
             <X size={14} />
           </button>
         </div>

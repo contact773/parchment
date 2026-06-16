@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApplyTheme } from '@/hooks/useApplyTheme'
+import { migrateChapterContentToScenes } from '@/data/repo'
 import { Toaster } from '@/components/ui/Toaster'
+import { ConfirmRoot } from '@/components/ui/confirm'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Dashboard } from '@/pages/Dashboard'
 import { Workspace } from '@/pages/Workspace'
@@ -9,6 +12,9 @@ import { HelpPage } from '@/pages/HelpPage'
 
 export function App() {
   useApplyTheme()
+  useEffect(() => {
+    void migrateChapterContentToScenes()
+  }, [])
   return (
     <>
       <ErrorBoundary>
@@ -21,6 +27,7 @@ export function App() {
         </Routes>
       </ErrorBoundary>
       <Toaster />
+      <ConfirmRoot />
     </>
   )
 }
