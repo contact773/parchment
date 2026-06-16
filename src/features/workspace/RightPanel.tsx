@@ -36,7 +36,9 @@ export function RightPanel({
   const tab = useUI((s) => s.rightTab)
   const setTab = useUI((s) => s.setRightTab)
   const characters = useLiveQuery(() => db.characters.where('projectId').equals(project.id).sortBy('order'), [project.id]) ?? []
+  const locations = useLiveQuery(() => db.locations.where('projectId').equals(project.id).sortBy('order'), [project.id]) ?? []
   const threads = useLiveQuery(() => db.threads.where('projectId').equals(project.id).sortBy('order'), [project.id]) ?? []
+  const worldElements = useLiveQuery(() => db.worldElements.where('projectId').equals(project.id).sortBy('order'), [project.id]) ?? []
 
   const docNodes = useMemo(() => allNodes.filter((n) => isDocument(n)), [allNodes])
   const noteNodes = useMemo(() => allNodes.filter((n) => n.type === 'note' || n.type === 'research'), [allNodes])
@@ -61,19 +63,21 @@ export function RightPanel({
       </div>
 
       <div className="min-h-0 flex-1">
-        {tab === 'inspector' && <InspectorPanel node={node} />}
+        {tab === 'inspector' && <InspectorPanel node={node} characters={characters} locations={locations} />}
         {tab === 'assistant' && (
           <AssistantPanel
             project={project}
             node={node}
             docNodes={docNodes}
             characters={characters}
+            locations={locations}
             threads={threads}
+            worldElements={worldElements}
             seed={assistantSeed}
             onSeedConsumed={onSeedConsumed}
           />
         )}
-        {tab === 'notes' && <NotesPanel node={node} noteNodes={noteNodes} onOpen={onOpen} />}
+        {tab === 'notes' && <NotesPanel node={node} noteNodes={noteNodes} projectId={project.id} onOpen={onOpen} />}
         {tab === 'snapshots' && <SnapshotsPanel node={node} />}
       </div>
     </div>

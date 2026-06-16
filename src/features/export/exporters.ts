@@ -1,7 +1,7 @@
-import { saveAs } from 'file-saver'
-import type { Character, Location, PlotThread, Project, TreeNode } from '@/types'
-import { buildManuscript, type Block, type Run } from './blocks'
-import { PROJECT_TYPES } from '@/lib/constants'
+import { saveBlob, type FileFilter } from '@/lib/desktop'
+import type { Character, Location, PlotThread, Project, TreeNode, WorldElement, WorldMap } from '@/types'
+import { buildManuscript, type Block, type Run, type CompileScope } from './blocks'
+import { PROJECT_TYPES, CHARACTER_ROLES, PLOT_THREAD_STATUSES, WORLD_CATEGORIES } from '@/lib/constants'
 
 export type ExportFormat = 'markdown' | 'text' | 'html' | 'json' | 'docx' | 'pdf' | 'fountain' | 'epub'
 
@@ -11,6 +11,117 @@ export interface ExportBundle {
   characters: Character[]
   locations: Location[]
   threads: PlotThread[]
+  worldElements?: WorldElement[]
+  maps?: WorldMap[]
+  /** Which documents to compile (set by runExport). Defaults to 'manuscript'. */
+  scope?: CompileScope
+  /** Append a "Story Bible" (characters/locations/threads/world) to the output. */
+  includeCodex?: boolean
+}
+
+// ── Story bible / codex ──────────────────────────────────────────────────────
+interface CodexField { label: string; value: string }
+interface CodexEntry { title: string; subtitle?: string; fields: CodexField[] }
+interface CodexSection { heading: string; entries: CodexEntry[] }
+
+function buildCodex(bundle: ExportBundle): CodexSection[] {
+  const sections: CodexSection[] = []
+  const fld = (label: string, value?: string | null): CodexField[] =>
+    value && String(value).trim() ? [{ label, value: String(value).trim() }] : []
+  const charName = (id: string) => bundle.characters.find((c) => c.id === id)?.name ?? 'Unknown'
+
+  if (bundle.characters.length) {
+    sections.push({
+      heading: 'Characters',
+      entries: bundle.characters.map((c) => ({
+        title: c.name,
+        subtitle: CHARACTER_ROLES[c.role]?.label,
+        fields: [
+          ...fld('Aliases', c.aliases),
+          ...fld('Summary', c.summary),
+          ...fld('Goal', c.goal),
+          ...fld('Motivation', c.motivation),
+          ...fld('Conflict', c.conflict),
+          ...fld('Arc', c.arc),
+          ...fld('Voice', c.voice),
+          ...fld('Appearance', c.appearance),
+          ...fld('Backstory', c.backstory),
+          ...((c.relationships ?? []).length
+            ? [{ label: 'Relationships', value: (c.relationships ?? []).map((r) => `${r.label} ${charName(r.targetId)}`).join('; ') }]
+            : []),
+          ...fld('Notes', c.notes),
+        ],
+      })),
+    })
+  }
+  if (bundle.locations.length) {
+    sections.push({
+      heading: 'Locations',
+      entries: bundle.locations.map((l) => ({
+        title: l.name,
+        subtitle: l.kind || undefined,
+        fields: [...fld('Description', l.description), ...fld('Atmosphere', l.atmosphere), ...fld('Significance', l.significance), ...fld('Notes', l.notes)],
+      })),
+    })
+  }
+  if (bundle.threads.length) {
+    sections.push({
+      heading: 'Plot threads',
+      entries: bundle.threads.map((t) => ({ title: t.name, subtitle: PLOT_THREAD_STATUSES[t.status]?.label, fields: [...fld('Description', t.description)] })),
+    })
+  }
+  const world = bundle.worldElements ?? []
+  if (world.length) {
+    sections.push({
+      heading: 'Worldbuilding',
+      entries: world.map((w) => ({ title: w.name, subtitle: WORLD_CATEGORIES[w.category]?.label, fields: [...fld('Summary', w.summary), ...fld('Details', w.details), ...fld('Rules', w.rules)] })),
+    })
+  }
+  return sections
+}
+
+function codexMd(bundle: ExportBundle): string {
+  const secs = buildCodex(bundle)
+  if (!secs.length) return ''
+  const out: string[] = ['', '---', '', '# Story Bible', '']
+  for (const s of secs) {
+    out.push(`## ${s.heading}`, '')
+    for (const e of s.entries) {
+      out.push(`### ${e.title}${e.subtitle ? ` — _${e.subtitle}_` : ''}`, '')
+      for (const f of e.fields) out.push(`- **${f.label}:** ${f.value.replace(/\n+/g, ' ')}`)
+      out.push('')
+    }
+  }
+  return out.join('\n')
+}
+
+function codexText(bundle: ExportBundle): string {
+  const secs = buildCodex(bundle)
+  if (!secs.length) return ''
+  const out: string[] = ['', '', 'STORY BIBLE', '===========', '']
+  for (const s of secs) {
+    out.push('', s.heading.toUpperCase(), '-'.repeat(s.heading.length), '')
+    for (const e of s.entries) {
+      out.push(e.subtitle ? `${e.title} (${e.subtitle})` : e.title)
+      for (const f of e.fields) out.push(`  ${f.label}: ${f.value.replace(/\n+/g, ' ')}`)
+      out.push('')
+    }
+  }
+  return out.join('\n')
+}
+
+function codexHtml(bundle: ExportBundle): string {
+  const secs = buildCodex(bundle)
+  if (!secs.length) return ''
+  const parts: string[] = ['<hr/>', '<h1>Story Bible</h1>']
+  for (const s of secs) {
+    parts.push(`<h2>${esc(s.heading)}</h2>`)
+    for (const e of s.entries) {
+      parts.push(`<h3>${esc(e.title)}${e.subtitle ? ` <em style="font-weight:400;color:#777">— ${esc(e.subtitle)}</em>` : ''}</h3>`)
+      for (const f of e.fields) parts.push(`<p style="text-indent:0;margin:0 0 .35rem"><strong>${esc(f.label)}:</strong> ${esc(f.value).replace(/\n/g, '<br/>')}</p>`)
+    }
+  }
+  return parts.join('\n')
 }
 
 export const EXPORT_FORMATS: { id: ExportFormat; label: string; desc: string; ext: string }[] = [
@@ -84,7 +195,7 @@ function blocksMd(blocks: Block[]): string {
 
 function toMarkdown(bundle: ExportBundle): string {
   const { project } = bundle
-  const items = buildManuscript(bundle.nodes)
+  const items = buildManuscript(bundle.nodes, bundle.scope ?? 'manuscript')
   const head = [`# ${project.title}`, project.author ? `_by ${project.author}_` : '', project.logline ? `> ${project.logline}` : '', '', '---', ''].filter((x) => x !== undefined).join('\n')
   const body = items
     .map((it) => {
@@ -97,12 +208,12 @@ function toMarkdown(bundle: ExportBundle): string {
     })
     .filter((x) => x.trim())
     .join('\n\n')
-  return `${head}\n${body}\n`
+  return `${head}\n${body}\n${bundle.includeCodex ? codexMd(bundle) : ''}`
 }
 
 // ── Plain text ───────────────────────────────────────────────────────────
 function toPlainText(bundle: ExportBundle): string {
-  const items = buildManuscript(bundle.nodes)
+  const items = buildManuscript(bundle.nodes, bundle.scope ?? 'manuscript')
   const lines: string[] = [bundle.project.title.toUpperCase()]
   if (bundle.project.author) lines.push(`by ${bundle.project.author}`)
   lines.push('', '')
@@ -117,6 +228,7 @@ function toPlainText(bundle: ExportBundle): string {
       lines.push('')
     }
   }
+  if (bundle.includeCodex) lines.push(codexText(bundle))
   return lines.join('\n')
 }
 
@@ -146,7 +258,7 @@ function blocksHtml(blocks: Block[]): string {
 }
 
 function bodyHtml(bundle: ExportBundle): string {
-  const items = buildManuscript(bundle.nodes)
+  const items = buildManuscript(bundle.nodes, bundle.scope ?? 'manuscript')
   return items
     .map((it) => {
       const parts: string[] = []
@@ -196,12 +308,13 @@ function toHTML(bundle: ExportBundle): string {
   ${project.logline ? `<p style="text-indent:0;font-style:italic;margin-top:2rem">${esc(project.logline)}</p>` : ''}
 </div>
 ${bodyHtml(bundle)}
+${bundle.includeCodex ? codexHtml(bundle) : ''}
 </body></html>`
 }
 
 // ── Fountain (screenplay) ────────────────────────────────────────────────
 function toFountain(bundle: ExportBundle): string {
-  const items = buildManuscript(bundle.nodes)
+  const items = buildManuscript(bundle.nodes, bundle.scope ?? 'manuscript')
   const out: string[] = [`Title: ${bundle.project.title}`, `Author: ${bundle.project.author ?? ''}`, '', '====', '']
   for (const it of items) {
     for (const b of it.blocks) {
@@ -283,7 +396,7 @@ async function toDocxBlob(bundle: ExportBundle): Promise<Blob> {
   }
 
   const { project } = bundle
-  const items = buildManuscript(bundle.nodes)
+  const items = buildManuscript(bundle.nodes, bundle.scope ?? 'manuscript')
   const children: InstanceType<typeof Paragraph>[] = [
     new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 2400, after: 240 }, children: [new TextRun({ text: project.title, bold: true, size: 56 })] }),
   ]
@@ -293,6 +406,20 @@ async function toDocxBlob(bundle: ExportBundle): Promise<Blob> {
   for (const it of items) {
     if (it.heading) children.push(new Paragraph({ heading: headingFor(it.heading.level), children: [new TextRun(it.heading.title)] }))
     children.push(...blocksToDocx(it.blocks, it.sceneBreakBefore))
+  }
+
+  if (bundle.includeCodex) {
+    const secs = buildCodex(bundle)
+    if (secs.length) {
+      children.push(new Paragraph({ pageBreakBefore: true, heading: HeadingLevel.HEADING_1, children: [new TextRun('Story Bible')] }))
+      for (const s of secs) {
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun(s.heading)] }))
+        for (const e of s.entries) {
+          children.push(new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun(e.subtitle ? `${e.title} — ${e.subtitle}` : e.title)] }))
+          for (const f of e.fields) children.push(new Paragraph({ children: [new TextRun({ text: `${f.label}: `, bold: true }), new TextRun(f.value)] }))
+        }
+      }
+    }
   }
 
   const doc = new Document({ creator: 'Parchment', title: project.title, sections: [{ children }] })
@@ -315,7 +442,7 @@ async function toEpubBlob(bundle: ExportBundle): Promise<Blob> {
   const content = `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${project.language}"><head>
 <meta charset="utf-8"/><title>${esc(project.title)}</title><link rel="stylesheet" href="style.css"/></head>
-<body>${bodyHtml(bundle)}</body></html>`
+<body>${bodyHtml(bundle)}${bundle.includeCodex ? codexHtml(bundle) : ''}</body></html>`
   zip.file('OEBPS/content.xhtml', content)
   zip.file('OEBPS/style.css', PRINT_CSS)
   zip.file(
@@ -358,6 +485,8 @@ export function toProjectBackup(bundle: ExportBundle): string {
       characters: bundle.characters,
       locations: bundle.locations,
       threads: bundle.threads,
+      worldElements: bundle.worldElements ?? [],
+      maps: bundle.maps ?? [],
     },
     null,
     2,
@@ -380,44 +509,114 @@ export async function runExportNode(
     subtree.push(node)
     allNodes.filter((n) => n.parentId === id).forEach((c) => stack.push(c.id))
   }
-  return runExport(format, { project, nodes: subtree, characters: [], locations: [], threads: [] })
+  return runExport(format, { project, nodes: subtree, characters: [], locations: [], threads: [] }, 'all')
 }
 
 // ── Orchestrator ─────────────────────────────────────────────────────────
-export async function runExport(format: ExportFormat, bundle: ExportBundle): Promise<string> {
-  const base = slug(bundle.project.title)
-  const isScript = PROJECT_TYPES[bundle.project.type].defaultDocType === 'script'
+const EXPORT_FILTERS: Record<Exclude<ExportFormat, 'pdf'>, FileFilter[]> = {
+  markdown: [{ name: 'Markdown', extensions: ['md'] }],
+  text: [{ name: 'Plain text', extensions: ['txt'] }],
+  html: [{ name: 'HTML', extensions: ['html'] }],
+  json: [{ name: 'Parchment backup', extensions: ['json'] }],
+  fountain: [{ name: 'Fountain', extensions: ['fountain'] }],
+  docx: [{ name: 'Word document', extensions: ['docx'] }],
+  epub: [{ name: 'EPUB', extensions: ['epub'] }],
+}
 
-  switch (format) {
-    case 'markdown':
-      saveAs(new Blob([toMarkdown(bundle)], { type: 'text/markdown;charset=utf-8' }), `${base}.md`)
-      return 'Markdown exported'
-    case 'text':
-      saveAs(new Blob([toPlainText(bundle)], { type: 'text/plain;charset=utf-8' }), `${base}.txt`)
-      return 'Plain text exported'
-    case 'html':
-      saveAs(new Blob([toHTML(bundle)], { type: 'text/html;charset=utf-8' }), `${base}.html`)
-      return 'HTML exported'
-    case 'json':
-      saveAs(new Blob([toProjectBackup(bundle)], { type: 'application/json;charset=utf-8' }), `${base}.parchment.json`)
-      return 'Backup exported'
-    case 'fountain':
-      saveAs(new Blob([toFountain(bundle)], { type: 'text/plain;charset=utf-8' }), `${base}.fountain`)
-      return isScript ? 'Fountain exported' : 'Fountain exported (note: not a script project)'
-    case 'docx':
-      saveAs(await toDocxBlob(bundle), `${base}.docx`)
-      return 'Word document exported'
-    case 'epub':
-      saveAs(await toEpubBlob(bundle), `${base}.epub`)
-      return 'ePub exported'
-    case 'pdf': {
-      const win = window.open('', '_blank')
-      if (!win) return 'Pop-up blocked — allow pop-ups to print'
-      win.document.write(toHTML(bundle))
-      win.document.close()
-      win.focus()
-      setTimeout(() => win.print(), 400)
-      return 'Opening print dialog…'
+/** Render HTML into an off-screen iframe and print it. Avoids window.open (which
+ *  WebView2 and most browsers block as a pop-up) and lets the user "Save as PDF"
+ *  or print from the system dialog. */
+function printViaIframe(html: string): string {
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  Object.assign(iframe.style, { position: 'fixed', left: '-99999px', top: '0', width: '794px', height: '1123px', border: '0' })
+  document.body.appendChild(iframe)
+  const cw = iframe.contentWindow
+  const cdoc = cw?.document
+  if (!cw || !cdoc) {
+    iframe.remove()
+    return 'Could not open the print view'
+  }
+  cdoc.open()
+  cdoc.write(html)
+  cdoc.close()
+  const cleanup = () => {
+    try {
+      iframe.remove()
+    } catch {
+      /* already removed */
     }
   }
+  cw.addEventListener?.('afterprint', cleanup)
+  // Let the WebView lay the document out before invoking print.
+  setTimeout(() => {
+    try {
+      cw.focus()
+      cw.print()
+    } catch {
+      /* ignore */
+    }
+    setTimeout(cleanup, 60_000)
+  }, 350)
+  return 'Opening print dialog…'
+}
+
+export async function runExport(format: ExportFormat, bundle: ExportBundle, scope: CompileScope = 'manuscript'): Promise<string> {
+  bundle = { ...bundle, scope }
+  const base = slug(bundle.project.title) + (scope === 'notes' ? '-notes' : '')
+  const isScript = PROJECT_TYPES[bundle.project.type].defaultDocType === 'script'
+
+  // PDF renders into a hidden iframe and prints it — no pop-up (works in the
+  // desktop WebView and in browsers that block window.open).
+  if (format === 'pdf') {
+    return printViaIframe(toHTML(bundle))
+  }
+
+  let blob: Blob
+  let filename: string
+  let okMsg: string
+  switch (format) {
+    case 'markdown':
+      blob = new Blob([toMarkdown(bundle)], { type: 'text/markdown;charset=utf-8' })
+      filename = `${base}.md`
+      okMsg = 'Markdown exported'
+      break
+    case 'text':
+      blob = new Blob([toPlainText(bundle)], { type: 'text/plain;charset=utf-8' })
+      filename = `${base}.txt`
+      okMsg = 'Plain text exported'
+      break
+    case 'html':
+      blob = new Blob([toHTML(bundle)], { type: 'text/html;charset=utf-8' })
+      filename = `${base}.html`
+      okMsg = 'HTML exported'
+      break
+    case 'json':
+      blob = new Blob([toProjectBackup(bundle)], { type: 'application/json;charset=utf-8' })
+      filename = `${base}.parchment.json`
+      okMsg = 'Backup exported'
+      break
+    case 'fountain':
+      blob = new Blob([toFountain(bundle)], { type: 'text/plain;charset=utf-8' })
+      filename = `${base}.fountain`
+      okMsg = isScript ? 'Fountain exported' : 'Fountain exported (note: not a script project)'
+      break
+    case 'docx':
+      blob = await toDocxBlob(bundle)
+      filename = `${base}.docx`
+      okMsg = 'Word document exported'
+      break
+    case 'epub':
+      blob = await toEpubBlob(bundle)
+      filename = `${base}.epub`
+      okMsg = 'ePub exported'
+      break
+    default: {
+      const _exhaustive: never = format
+      throw new Error(`Unknown export format: ${String(_exhaustive)}`)
+    }
+  }
+
+  const saved = await saveBlob(blob, filename, EXPORT_FILTERS[format])
+  return saved === null ? 'Export cancelled' : okMsg
 }

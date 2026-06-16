@@ -1,4 +1,4 @@
-import type { AIConfig, Character, Project, StoryAnalysis, TreeNode } from '@/types'
+import type { AIConfig, Character, Location, PlotThread, Project, StoryAnalysis, TreeNode, WorldElement } from '@/types'
 import { analyzeText } from '@/lib/text'
 import { checkGrammar, strongerWords, synonymsFor, simplify } from './language'
 
@@ -59,6 +59,9 @@ export interface StoryContext {
   node?: TreeNode | null
   sceneText: string
   characters: Character[]
+  locations?: Location[]
+  threads?: PlotThread[]
+  worldElements?: WorldElement[]
   analysis: StoryAnalysis
 }
 
@@ -95,14 +98,33 @@ function systemPrompt(): string {
 
 function contextBlock(ctx: StoryContext): string {
   const p = ctx.project
+  const clip = (s: string | undefined | null, n: number) => (s && s.trim() ? s.trim().replace(/\s+/g, ' ').slice(0, n) : '')
+  const charById = new Map(ctx.characters.map((c) => [c.id, c.name]))
+  // A richer character line: voice/motivation/arc/relationships when present, so
+  // the assistant can actually honor the codex the author built.
+  const charLine = (c: Character) => {
+    const bits = [
+      `${c.name} (${c.role})`,
+      clip(c.goal, 100) && `wants: ${clip(c.goal, 100)}`,
+      clip(c.motivation, 100) && `because: ${clip(c.motivation, 100)}`,
+      clip(c.arc, 100) && `arc: ${clip(c.arc, 100)}`,
+      clip(c.voice, 100) && `voice: ${clip(c.voice, 100)}`,
+      (c.relationships ?? []).length && `relationships: ${(c.relationships ?? []).map((r) => `${r.label} ${charById.get(r.targetId) ?? '?'}`).join(', ')}`,
+    ].filter(Boolean)
+    return bits.join('; ')
+  }
+  const locs = ctx.locations ?? []
+  const world = ctx.worldElements ?? []
+  const threads = ctx.threads ?? []
   return [
     `PROJECT: "${p.title}" — type: ${p.type}, genre: ${p.genre || insight(ctx, 'genre')}, language: ${p.language}.`,
     p.logline ? `LOGLINE: ${p.logline}` : '',
     `DETECTED — tone: ${insight(ctx, 'tone')}; POV: ${insight(ctx, 'point of view')}; pacing: ${insight(ctx, 'pacing')}; tension: ${insight(ctx, 'tension')}.`,
     `PROTAGONIST: ${insight(ctx, 'protagonist')}. ANTAGONIST: ${insight(ctx, 'antagonist')}.`,
-    ctx.characters.length
-      ? `CHARACTERS: ${ctx.characters.map((c) => `${c.name} (${c.role}${c.goal ? `, wants: ${c.goal}` : ''})`).join('; ')}.`
-      : '',
+    ctx.characters.length ? `CHARACTERS:\n${ctx.characters.slice(0, 12).map((c) => `- ${charLine(c)}`).join('\n')}` : '',
+    locs.length ? `LOCATIONS: ${locs.slice(0, 12).map((l) => `${l.name}${l.kind ? ` (${l.kind})` : ''}${clip(l.significance, 80) ? ` — ${clip(l.significance, 80)}` : ''}`).join('; ')}.` : '',
+    threads.length ? `PLOT THREADS: ${threads.slice(0, 12).map((t) => `${t.name} [${t.status}]`).join('; ')}.` : '',
+    world.length ? `WORLD RULES: ${world.filter((w) => w.rules || w.summary).slice(0, 10).map((w) => `${w.name}: ${clip(w.rules || w.summary, 120)}`).join('; ')}.` : '',
     ctx.node ? `CURRENT DOCUMENT: "${ctx.node.title}" (${ctx.node.docType}).` : '',
     ctx.sceneText ? `CURRENT TEXT (excerpt):\n"""${ctx.sceneText.slice(0, 4000)}"""` : 'No text written yet.',
   ]
@@ -348,7 +370,7 @@ async function callOllama(cfg: AIConfig, messages: ChatMessage[], ctx: StoryCont
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: cfg.model || 'llama3.1',
+      model: cfg.model || 'llama3.1:8b',
       stream: false,
       messages: [{ role: 'system', content: `${systemPrompt()}\n\n${contextBlock(ctx)}` }, ...messages],
     }),

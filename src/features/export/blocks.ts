@@ -95,22 +95,61 @@ export interface ManuscriptItem {
   sceneBreakBefore: boolean
 }
 
-/** Walk the whole project tree into an ordered list of export items. */
-export function buildManuscript(nodes: TreeNode[], compileOnly = true): ManuscriptItem[] {
+export type CompileScope = 'manuscript' | 'notes' | 'all'
+
+const CONTAINER_NODE_TYPES = new Set(['folder', 'part', 'chapter'])
+const NOTE_NODE_TYPES = new Set(['note', 'research'])
+
+/**
+ * Walk the project tree into an ordered list of export items.
+ *
+ * `scope` controls which documents are compiled:
+ *  - 'manuscript' (default): the story — everything except notes/research.
+ *  - 'notes': only note/research documents (exported separately).
+ *  - 'all': everything.
+ *
+ * Containers (folders/parts/chapters) are only emitted when they actually hold
+ * an in-scope document, so excluding notes never leaves an empty "Notes" heading.
+ */
+export function buildManuscript(nodes: TreeNode[], scope: CompileScope = 'manuscript', compileOnly = true): ManuscriptItem[] {
   const flat = flattenForest(buildForest(nodes))
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+
+  const live = (n: TreeNode) => !n.deletedAt && !(compileOnly && n.meta?.includeInCompile === false)
+  const inScope = (n: TreeNode) => {
+    const isNote = NOTE_NODE_TYPES.has(n.type)
+    return scope === 'all' ? true : scope === 'notes' ? isNote : !isNote
+  }
+  const hasOwnContent = (n: TreeNode) => (n.text ?? '').trim().length > 0
+
+  // Keep in-scope content (leaf documents, or containers with their own text),
+  // plus the container ancestors needed to hold them.
+  const keep = new Set<string>()
+  for (const { node } of flat) {
+    if (!live(node) || !inScope(node)) continue
+    const isLeaf = !CONTAINER_NODE_TYPES.has(node.type)
+    if (!isLeaf && !hasOwnContent(node)) continue
+    keep.add(node.id)
+    let pid = node.parentId
+    while (pid && byId.has(pid) && !keep.has(pid)) {
+      const parent = byId.get(pid)!
+      if (!live(parent)) break
+      keep.add(parent.id)
+      pid = parent.parentId
+    }
+  }
+
   const items: ManuscriptItem[] = []
   let prev: TreeNode | null = null
   for (const { node, depth } of flat) {
-    if (node.deletedAt) continue
-    if (compileOnly && node.meta.includeInCompile === false) continue
+    if (!keep.has(node.id)) continue
     const isScene = node.type === 'scene'
-    const isContainer = node.type === 'folder' || node.type === 'part' || node.type === 'chapter'
     const level = Math.min(3, depth + 1) as 1 | 2 | 3
     const sceneBreakBefore = isScene && prev?.type === 'scene' && prev.parentId === node.parentId
     items.push({
       node,
       depth,
-      heading: !isScene ? { level, title: node.title } : isContainer ? { level, title: node.title } : undefined,
+      heading: !isScene ? { level, title: node.title } : undefined,
       blocks: contentToBlocks(node.content),
       sceneBreakBefore,
     })

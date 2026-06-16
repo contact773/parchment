@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles, Send, Loader2, Gauge, Lightbulb, ChevronDown } from 'lucide-react'
-import type { Character, PlotThread, Project, StoryAnalysis, TreeNode } from '@/types'
+import type { Character, Location, PlotThread, Project, StoryAnalysis, TreeNode, WorldElement } from '@/types'
 import { analyzeStory } from './analyzeLocal'
 import { getProvider, localProvider, type ChatMessage, type StoryContext } from './providers'
 import { Markdownish } from './Markdownish'
@@ -26,7 +26,9 @@ export function AssistantPanel({
   node,
   docNodes,
   characters,
+  locations = [],
   threads,
+  worldElements = [],
   seed,
   onSeedConsumed,
 }: {
@@ -34,7 +36,9 @@ export function AssistantPanel({
   node: TreeNode | null
   docNodes: TreeNode[]
   characters: Character[]
+  locations?: Location[]
   threads: PlotThread[]
+  worldElements?: WorldElement[]
   seed?: string
   onSeedConsumed?: () => void
 }) {
@@ -86,6 +90,9 @@ export function AssistantPanel({
       node,
       sceneText: scope === 'node' && node ? node.text ?? '' : docNodes.map((n) => n.text ?? '').join('\n\n'),
       characters,
+      locations,
+      threads,
+      worldElements,
       analysis,
     }
     try {
