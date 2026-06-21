@@ -14,7 +14,9 @@
     "typecheck": "tsc -b --noEmit",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "desktop:build": "tauri build --no-bundle && node scripts/place-exe.mjs",
+    "place-exe": "node scripts/place-exe.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
