@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Sparkles, Send, Loader2, Gauge, Lightbulb, ChevronDown } from 'lucide-react'
+import { Sparkles, Send, Loader2, Gauge, Lightbulb, ChevronDown, Wand2, RefreshCw, AlertTriangle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { Character, Location, PlotThread, Project, StoryAnalysis, TreeNode, WorldElement } from '@/types'
 import { analyzeStory } from './analyzeLocal'
 import { getProvider, localProvider, type ChatMessage, type StoryContext } from './providers'
+import { resolveDocKind, runAdvancedAnalysis, parseAdvanced, DOC_KIND_LABEL, type AdvancedAnalysisResult } from './advancedAnalysis'
 import { Markdownish } from './Markdownish'
 import { Segmented } from '@/components/ui/misc'
 import { IconButton } from '@/components/ui/IconButton'
@@ -20,6 +22,16 @@ const QUICK = [
   { label: 'Possible twist', prompt: 'What twists could work from here?' },
   { label: 'Pacing', prompt: 'How is the pacing, and how could I improve it?' },
 ]
+
+/** Cheap 32-bit FNV-1a hash so the advanced cache key tracks the whole scene text. */
+function fnv1a(s: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(36)
+}
 
 export function AssistantPanel({
   project,
@@ -78,6 +90,39 @@ export function AssistantPanel({
     return p.ready ? p : localProvider
   }, [ai])
 
+  // ── Advanced (LLM) analysis ────────────────────────────────────────────────
+  const navigate = useNavigate()
+  const docKind = resolveDocKind(node, project)
+  const aiReady = provider.id !== 'local' && (provider.id === 'ollama' || !!ai.apiKey)
+  const sceneText = scope === 'node' && node ? node.text ?? '' : docNodes.map((n) => n.text ?? '').join('\n\n')
+  const buildCtx = (): StoryContext => ({ project, node, sceneText, characters, locations, threads, worldElements, analysis })
+  const [adv, setAdv] = useState<{ status: 'idle' | 'loading' | 'result' | 'error'; text?: string }>({ status: 'idle' })
+  const advCache = useRef<Map<string, string>>(new Map())
+  const advKey = `${provider.id}|${ai.model}|${scope}|${scope === 'node' ? node?.id ?? '' : 'project'}|${docKind}|${sceneText.length}:${fnv1a(sceneText)}`
+  const advKeyRef = useRef(advKey)
+  useEffect(() => {
+    advKeyRef.current = advKey
+    const cached = advCache.current.get(advKey)
+    setAdv(cached ? { status: 'result', text: cached } : { status: 'idle' })
+  }, [advKey])
+  async function runAdvanced(force: boolean) {
+    const key = advKey // capture; the panel may switch context mid-request
+    if (!force) {
+      const cached = advCache.current.get(key)
+      if (cached) { setAdv({ status: 'result', text: cached }); return }
+    }
+    setAdv({ status: 'loading' })
+    try {
+      const reply = await runAdvancedAnalysis(provider, docKind, buildCtx())
+      advCache.current.set(key, reply)
+      if (advKeyRef.current === key) setAdv({ status: 'result', text: reply })
+    } catch {
+      if (advKeyRef.current !== key) return
+      toast(`${provider.label} couldn’t complete the analysis`, 'error')
+      setAdv({ status: 'error' })
+    }
+  }
+
   async function send(text: string) {
     const content = text.trim()
     if (!content || busy) return
@@ -85,16 +130,7 @@ export function AssistantPanel({
     setMessages(next)
     setInput('')
     setBusy(true)
-    const ctx: StoryContext = {
-      project,
-      node,
-      sceneText: scope === 'node' && node ? node.text ?? '' : docNodes.map((n) => n.text ?? '').join('\n\n'),
-      characters,
-      locations,
-      threads,
-      worldElements,
-      analysis,
-    }
+    const ctx = buildCtx()
     try {
       const reply = await provider.generate(next, ctx)
       setMessages((m) => [...m, { role: 'assistant', content: reply }])
@@ -169,6 +205,55 @@ export function AssistantPanel({
                   ))}
                 </div>
               )}
+
+              {/* Advanced (LLM) analysis */}
+              <div className="border-t border-border pt-2.5">
+                {!aiReady ? (
+                  <div className="rounded-md border border-dashed border-border bg-surface px-3 py-2.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-muted">
+                      <Wand2 size={13} className="text-accent" /> Advanced analysis needs a connected AI model.
+                    </div>
+                    <button onClick={() => navigate('/settings')} className="mt-1 text-accent hover:underline">
+                      Connect a model in Settings →
+                    </button>
+                  </div>
+                ) : adv.status === 'loading' ? (
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-xs text-muted">
+                    <Loader2 size={13} className="animate-spin" /> Analysing your {DOC_KIND_LABEL[docKind]}…
+                  </div>
+                ) : adv.status === 'error' ? (
+                  <div className="rounded-md border border-border bg-surface px-3 py-2.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-danger">
+                      <AlertTriangle size={13} /> Couldn’t reach {provider.label}.
+                    </div>
+                    <div className="mt-1 flex gap-3">
+                      <button onClick={() => runAdvanced(true)} className="text-accent hover:underline">Retry</button>
+                      <button onClick={() => navigate('/settings')} className="text-muted hover:underline">Check Settings</button>
+                    </div>
+                  </div>
+                ) : adv.status === 'result' && adv.text ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-text">
+                        <Wand2 size={13} className="text-accent" /> Advanced analysis
+                      </span>
+                      <IconButton label="Refresh analysis" onClick={() => runAdvanced(true)}>
+                        <RefreshCw size={13} />
+                      </IconButton>
+                    </div>
+                    <AdvancedResult text={adv.text} />
+                    <div className="text-[11px] text-muted">via {provider.label}{ai.model ? ` · ${ai.model}` : ''}</div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => runAdvanced(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-text transition-colors hover:border-accent/50"
+                  >
+                    <Wand2 size={13} className="text-accent" /> Advanced analysis
+                    <span className="font-normal text-muted">· tailored to your {DOC_KIND_LABEL[docKind]}</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -257,6 +342,69 @@ function Meters({ analysis }: { analysis: StoryAnalysis }) {
       <Meter label="Variety" value={m.uniqueWordRatio} hint={`${Math.round(m.uniqueWordRatio * 100)}%`} />
       <Meter label="Avg sentence" value={Math.min(1, m.avgSentenceLength / 30)} hint={`${m.avgSentenceLength.toFixed(0)}w`} />
       <Meter label="Adverbs" value={Math.min(1, m.adverbRatio * 12)} hint={`${(m.adverbRatio * 100).toFixed(1)}%`} />
+    </div>
+  )
+}
+
+function ScoreBar({ label, score, note }: { label: string; score: number | null; note?: string }) {
+  const v = typeof score === 'number' ? Math.max(0, Math.min(100, Math.round(score))) : null
+  const color = v == null ? 'bg-muted/40' : v >= 75 ? 'bg-success' : v >= 50 ? 'bg-accent' : 'bg-danger'
+  return (
+    <div>
+      <div className="mb-0.5 flex items-baseline justify-between gap-2 text-[11px]">
+        <span className="text-muted">{label}</span>
+        <span className="font-medium text-text">{v == null ? '—' : v}</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface">
+        <div className={cn('h-full rounded-full', color)} style={{ width: `${v ?? 0}%` }} />
+      </div>
+      {note && <div className="mt-0.5 text-[11px] leading-snug text-muted">{note}</div>}
+    </div>
+  )
+}
+
+function AdvancedResult({ text }: { text: string }) {
+  const r: AdvancedAnalysisResult | null = useMemo(() => parseAdvanced(text), [text])
+  if (!r) return <Markdownish text={text} />
+  const sevClass = (s?: string) => (s === 'major' ? 'text-danger' : s === 'notable' ? 'text-accent' : 'text-muted')
+  return (
+    <div className="space-y-3">
+      {r.overall && <p className="text-xs leading-relaxed text-text">{r.overall}</p>}
+      {!!r.scores?.length && (
+        <div className="space-y-2">
+          {r.scores.map((s, i) => (
+            <ScoreBar key={i} label={s.label} score={s.score} note={s.note} />
+          ))}
+        </div>
+      )}
+      {!!r.priorities?.length && (
+        <div className="space-y-1.5 border-t border-border pt-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Top priorities</div>
+          {r.priorities.map((p, i) => (
+            <div key={i} className="text-xs leading-snug">
+              <span className="font-semibold text-text">{i + 1}. {p.priority}</span>
+              {p.why && <span className="text-muted"> — {p.why}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {!!r.findings?.length && (
+        <div className="space-y-2 border-t border-border pt-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Notes</div>
+          {r.findings.map((f, i) => (
+            <div key={i} className="rounded-md bg-surface px-2.5 py-2">
+              {f.quote && <div className="mb-1 border-l-2 border-border pl-2 text-[11px] italic text-muted">“{f.quote}”</div>}
+              <div className="text-xs text-text">{f.issue}</div>
+              {f.suggestion && <div className="mt-0.5 text-[11px] text-accent/90">{f.suggestion}</div>}
+              {(f.group || f.severity) && (
+                <div className={cn('mt-1 text-[10px] uppercase tracking-wide', sevClass(f.severity))}>
+                  {f.group}{f.severity ? ` · ${f.severity}` : ''}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

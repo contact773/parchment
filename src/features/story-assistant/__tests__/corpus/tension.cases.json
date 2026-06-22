@@ -1,0 +1,198 @@
+[
+  {
+    "id": "action-en-01",
+    "lang": "en",
+    "text": "He kicked the door open and ran. A gun barked behind him; the bullet split the frame. Blood. He didn't stop. Down the stairs, three at a time, the chase tightening like a noose around his throat.",
+    "label": "High",
+    "expectMatch": "agree",
+    "convention": "Overt physical peril and pursuit (gunfire, blood, flight, chase) = High.",
+    "tags": ["action", "peril", "thriller", "agree"]
+  },
+  {
+    "id": "calm-en-02",
+    "lang": "en",
+    "text": "The afternoon light lay soft across the orchard. Bees moved between the apple blossoms without hurry. She set down her tea, watched a single petal drift to the grass, and felt, for the first time in weeks, entirely at peace.",
+    "label": "Low",
+    "expectMatch": "agree",
+    "convention": "Calm, idle description with no threat or stakes = Low.",
+    "tags": ["calm", "description", "literary", "agree"]
+  },
+  {
+    "id": "psych-en-03",
+    "lang": "en",
+    "text": "The voicemail had been left at 3:11 a.m. She had not given anyone this number. She played it again. Only breathing, slow and patient, and beneath it the faint hum of her own refrigerator. Whoever it was had been standing in her kitchen.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "Dread of an intruder in the home is High to a reader; no peril keyword appears, so the substring counter scores it Low.",
+    "tags": ["psychological", "dread", "lexically-invisible", "no-keyword"]
+  },
+  {
+    "id": "psych-en-04",
+    "lang": "en",
+    "text": "Everyone at the table was laughing. The wine was good, the candles low. And yet she could not stop watching her husband's hands, the way his wedding ring turned and turned against his glass, and the small new habit of his, of never quite meeting her eyes.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "Slow-burn suspicion of betrayal carries high reader tension; the surface vocabulary is warm and domestic, so no TENSION word fires.",
+    "tags": ["psychological", "dread", "domestic", "lexically-invisible"]
+  },
+  {
+    "id": "neg-en-05",
+    "lang": "en",
+    "text": "There was no gun in the drawer. No knife under the mattress, no danger waiting on the stairs. He checked every room twice and found nothing at all to fear. The house was simply empty, and quiet, and safe.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "Every threat is explicitly negated and the scene resolves to safety = Low; the counter ignores negation and tallies gun+knife+danger as three hits.",
+    "tags": ["negation", "negation-trap", "false-positive"]
+  },
+  {
+    "id": "trap-en-06",
+    "lang": "en",
+    "text": "The old soldier studied the trunk for a long while. He had grunted as he lifted it, then paused at the hedge to catch his breath. Knowledge of the garden had not made the work lighter; he had begun at dawn and the morning was already gone.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "Quiet, tired labour in a garden = Low; substring matching false-fires on g-RUN-ted, t-RUN-k, stu-DIE-d, sol-DIE-r, h-EDGE, kn-owl-EDGE.",
+    "tags": ["substring", "false-positive", "literary"]
+  },
+  {
+    "id": "dialogue-en-07",
+    "lang": "en",
+    "text": "“Put it down,” she said.\n“You won't shoot.”\n“I will. I swear to God I will.”\nHe took a step. She fired. The sound filled the room and did not stop filling it.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "An armed standoff that ends in a shot is High; the prose avoids the listed nouns (no gun/blood/kill), and the short sentences only earn the +0.2 floor, so it scores Low.",
+    "tags": ["dialogue", "action", "psychological", "no-keyword"]
+  },
+  {
+    "id": "thriller-fr-08",
+    "lang": "fr",
+    "text": "Il courut dans le couloir, le pistolet au poing. Derrière lui, un cri, puis le sang sur le mur blanc. La porte du fond explosa. Il sauta, roula, se releva, le cœur battant à se rompre.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "French action — running, a gun (pistolet), a scream (cri), blood (sang), an explosion — reads High, but the TENSION list is English-only so no word matches.",
+    "tags": ["psychological", "language-gap", "non-english", "action"]
+  },
+  {
+    "id": "calm-fr-09",
+    "lang": "fr",
+    "text": "Le village dormait sous la neige. Une fumée montait droit d'une cheminée, et la rivière, prise par le gel, ne faisait plus aucun bruit. Marie marchait lentement, savourant le silence du matin.",
+    "label": "Low",
+    "expectMatch": "agree",
+    "convention": "A sleeping snowbound village in silence = Low; no English peril substrings appear, so spec also returns Low.",
+    "tags": ["calm", "non-english", "description", "agree"]
+  },
+  {
+    "id": "psych-fr-10",
+    "lang": "fr",
+    "text": "Le médecin a souri en lisant les résultats. Il a dit que tout allait bien, qu'il n'y avait aucune raison de s'inquiéter. Mais il a rangé le dossier trop vite, et il n'a pas voulu me serrer la main en partant.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "A doctor reassuring you while his body language says otherwise is high dread; reassuring French vocabulary triggers no English keyword.",
+    "tags": ["psychological", "dread", "non-english", "lexically-invisible"]
+  },
+  {
+    "id": "action-de-11",
+    "lang": "de",
+    "text": "Sie rannte durch den brennenden Wald. Hinter ihr brüllte das Feuer, Funken stoben, ein Ast krachte herab. Sie sprang über den Bach, fiel, stand wieder auf, das Blut pochte in ihren Ohren.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "Flight through a burning forest (Feuer, fiel, Blut) is High; German peril words don't match the English substrings, so spec scores Low.",
+    "tags": ["action", "peril", "non-english", "language-gap"]
+  },
+  {
+    "id": "calm-de-12",
+    "lang": "de",
+    "text": "Die Sonne ging langsam über den Hügeln auf. Im Garten sang eine Amsel, und der Kaffee dampfte auf dem Tisch. Er las die Zeitung und dachte, dass dies ein guter, ruhiger Tag werden würde.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "A serene German sunrise scene = Low; the article 'die' is counted as the peril verb 'die' (three hits here), inflating it to High.",
+    "tags": ["substring", "false-positive", "non-english", "article-die"]
+  },
+  {
+    "id": "trap-de-13",
+    "lang": "de",
+    "text": "Die Tür stand offen. Die Katze schlief. Die Kinder lachten im Garten, und die Großmutter deckte den Tisch. Die Wärme des Nachmittags lag über allem wie eine Decke.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "An idyllic family afternoon = Low; five sentences each open with the German article 'Die', so five 'die' hits push it to High.",
+    "tags": ["substring", "false-positive", "non-english", "article-die"]
+  },
+  {
+    "id": "psych-de-14",
+    "lang": "de",
+    "text": "Niemand im Dorf sprach mehr über das Haus am Ende der Straße. Wenn ich danach fragte, wechselten sie das Thema und schauten zur Seite. Gestern Abend brannte dort zum ersten Mal seit Jahren wieder ein Licht.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "Villagers who refuse to discuss the house, and a light now burning in it, is high dread; the German text contains no English peril substring.",
+    "tags": ["psychological", "dread", "non-english", "lexically-invisible"]
+  },
+  {
+    "id": "thriller-es-15",
+    "lang": "es",
+    "text": "Corrió hacia el coche mientras los disparos rompían los cristales. Sangre en el asiento. Pisó el acelerador, el motor rugió, y el otro vehículo lo persiguió a toda velocidad por la carretera vacía.",
+    "label": "High",
+    "specLabel": "Low",
+    "expectMatch": "known-divergence",
+    "convention": "A Spanish car chase with gunfire (disparos), blood (sangre) and pursuit is High; none of the Spanish words match the English TENSION list.",
+    "tags": ["action", "chase", "non-english", "language-gap"]
+  },
+  {
+    "id": "calm-es-16",
+    "lang": "es",
+    "text": "La abuela amasaba el pan despacio, como cada mañana. El olor a harina llenaba la cocina, el gato dormía junto al fuego, y afuera la lluvia caía mansa sobre los tejados del pueblo.",
+    "label": "Low",
+    "expectMatch": "agree",
+    "convention": "A grandmother kneading bread on a rainy morning = Low; no English peril substring appears, so spec agrees on Low.",
+    "tags": ["calm", "non-english", "description", "agree"]
+  },
+  {
+    "id": "psych-es-17",
+    "lang": "es",
+    "text": "Mi hermano me devolvió las llaves de casa, sonriendo, y dijo que ya no las necesitaría. Esa noche ordenó todos sus papeles, regaló sus libros y llamó, uno por uno, a todos los que alguna vez había querido.",
+    "label": "High",
+    "specLabel": "Moderate",
+    "expectMatch": "known-divergence",
+    "convention": "Giving back keys, settling affairs and saying goodbye to everyone signals impending suicide — high dread; spec lands Moderate only by accident, matching 'gun' inside al-GUN-a.",
+    "tags": ["psychological", "dread", "non-english", "substring", "lexically-invisible"]
+  },
+  {
+    "id": "literary-en-18",
+    "lang": "en",
+    "text": "The knife of winter light fell across the kitchen table where her mother had once peeled apples. Nothing happened here anymore. The clock had run down years ago, and on its still face the dust lay thick as snow on a battlefield.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "A still, melancholic, motionless scene = Low; 'knife of light' (metaphor) and 'run down' (idiom) are literal substring hits that score it High.",
+    "tags": ["substring", "metaphor", "idiom", "false-positive", "literary"]
+  },
+  {
+    "id": "sparse-en-19",
+    "lang": "en",
+    "text": "Wind. The cliff edge. One step left.\nHe looked down.\nThe sea waited, grey and enormous, and said nothing at all.",
+    "label": "High",
+    "specLabel": "Moderate",
+    "expectMatch": "known-divergence",
+    "convention": "A figure at a cliff edge contemplating the drop is high peril/dread; the one real cue ('edge') plus the short-sentence floor only reaches Moderate.",
+    "tags": ["psychological", "peril", "sparse", "under-scored"]
+  },
+  {
+    "id": "war-en-20",
+    "lang": "en",
+    "text": "The soldier had studied the old map until the candle guttered. He had grown fond of its faded ink, the rivers drawn like veins. Outside, the camp slept. No order had come. Tomorrow, perhaps, but not tonight.",
+    "label": "Low",
+    "specLabel": "High",
+    "expectMatch": "known-divergence",
+    "convention": "A quiet night before battle, nothing happening = Low; 'sol-DIE-r' and 'stu-DIE-d' give two 'die' hits that wrongly push it to High.",
+    "tags": ["substring", "false-positive", "war", "literary"]
+  }
+]

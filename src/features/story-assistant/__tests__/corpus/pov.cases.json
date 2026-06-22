@@ -1,0 +1,350 @@
+[
+  {
+    "id": "pov-en-01",
+    "lang": "en",
+    "text": "I pressed my palm flat against the cold window and watched the rain unstitch the city below. My breath fogged the glass. We had argued again, and now the apartment felt like a held breath. I told myself I would not call her, and then I reached for the phone anyway.",
+    "label": "First person",
+    "expectMatch": "agree",
+    "convention": "Narration is voiced by an 'I'; first-person pronouns dominate the narration itself.",
+    "tags": ["literary", "clear", "first-person"]
+  },
+  {
+    "id": "pov-en-02",
+    "lang": "en",
+    "text": "Marlowe straightened his tie and stepped into the smoke-blue light of the office. He had seen a hundred clients like her before, and every one of them had lied. He sat, lit a cigarette, and waited for the woman in the green hat to begin.",
+    "label": "Third person",
+    "expectMatch": "agree",
+    "convention": "Narration refers to the protagonist as 'he'; third-person pronouns dominate.",
+    "tags": ["noir", "clear", "third-person"]
+  },
+  {
+    "id": "pov-en-03",
+    "lang": "en",
+    "text": "You wake before the alarm, as you always do, and lie still listening to the house settle. You count the cracks in the ceiling. You decide, today, you will finally say the thing you have rehearsed for a year, and you already know you won't.",
+    "label": "Second person",
+    "expectMatch": "agree",
+    "convention": "Narration addresses the reader/protagonist as 'you'; genuine second-person narration.",
+    "tags": ["literary", "clear", "second-person", "rare"]
+  },
+  {
+    "id": "pov-en-04",
+    "lang": "en",
+    "text": "The lighthouse stood at the end of the spit, white and patient against the storm. Gulls wheeled over the breakwater. The lamp turned, throwing its slow blade of light across the water, and the village slept beneath it, unaware of what the tide was carrying in.",
+    "label": "Third person",
+    "expectMatch": "agree",
+    "convention": "Objective third-person narration with no narrator-I and no addressee-you; default scenic third.",
+    "tags": ["literary", "clear", "third-person", "sparse"]
+  },
+  {
+    "id": "pov-en-05",
+    "lang": "en",
+    "text": "We buried the old man on a Tuesday, and none of us cried. Our family had never been the crying kind. I carried the front left corner of the coffin; my brother took the right. Afterwards we drank his whisky and pretended we had loved him.",
+    "label": "First person",
+    "expectMatch": "agree",
+    "convention": "First-person plural/singular narrator ('we', 'I', 'our'); the narrator is inside the story.",
+    "tags": ["literary", "clear", "first-person", "plural"]
+  },
+  {
+    "id": "pov-en-06",
+    "lang": "en",
+    "text": "\"I can't believe you said that to me,\" Dana snapped, jabbing a finger at his chest. \"You always do this. You make me the villain.\" Tom raised both hands. \"I never said you were the villain. I said you were wrong, and you are.\" \"See? You're doing it right now.\"",
+    "label": "Third person",
+    "specLabel": "First person",
+    "expectMatch": "known-divergence",
+    "convention": "Label by NARRATION stance only. The narrative tags ('Dana snapped', 'Tom raised both hands') are third-person; the 'I'/'you' all sit inside quoted dialogue and must be ignored.",
+    "tags": ["dialogue-heavy", "divergence", "third-person", "dialogue-pronouns"]
+  },
+  {
+    "id": "pov-en-07",
+    "lang": "en",
+    "text": "Elena watched them from the doorway. \"You don't have to do this,\" she said quietly. \"I know,\" he answered without turning. \"I want to.\" \"You'll regret it.\" \"Maybe.\" She crossed her arms and said nothing more, because she had learned that you could not save a man who did not wish to be saved.",
+    "label": "Third person",
+    "specLabel": "Second person",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is third-person ('Elena watched', 'she crossed her arms'). The many 'you'/'I' are dialogue, plus one generic 'you' in narration; stance remains third-person.",
+    "tags": ["dialogue-heavy", "divergence", "third-person", "generic-you"]
+  },
+  {
+    "id": "pov-en-08",
+    "lang": "en",
+    "text": "\"I'll tell you exactly what I told the inspector,\" said Hollis, and I leaned closer, because I had spent three weeks chasing this man across two counties. \"I was nowhere near the bridge that night.\" I wrote it down. I did not believe a word of it.",
+    "label": "First person",
+    "expectMatch": "agree",
+    "convention": "The narrative tags themselves use 'I' ('I leaned closer', 'I wrote it down') -- the narrator is a character. Genuine first-person, not a dialogue artefact.",
+    "tags": ["mystery", "dialogue", "first-person", "tricky"]
+  },
+  {
+    "id": "pov-en-09",
+    "lang": "en",
+    "text": "To assemble the cabinet, first lay the side panels face-down on a soft cloth. Insert the wooden dowels into the pre-drilled holes. Align the back board with the grooves, then tap it gently into place with a rubber mallet. Do not overtighten the screws.",
+    "label": "Undetermined",
+    "expectMatch": "agree",
+    "convention": "Imperative instructional prose has no narrating I, addressed you, or referenced he/she -- no pronoun stance. Not narrative POV.",
+    "tags": ["instructional", "no-pronouns", "undetermined", "edge"]
+  },
+  {
+    "id": "pov-en-10",
+    "lang": "en",
+    "text": "Rain. Always rain in that town. The bus shelter leaking, the streetlight buzzing, the last bus long gone. A dog somewhere, barking at nothing. Cold seeping up through thin shoes. Nobody coming. Nobody ever came to a place like that, not at this hour, not in this weather.",
+    "label": "Undetermined",
+    "expectMatch": "agree",
+    "convention": "Fragmentary scene-setting with no personal pronouns of any kind; narrative stance is not marked, so Undetermined.",
+    "tags": ["literary", "sparse", "no-pronouns", "undetermined"]
+  },
+  {
+    "id": "pov-en-11",
+    "lang": "en",
+    "text": "The general studied the map. \"You will take the eastern road,\" he told the scouts. \"I want the bridge held by dawn. If you fail me, you answer to the council, not to me.\" His aides scribbled. Outside, the army stirred in the dark, ten thousand men who did not yet know where they were going.",
+    "label": "Third person",
+    "specLabel": "Second person",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is third-person ('The general studied', 'His aides scribbled'); the dense 'you'/'I' belong to the general's quoted orders and are ignored for stance.",
+    "tags": ["dialogue-heavy", "divergence", "third-person", "dialogue-pronouns"]
+  },
+  {
+    "id": "pov-en-12",
+    "lang": "en",
+    "text": "I am not the hero of this story. I want that understood before I go any further. I was the man who held the door, who looked away, who signed the paper because signing was easier than asking what it meant. My name does not matter. What I did does.",
+    "label": "First person",
+    "expectMatch": "agree",
+    "convention": "Confessional first-person narration; the narrating voice is 'I' throughout.",
+    "tags": ["literary", "clear", "first-person", "confessional"]
+  },
+  {
+    "id": "pov-en-13",
+    "lang": "en",
+    "text": "Picture yourself on the platform. The train is late, the way it is always late, and you are holding a coffee you do not want. You glance at your watch. You glance again. You begin, without quite deciding to, to imagine the life you might have had if you had simply walked the other way.",
+    "label": "Second person",
+    "expectMatch": "agree",
+    "convention": "Sustained second-person narration directed at 'you'; genuine second-person, the dominant stance.",
+    "tags": ["literary", "second-person", "rare", "clear"]
+  },
+  {
+    "id": "pov-en-14",
+    "lang": "en",
+    "text": "She told him she loved him. He told her he loved her too. They both knew it was a lie, and they both said it anyway, because the alternative was silence, and they had run out of silence years ago. He kissed her forehead. She let him.",
+    "label": "Third person",
+    "expectMatch": "agree",
+    "convention": "Reported (not quoted) speech in third-person narration; all pronouns are he/she/they within narration. Clear third-person.",
+    "tags": ["literary", "third-person", "reported-speech", "clear"]
+  },
+  {
+    "id": "pov-en-15",
+    "lang": "en",
+    "text": "When you have read this, burn it. I am writing to you from the only room they have not searched. You must not trust the man who calls himself my brother. You knew me once; trust that, if nothing else. I do not have long.",
+    "label": "First person",
+    "specLabel": "Second person",
+    "expectMatch": "known-divergence",
+    "convention": "Epistolary first-person: an 'I' writes a letter, so the narration's stance is first-person. The naive counter overweights the frequent address-'you' over the narrator-I.",
+    "tags": ["epistolary", "divergence", "first-person", "letter"]
+  },
+  {
+    "id": "pov-nl-01",
+    "lang": "nl",
+    "text": "Ik liep door de verlaten straten van de oude stad en voelde de regen in mijn nek kruipen. Mijn schoenen waren doorweekt. Ik wist niet meer waar ik heen ging; ik wist alleen dat ik niet terug kon. We hadden alles achtergelaten, en nu was er alleen nog ik.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Dutch first-person ('Ik', 'mijn', 'We'). The English-only regex matches none of these pronouns, so it returns Undetermined.",
+    "tags": ["dutch", "divergence", "first-person", "non-english"]
+  },
+  {
+    "id": "pov-nl-02",
+    "lang": "nl",
+    "text": "Joris staarde naar de zee. Hij wist dat zij niet meer zou komen. De golven sloegen tegen de pier en hij dacht aan alles wat hij had moeten zeggen. Zij had hem gewaarschuwd. Hij had niet geluisterd, en nu stond hij hier alleen, met zijn handen diep in zijn zakken.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Dutch third-person ('Hij', 'zij', 'hem', 'zijn'). None are in the English regex, so the naive output is Undetermined.",
+    "tags": ["dutch", "divergence", "third-person", "non-english"]
+  },
+  {
+    "id": "pov-nl-03",
+    "lang": "nl",
+    "text": "\"Ik heb je gewaarschuwd,\" zei Anna scherp. \"Jij luistert nooit.\" Pieter haalde zijn schouders op en keek haar niet aan. \"Ik luister wel,\" mompelde hij. \"Jij hoort alleen wat je wilt horen.\" Ze zuchtte en draaide zich om naar het raam.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is Dutch third-person ('zei Anna', 'mompelde hij', 'Ze zuchtte'); the 'Ik'/'Jij' are dialogue. The English regex matches no Dutch words, returning Undetermined.",
+    "tags": ["dutch", "dialogue-heavy", "divergence", "third-person"]
+  },
+  {
+    "id": "pov-nl-04",
+    "lang": "nl",
+    "text": "Je opent je ogen voordat de wekker afgaat. Je blijft liggen en luistert naar het huis. Je weet dat je vandaag moet vertrekken, en je weet ook dat je het waarschijnlijk weer zult uitstellen. Je staat op. Je zet koffie. Je kijkt niet in de spiegel.",
+    "label": "Second person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Genuine Dutch second-person narration ('Je' as subject throughout). The English regex has no Dutch 'je'/'jij', so it returns Undetermined.",
+    "tags": ["dutch", "divergence", "second-person", "rare"]
+  },
+  {
+    "id": "pov-nl-05",
+    "lang": "nl",
+    "text": "De trein vertrok om zeven uur. Het perron was leeg, op een enkele duif na. Mist hing tussen de rails. Ergens sloeg een klok. Niemand stapte in, niemand stapte uit, en de conducteur floot in de stilte alsof er wel reizigers waren.",
+    "label": "Undetermined",
+    "expectMatch": "agree",
+    "convention": "Dutch scenic narration with no personal pronouns at all; no stance is marked. Both the human label and the naive regex agree on Undetermined.",
+    "tags": ["dutch", "sparse", "no-pronouns", "undetermined"]
+  },
+  {
+    "id": "pov-nl-06",
+    "lang": "nl",
+    "text": "Ik kan niet slapen. Al weken niet. 's Nachts loop ik door het huis en raak de muren aan om zeker te weten dat ze er nog zijn. Mijn moeder zegt dat het overgaat. Ik geloof haar niet meer. Ik geloof eigenlijk niemand meer.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Dutch first-person ('Ik', 'mijn', 'loop ik'). The English-only regex matches none of these, so the naive output is Undetermined.",
+    "tags": ["dutch", "divergence", "first-person", "non-english"]
+  },
+  {
+    "id": "pov-fr-01",
+    "lang": "fr",
+    "text": "Je marchais seul le long du quai quand la pluie a commencé à tomber. J'avais oublié mon parapluie, comme toujours. Je pensais à elle, à ce que je n'avais pas su lui dire. Nous étions jeunes, et je croyais que nous avions tout le temps du monde.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "French first-person ('Je', 'J'avais', 'Nous'). The English regex contains none of these tokens, so it returns Undetermined.",
+    "tags": ["french", "divergence", "first-person", "non-english"]
+  },
+  {
+    "id": "pov-fr-02",
+    "lang": "fr",
+    "text": "Antoine ferma la porte derrière lui. Il savait qu'elle l'attendait dans le salon, et il savait aussi ce qu'elle allait dire. Il posa son manteau, respira, puis entra. Elle ne leva pas les yeux. Il comprit, à ce silence, que tout était déjà fini.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "French third-person ('Il', 'elle', 'lui'). None are matched by the English regex, so the naive output is Undetermined.",
+    "tags": ["french", "divergence", "third-person", "non-english"]
+  },
+  {
+    "id": "pov-fr-03",
+    "lang": "fr",
+    "text": "Cherchais partout mes clés, ne les trouvais nulle part. Avais dormi trop peu, encore. Sortis sans manteau, claquai la porte, courus jusqu'à l'arrêt. Manquai le bus quand même. Restai là, sous l'auvent, à regarder la rue se vider, à attendre sans vraiment attendre.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Pro-drop French first-person: subject 'je' is omitted but the verb forms ('cherchais', 'avais dormi', 'sortis', 'manquai') are unambiguously first-person singular. The English regex finds no first-person tokens, returning Undetermined.",
+    "tags": ["french", "pro-drop", "divergence", "first-person", "hard"]
+  },
+  {
+    "id": "pov-fr-04",
+    "lang": "fr",
+    "text": "\"Je t'avais prévenu,\" dit Camille d'une voix dure. \"Tu n'écoutes jamais.\" Lucas haussa les épaules sans la regarder. \"Je t'écoute,\" murmura-t-il. \"Tu n'entends que ce que tu veux.\" Elle soupira et se tourna vers la fenêtre.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is French third-person ('dit Camille', 'murmura-t-il', 'Elle soupira'); the 'Je'/'Tu' are dialogue. The English regex matches nothing here, returning Undetermined.",
+    "tags": ["french", "dialogue-heavy", "divergence", "third-person"]
+  },
+  {
+    "id": "pov-fr-05",
+    "lang": "fr",
+    "text": "Tu te réveilles avant le réveil, comme chaque matin. Tu restes immobile, tu écoutes la maison. Tu sais que tu devrais partir aujourd'hui, et tu sais que tu vas encore repousser. Tu te lèves. Tu fais du café. Tu ne te regardes pas dans la glace.",
+    "label": "Second person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Genuine French second-person narration ('Tu' as subject throughout). The English regex has no 'tu', so the naive output is Undetermined.",
+    "tags": ["french", "divergence", "second-person", "rare"]
+  },
+  {
+    "id": "pov-de-01",
+    "lang": "de",
+    "text": "Ich ging durch die leeren Straßen der alten Stadt und spürte den Regen im Nacken. Meine Schuhe waren durchnässt. Ich wusste nicht mehr, wohin ich ging; ich wusste nur, dass ich nicht zurückkonnte. Wir hatten alles zurückgelassen, und jetzt war da nur noch ich.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "German first-person ('Ich', 'Meine', 'Wir'). None are in the English regex, so the naive output is Undetermined.",
+    "tags": ["german", "divergence", "first-person", "non-english"]
+  },
+  {
+    "id": "pov-de-02",
+    "lang": "de",
+    "text": "Sie öffnete die Tür und trat in die Kälte hinaus. Er folgte ihr nicht. Sie wusste, dass er am Fenster stand und ihr nachsah, aber sie drehte sich nicht um. Der Schnee fiel auf ihre Schultern. Sie ging weiter, und er ließ sie gehen.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "German third-person singular ('Sie' = she, 'Er' = he, 'ihr', 'sie'). The English regex matches none, returning Undetermined. Note the capitalized 'Sie' here is the feminine subject, not the polite address.",
+    "tags": ["german", "divergence", "third-person", "sie-ambiguity"]
+  },
+  {
+    "id": "pov-de-03",
+    "lang": "de",
+    "text": "\"Bitte nehmen Sie Platz,\" sagte der Anwalt und deutete auf den Stuhl. \"Möchten Sie etwas trinken? Wenn Sie mir vertrauen, kann ich Ihnen helfen.\" Frau Berger setzte sich langsam. Sie traute ihm nicht, aber sie hatte keine andere Wahl mehr.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is German third-person ('sagte der Anwalt', 'Frau Berger setzte sich', 'Sie traute ihm nicht'); the polite 'Sie'/'Ihnen' belong to quoted dialogue. The English regex matches no German tokens, so Undetermined.",
+    "tags": ["german", "dialogue-heavy", "divergence", "third-person", "sie-polite"]
+  },
+  {
+    "id": "pov-de-04",
+    "lang": "de",
+    "text": "Der Leuchtturm stand am Ende der Landzunge, weiß und geduldig gegen den Sturm. Möwen kreisten über der Mole. Die Lampe drehte sich und warf ihre langsame Klinge aus Licht über das Wasser. Das Dorf schlief darunter, ohne zu ahnen, was die Flut heranbrachte.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "German objective scenic narration with no narrator-ich and no address-du; by the stated convention this is third-person. The English-only regex matches no German tokens, so the naive output is Undetermined -- a divergence, exactly like the parallel Spanish scenic case.",
+    "tags": ["german", "divergence", "third-person", "scenic"]
+  },
+  {
+    "id": "pov-de-05",
+    "lang": "de",
+    "text": "Du wachst auf, bevor der Wecker klingelt, so wie jeden Morgen. Du bleibst liegen und hörst dem Haus zu. Du weißt, dass du heute gehen solltest, und du weißt auch, dass du es wieder aufschieben wirst. Du stehst auf. Du kochst Kaffee. Du siehst nicht in den Spiegel.",
+    "label": "Second person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Genuine German second-person narration ('Du' as subject throughout). The English regex has no German 'du', so the naive output is Undetermined.",
+    "tags": ["german", "divergence", "second-person", "rare"]
+  },
+  {
+    "id": "pov-es-01",
+    "lang": "es",
+    "text": "Caminé solo por el muelle cuando empezó a llover. Había olvidado el paraguas, como siempre. Pensaba en ella, en lo que no supe decirle. Éramos jóvenes, y creía que teníamos todo el tiempo del mundo. Ahora solo me queda recordar.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Pro-drop Spanish first-person: subject pronoun 'yo' is omitted, but the verb forms ('caminé', 'había olvidado', 'pensaba', 'creía') are unambiguously first-person singular. The English regex finds no first-person tokens, so Undetermined.",
+    "tags": ["spanish", "pro-drop", "divergence", "first-person", "hard"]
+  },
+  {
+    "id": "pov-es-02",
+    "lang": "es",
+    "text": "Antonio cerró la puerta tras de sí. Sabía que ella lo esperaba en el salón, y sabía también lo que iba a decir. Colgó el abrigo, respiró y entró. Ella no levantó la vista. Él comprendió, en aquel silencio, que todo había terminado ya.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish third-person ('Antonio', 'ella', 'Él', 'lo'). The English regex matches none of these Spanish tokens, so the naive output is Undetermined.",
+    "tags": ["spanish", "divergence", "third-person", "non-english"]
+  },
+  {
+    "id": "pov-es-03",
+    "lang": "es",
+    "text": "\"Te lo advertí,\" dijo Marta con voz dura. \"Nunca escuchas.\" Luis se encogió de hombros sin mirarla. \"Sí que escucho,\" murmuró. \"Solo oyes lo que quieres oír.\" Ella suspiró y se volvió hacia la ventana, y él la dejó marchar sin una palabra.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Narration is Spanish third-person ('dijo Marta', 'murmuró', 'Ella suspiró', 'él la dejó'); the 'Te'/'escuchas' second-person forms are dialogue. The English regex matches nothing, so Undetermined.",
+    "tags": ["spanish", "dialogue-heavy", "divergence", "third-person"]
+  },
+  {
+    "id": "pov-es-04",
+    "lang": "es",
+    "text": "Llevábamos tres días sin dormir. Habíamos cruzado la frontera de noche, sin papeles, sin nada. Yo cargaba a mi hermana en la espalda; mi padre iba delante, abriéndonos paso. No hablábamos. Sabíamos que cualquier palabra podía delatarnos.",
+    "label": "First person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish first-person plural and singular ('Llevábamos', 'Habíamos cruzado', 'Yo', 'mi'). Mostly pro-drop with one explicit 'Yo'. The English regex matches none of these, so Undetermined.",
+    "tags": ["spanish", "pro-drop", "divergence", "first-person", "plural"]
+  },
+  {
+    "id": "pov-es-05",
+    "lang": "es",
+    "text": "El faro se alzaba al final de la lengua de tierra, blanco y paciente contra la tormenta. Las gaviotas giraban sobre el rompeolas. La lámpara giraba y lanzaba su lenta hoja de luz sobre el agua. El pueblo dormía debajo, sin saber lo que traía la marea.",
+    "label": "Third person",
+    "specLabel": "Undetermined",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish objective scenic narration with no first/second-person verbs or pronouns; by convention it is third-person. The English regex finds no English pronouns at all, so it returns Undetermined.",
+    "tags": ["spanish", "divergence", "third-person", "scenic"]
+  }
+]

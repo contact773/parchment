@@ -1,0 +1,308 @@
+[
+  {
+    "id": "tone-en-01",
+    "lang": "en",
+    "text": "Dawn came gentle over the hills. She breathed deeply, and for the first time in months, hope felt possible again.",
+    "label": "Light / hopeful",
+    "expectMatch": "agree",
+    "convention": "Explicit hope plus a softening, optimistic image (gentle dawn) reads as light/hopeful to any reader; naive list counts hope+gentle.",
+    "tags": ["clear", "literary"]
+  },
+  {
+    "id": "tone-en-02",
+    "lang": "en",
+    "text": "She held the sleeping baby against her chest, calm and tender, and the whole world went quiet and soft around them.",
+    "label": "Warm",
+    "specLabel": "Light / hopeful",
+    "expectMatch": "known-divergence",
+    "convention": "A tender, intimate domestic moment is warm rather than soaring; naive counts calm+tender and over-shoots the ratio into Light/hopeful.",
+    "tags": ["clear", "literary", "threshold"]
+  },
+  {
+    "id": "tone-en-03",
+    "lang": "en",
+    "text": "My dear friend, I think of you often and warmly. The garden you planted years ago still blooms by the gate.",
+    "label": "Warm",
+    "expectMatch": "agree",
+    "convention": "Affectionate, settled feeling toward a friend is the textbook 'Warm'; naive counts 'warm' once for a matching ratio.",
+    "tags": ["clear", "epistolary"]
+  },
+  {
+    "id": "tone-en-04",
+    "lang": "en",
+    "text": "They sat at the conference table and worked through the quarterly figures. The report was due Thursday and the printer was low on toner.",
+    "label": "Balanced",
+    "expectMatch": "agree",
+    "convention": "Flat, affect-neutral procedural prose with no emotional charge is Balanced; naive finds no list words and returns Balanced.",
+    "tags": ["clear", "neutral"]
+  },
+  {
+    "id": "tone-en-05",
+    "lang": "en",
+    "text": "He ran. The footsteps behind him did not stop. Somewhere a door slammed, his lungs burned, and his pulse hammered against his ribs.",
+    "label": "Tense / somber",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Chase, pursuit and panic read as tense; naive misses it because 'ran/footsteps/slammed/pulse' aren't in the English negative list, so it returns Balanced.",
+    "tags": ["clear", "thriller"]
+  },
+  {
+    "id": "tone-en-06",
+    "lang": "en",
+    "text": "Darkness. Grief. The blood on the snow would not wash away, and a cold dread coiled in every shadow of the dead house.",
+    "label": "Dark / ominous",
+    "expectMatch": "agree",
+    "convention": "Dense imagery of death, grief and dread is unmistakably dark; naive counts dark+grief+blood+cold+dread+shadow.",
+    "tags": ["clear", "horror"]
+  },
+  {
+    "id": "tone-en-07",
+    "lang": "en",
+    "text": "There was no hope left in him. The fire had gone out long ago, and only grey ash remained where a man used to be.",
+    "label": "Dark / ominous",
+    "specLabel": "Warm",
+    "expectMatch": "known-divergence",
+    "convention": "'No hope left' is a despairing, hollowed-out statement (dark); naive ignores the negation, counts 'hope' as positive, and labels it Warm.",
+    "tags": ["clear", "negation", "negation-trap"]
+  },
+  {
+    "id": "tone-en-08",
+    "lang": "en",
+    "text": "Without fear, she smiled at the storm, squared her shoulders, and stepped out onto the swaying bridge.",
+    "label": "Light / hopeful",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Negated fear plus a smile and bold forward action is positive/courageous; naive counts 'fear' negative and 'smile' positive, they cancel, yielding Balanced.",
+    "tags": ["clear", "negation", "negation-trap"]
+  },
+  {
+    "id": "tone-en-09",
+    "lang": "en",
+    "text": "Without fear and without hate, the knight rode straight into the enemy line, calm as still water at first light.",
+    "label": "Light / hopeful",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Both 'fear' and 'hate' are explicitly negated and the actor is 'calm', so the felt tone is serene resolve; naive counts both negatives literally but 'calm' and 'light' offset them, so the ratio cancels to 0 and it returns Balanced.",
+    "tags": ["clear", "negation", "negation-trap"]
+  },
+  {
+    "id": "tone-en-10",
+    "lang": "en",
+    "text": "\"You don't love me,\" she said. It wasn't a question. He looked at the floor and found nothing there worth saying.",
+    "label": "Tense / somber",
+    "specLabel": "Warm",
+    "expectMatch": "known-divergence",
+    "convention": "A quiet breakup with a negated 'love' is somber; naive counts 'love' positive despite the 'don't' and mislabels it Warm.",
+    "tags": ["clear", "negation", "dialogue", "negation-trap"]
+  },
+  {
+    "id": "tone-en-11",
+    "lang": "en",
+    "text": "Lightning split the dark sky. The cold rain hammered the broken road, and the wind dragged a shutter back and forth.",
+    "label": "Tense / somber",
+    "specLabel": "Dark / ominous",
+    "expectMatch": "known-divergence",
+    "convention": "An ominous storm is moody/tense but not death-laden; naive substring-counts 'dark','cold','broken' (and a phantom 'light' inside 'lightning') and over-rates it to Dark/ominous.",
+    "tags": ["clear", "substring-trap", "threshold"]
+  },
+  {
+    "id": "tone-en-12",
+    "lang": "en",
+    "text": "\"Don't scold the boy,\" his mother said, though her voice stayed level and her hands kept folding the warm laundry.",
+    "label": "Warm",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "A mild, caring domestic scene reads warm; naive finds a phantom 'cold' inside 'scold' that cancels the real 'warm', netting a zero ratio and Balanced.",
+    "tags": ["clear", "substring-trap"]
+  },
+  {
+    "id": "tone-en-13",
+    "lang": "en",
+    "text": "\"I lost my keys again,\" she laughed, and we turned the whole bright little apartment upside down hunting for them.",
+    "label": "Warm",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "A playful, affectionate everyday scene is warm; naive counts 'lost' negative against 'bright' positive, they cancel to Balanced.",
+    "tags": ["clear", "substring-trap"]
+  },
+  {
+    "id": "tone-en-14",
+    "lang": "en",
+    "text": "After seven years of war, the two nations signed the peace. Bells rang across the city; strangers wept and embraced in the square.",
+    "label": "Light / hopeful",
+    "specLabel": "Warm",
+    "expectMatch": "known-divergence",
+    "convention": "Public joy and relief at war's end is elating/hopeful; naive only catches 'peace' once, so the ratio under-shoots the Light threshold and stops at Warm.",
+    "tags": ["clear", "threshold"]
+  },
+  {
+    "id": "tone-en-15",
+    "lang": "en",
+    "text": "They lowered the coffin into the wet earth. The rain was soft. No one spoke, because there was nothing left to say.",
+    "label": "Tense / somber",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "A hushed funeral is plainly somber; naive finds none of its list words (grief/death absent as tokens) and returns Balanced.",
+    "tags": ["clear", "literary"]
+  },
+  {
+    "id": "tone-en-16",
+    "lang": "en",
+    "text": "\"If you ever come back here,\" the old man whispered, leaning close, \"you will not leave again with your life.\"",
+    "label": "Dark / ominous",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "A whispered death threat is menacing/ominous; naive matches no list tokens (no 'death/blood/kill') and returns Balanced.",
+    "tags": ["clear", "dialogue", "thriller"]
+  },
+  {
+    "id": "tone-en-17",
+    "lang": "en",
+    "text": "Oh, perfect. Just perfect. The car was dead, the rain was endless, and her phone had already drowned in the gutter.",
+    "label": "Tense / somber",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Ironic 'perfect' over a string of small disasters reads as frustrated/grim, not positive; naive sees no positive list words but the phantom 'death' inside 'dead' is absent (it is a separate token), so it returns Balanced.",
+    "tags": ["ambiguous", "irony"]
+  },
+  {
+    "id": "tone-en-18",
+    "lang": "en",
+    "text": "\"This is going to be great,\" he announced with a grin, though dread sat low in his stomach like a swallowed stone.",
+    "label": "Tense / somber",
+    "specLabel": "Tense / somber",
+    "expectMatch": "agree",
+    "convention": "Cheerful surface undercut by 'dread' is anxious; a reader weights the felt dread over the bravado. Naive also lands Tense via the single 'dread'.",
+    "tags": ["ambiguous", "irony"]
+  },
+  {
+    "id": "tone-en-19",
+    "lang": "en",
+    "text": "It was a cruel little joke, the funny kind, the kind that leaves a bruise nobody else can see.",
+    "label": "Tense / somber",
+    "specLabel": "Tense / somber",
+    "expectMatch": "agree",
+    "convention": "'Funny' is overridden by 'cruel' and a hidden bruise; the lasting note is hurt. Naive counts 'cruel' and agrees.",
+    "tags": ["ambiguous", "irony"]
+  },
+  {
+    "id": "tone-en-20",
+    "lang": "en",
+    "text": "Everything is fine. The water is rising in the basement, the dog won't stop barking, and the smoke alarm is singing. Everything is absolutely fine.",
+    "label": "Tense / somber",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Repeated 'fine' over mounting alarm is sarcastic, signalling crisis; a reader reads escalating tension. Naive sees no list words and returns Balanced.",
+    "tags": ["ambiguous", "irony"]
+  },
+  {
+    "id": "tone-en-21",
+    "lang": "en",
+    "text": "The sun was out. Somewhere a child laughed. He stood at the open grave with his hands in his pockets and felt absolutely nothing.",
+    "label": "Tense / somber",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Bright surface details frame numb grief at a graveside; the dominant feeling is hollow/somber. Naive finds no tokens (no 'grief/death') and returns Balanced.",
+    "tags": ["ambiguous", "literary"]
+  },
+  {
+    "id": "tone-nl-01",
+    "lang": "nl",
+    "text": "Het was een warme, lichte ochtend. De kinderen lachten in de tuin en de geur van vers brood dreef door het open raam.",
+    "label": "Warm",
+    "specLabel": "Warm",
+    "expectMatch": "agree",
+    "convention": "Dutch domestic-morning scene (warm light, laughing children, fresh bread) is warm; naive coincidentally matches the substring 'warm' in 'warme' and lands Warm.",
+    "tags": ["clear", "dutch", "substring-trap"]
+  },
+  {
+    "id": "tone-nl-02",
+    "lang": "nl",
+    "text": "De duisternis kwam. Niemand zou haar nog redden. Angst, kou, en bloed op de witte sneeuw.",
+    "label": "Dark / ominous",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Dutch passage of darkness, fear, cold and blood on snow is dark; naive's English-only lists match nothing and it returns Balanced.",
+    "tags": ["clear", "dutch", "non-english"]
+  },
+  {
+    "id": "tone-nl-03",
+    "lang": "nl",
+    "text": "Hij liep naar het eind van de kade en keek naar het grijze water onder de lage hemel. De veerboot zou pas om zes uur komen.",
+    "label": "Balanced",
+    "specLabel": "Balanced",
+    "expectMatch": "agree",
+    "convention": "Flat, observational Dutch prose with no emotional load is Balanced; naive matches nothing and agrees by accident.",
+    "tags": ["clear", "dutch", "neutral"]
+  },
+  {
+    "id": "tone-fr-01",
+    "lang": "fr",
+    "text": "Le feu crépitait doucement dans l'âtre. Les enfants riaient, et la maison tout entière était pleine de chaleur et de douceur.",
+    "label": "Warm",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "French fireside scene full of warmth and tenderness is warm; naive's English lists match no French tokens and it returns Balanced.",
+    "tags": ["clear", "french", "non-english"]
+  },
+  {
+    "id": "tone-fr-02",
+    "lang": "fr",
+    "text": "Il marcha jusqu'au bout du quai et regarda l'eau grise sous le ciel bas. Le train de midi avait dix minutes de retard.",
+    "label": "Balanced",
+    "specLabel": "Balanced",
+    "expectMatch": "agree",
+    "convention": "Neutral French description with no affect is Balanced; naive matches nothing and agrees.",
+    "tags": ["clear", "french", "neutral"]
+  },
+  {
+    "id": "tone-fr-03",
+    "lang": "fr",
+    "text": "Il ne restait plus aucun espoir. La maison était froide, les lettres brûlées, et le silence pesait comme une pierre sur sa poitrine.",
+    "label": "Dark / ominous",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "French 'no hope left' in a cold, ash-and-silence scene is dark/despairing; naive's English lists catch nothing and return Balanced (and would miss the negation regardless).",
+    "tags": ["clear", "french", "non-english", "negation"]
+  },
+  {
+    "id": "tone-de-01",
+    "lang": "de",
+    "text": "Es war ein warmer, heller Tag. Die ganze Familie lachte am Tisch, und alles fühlte sich friedlich und leicht an.",
+    "label": "Warm",
+    "specLabel": "Warm",
+    "expectMatch": "agree",
+    "convention": "German family scene (warm, bright, peaceful, light) is warm; naive matches the substring 'warm' inside 'warmer' and lands Warm by coincidence.",
+    "tags": ["clear", "german", "substring-trap"]
+  },
+  {
+    "id": "tone-de-02",
+    "lang": "de",
+    "text": "Die Dunkelheit kam über das Dorf. Angst kroch durch die Gassen. Niemand würde sie retten in dieser kalten, toten Nacht.",
+    "label": "Dark / ominous",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "German night of darkness, fear and a 'dead' village is dark; naive's English lists match nothing and it returns Balanced.",
+    "tags": ["clear", "german", "non-english"]
+  },
+  {
+    "id": "tone-es-01",
+    "lang": "es",
+    "text": "La abuela sonrió y nos abrazó a todos. La casa entera olía a pan caliente, y por un momento nada más importaba.",
+    "label": "Warm",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish scene of a grandmother's embrace and fresh bread is warm; naive's English lists catch no Spanish tokens and return Balanced.",
+    "tags": ["clear", "spanish", "non-english"]
+  },
+  {
+    "id": "tone-es-02",
+    "lang": "es",
+    "text": "La sangre cubría el suelo de piedra. Nadie escaparía de aquella noche fría y muerta, y el miedo se cerró como una mano alrededor de su garganta.",
+    "label": "Dark / ominous",
+    "specLabel": "Balanced",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish passage of blood, a 'dead' night, cold and throttling fear is dark; naive's English lists match nothing and return Balanced.",
+    "tags": ["clear", "spanish", "non-english"]
+  }
+]

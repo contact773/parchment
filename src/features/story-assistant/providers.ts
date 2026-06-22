@@ -71,6 +71,8 @@ export interface StoryProvider {
   /** True if the provider is configured and usable. */
   ready: boolean
   generate: (messages: ChatMessage[], context: StoryContext) => Promise<string>
+  /** Raw completion with a custom system prompt — used by advanced analysis. */
+  complete: (messages: ChatMessage[], context: StoryContext, system: string) => Promise<string>
   transform: (kind: TransformKind, text: string, context: StoryContext, opts?: TransformOpts) => Promise<TransformResult>
 }
 
@@ -116,17 +118,18 @@ function contextBlock(ctx: StoryContext): string {
   const locs = ctx.locations ?? []
   const world = ctx.worldElements ?? []
   const threads = ctx.threads ?? []
+  const antagonist = ctx.characters.find((c) => c.role === 'antagonist')?.name
   return [
     `PROJECT: "${p.title}" — type: ${p.type}, genre: ${p.genre || insight(ctx, 'genre')}, language: ${p.language}.`,
     p.logline ? `LOGLINE: ${p.logline}` : '',
-    `DETECTED — tone: ${insight(ctx, 'tone')}; POV: ${insight(ctx, 'point of view')}; pacing: ${insight(ctx, 'pacing')}; tension: ${insight(ctx, 'tension')}.`,
-    `PROTAGONIST: ${insight(ctx, 'protagonist')}. ANTAGONIST: ${insight(ctx, 'antagonist')}.`,
+    `DETECTED — POV: ${insight(ctx, 'point of view')}; pacing: ${insight(ctx, 'pacing')}.`,
+    `PROTAGONIST: ${insight(ctx, 'protagonist')}.${antagonist ? ` ANTAGONIST: ${antagonist}.` : ''}`,
     ctx.characters.length ? `CHARACTERS:\n${ctx.characters.slice(0, 12).map((c) => `- ${charLine(c)}`).join('\n')}` : '',
     locs.length ? `LOCATIONS: ${locs.slice(0, 12).map((l) => `${l.name}${l.kind ? ` (${l.kind})` : ''}${clip(l.significance, 80) ? ` — ${clip(l.significance, 80)}` : ''}`).join('; ')}.` : '',
     threads.length ? `PLOT THREADS: ${threads.slice(0, 12).map((t) => `${t.name} [${t.status}]`).join('; ')}.` : '',
     world.length ? `WORLD RULES: ${world.filter((w) => w.rules || w.summary).slice(0, 10).map((w) => `${w.name}: ${clip(w.rules || w.summary, 120)}`).join('; ')}.` : '',
     ctx.node ? `CURRENT DOCUMENT: "${ctx.node.title}" (${ctx.node.docType}).` : '',
-    ctx.sceneText ? `CURRENT TEXT (excerpt):\n"""${ctx.sceneText.slice(0, 4000)}"""` : 'No text written yet.',
+    ctx.sceneText ? `CURRENT TEXT (excerpt):\n"""${ctx.sceneText.slice(0, 6000)}"""` : 'No text written yet.',
   ]
     .filter(Boolean)
     .join('\n')
@@ -151,8 +154,7 @@ function block(intro: string, options: Option[]): string {
 function localGenerate(messages: ChatMessage[], ctx: StoryContext): string {
   const q = (messages.filter((m) => m.role === 'user').pop()?.content ?? '').toLowerCase()
   const hero = insight(ctx, 'protagonist').includes('Not yet') ? 'your protagonist' : insight(ctx, 'protagonist')
-  const foe = insight(ctx, 'antagonist').includes('Not yet') ? 'the opposing force' : insight(ctx, 'antagonist')
-  const tone = insight(ctx, 'tone').toLowerCase()
+  const foe = ctx.characters.find((c) => c.role === 'antagonist')?.name ?? 'the opposing force'
   const has = (...k: string[]) => k.some((x) => q.includes(x))
   const snippet = ctx.sceneText ? lastSnippet(ctx.sceneText, 24) : ''
 
@@ -236,7 +238,7 @@ function localGenerate(messages: ChatMessage[], ctx: StoryContext): string {
 
   // Default
   return block(
-    `Here’s how I read it — ${tone} tone, pacing ${insight(ctx, 'pacing').toLowerCase()}. A few ways forward:`,
+    `Here’s how I read it. A few ways forward:`,
     [
       { title: 'Escalate', body: `Put ${hero} under a sharper, more immediate pressure.`, effect: 'Drives momentum and forces revealing choices.' },
       { title: 'Complicate', body: 'Introduce a competing want or an inconvenient ally.', effect: 'Adds texture and delays easy resolution.' },
@@ -306,19 +308,33 @@ export const localProvider: StoryProvider = {
   label: 'Parchment (local)',
   ready: true,
   generate: async (messages, ctx) => localGenerate(messages, ctx),
+  complete: async () => {
+    throw new Error('Advanced analysis needs a connected AI model (Settings → Story Assistant).')
+  },
   transform: async (kind, text) => localTransform(kind, text),
 }
 
 // ── Cloud providers (best-effort direct browser calls) ─────────────────────
 
-async function callOpenAI(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext): Promise<string> {
-  const res = await fetch(`${(cfg.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '')}/chat/completions`, {
+/** fetch with an abort timeout so a hung endpoint can't leave the UI spinning. */
+async function fetchWithTimeout(url: string, init: RequestInit, ms = 90000): Promise<Response> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function callOpenAI(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext, system?: string): Promise<string> {
+  const res = await fetchWithTimeout(`${(cfg.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
     body: JSON.stringify({
       model: cfg.model || 'gpt-4o-mini',
-      messages: [{ role: 'system', content: systemPrompt() }, { role: 'system', content: contextBlock(ctx) }, ...messages],
-      temperature: 0.9,
+      messages: [{ role: 'system', content: system ?? systemPrompt() }, { role: 'system', content: contextBlock(ctx) }, ...messages],
+      temperature: system ? 0.3 : 0.9,
     }),
   })
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`)
@@ -326,8 +342,8 @@ async function callOpenAI(cfg: AIConfig, messages: ChatMessage[], ctx: StoryCont
   return data.choices?.[0]?.message?.content ?? '(no response)'
 }
 
-async function callAnthropic(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+async function callAnthropic(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext, system?: string): Promise<string> {
+  const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -337,8 +353,8 @@ async function callAnthropic(cfg: AIConfig, messages: ChatMessage[], ctx: StoryC
     },
     body: JSON.stringify({
       model: cfg.model || 'claude-opus-4-8',
-      max_tokens: 1200,
-      system: `${systemPrompt()}\n\n${contextBlock(ctx)}`,
+      max_tokens: 4096,
+      system: `${system ?? systemPrompt()}\n\n${contextBlock(ctx)}`,
       messages: messages.map((m) => ({ role: m.role === 'system' ? 'user' : m.role, content: m.content })),
     }),
   })
@@ -347,15 +363,15 @@ async function callAnthropic(cfg: AIConfig, messages: ChatMessage[], ctx: StoryC
   return data.content?.[0]?.text ?? '(no response)'
 }
 
-async function callGemini(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext): Promise<string> {
+async function callGemini(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext, system?: string): Promise<string> {
   const model = cfg.model || 'gemini-1.5-flash'
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: `${systemPrompt()}\n\n${contextBlock(ctx)}` }] },
+        systemInstruction: { parts: [{ text: `${system ?? systemPrompt()}\n\n${contextBlock(ctx)}` }] },
         contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
       }),
     },
@@ -365,14 +381,14 @@ async function callGemini(cfg: AIConfig, messages: ChatMessage[], ctx: StoryCont
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '(no response)'
 }
 
-async function callOllama(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext): Promise<string> {
-  const res = await fetch(`${(cfg.baseUrl || 'http://localhost:11434').replace(/\/$/, '')}/api/chat`, {
+async function callOllama(cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext, system?: string): Promise<string> {
+  const res = await fetchWithTimeout(`${(cfg.baseUrl || 'http://localhost:11434').replace(/\/$/, '')}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: cfg.model || 'llama3.1:8b',
       stream: false,
-      messages: [{ role: 'system', content: `${systemPrompt()}\n\n${contextBlock(ctx)}` }, ...messages],
+      messages: [{ role: 'system', content: `${system ?? systemPrompt()}\n\n${contextBlock(ctx)}` }, ...messages],
     }),
   })
   if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
@@ -380,7 +396,7 @@ async function callOllama(cfg: AIConfig, messages: ChatMessage[], ctx: StoryCont
   return data.message?.content ?? '(no response)'
 }
 
-type CallFn = (cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext) => Promise<string>
+type CallFn = (cfg: AIConfig, messages: ChatMessage[], ctx: StoryContext, system?: string) => Promise<string>
 
 async function cloudTransform(
   call: CallFn,
@@ -405,6 +421,7 @@ export function getProvider(cfg: AIConfig): StoryProvider {
     label,
     ready,
     generate: (m, c) => call(cfg, m, c),
+    complete: (m, c, system) => call(cfg, m, c, system),
     transform: (kind, text, ctx, opts) => cloudTransform(call, cfg, kind, text, ctx, opts),
   })
   switch (cfg.provider) {

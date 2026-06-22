@@ -1,0 +1,237 @@
+[
+  {
+    "id": "agree-en-01",
+    "lang": "en",
+    "text": "She gave a well-known reply and turned away.",
+    "label": "8",
+    "expectMatch": "agree",
+    "convention": "Hyphenated compound 'well-known' counts as 1 word; the ASCII hyphen lives inside the token regex class so it is kept, not split.",
+    "tags": ["hyphen-compound", "literary", "short"]
+  },
+  {
+    "id": "agree-en-02",
+    "lang": "en",
+    "text": "\"I don't know,\" he said, \"and I don't care.\"",
+    "label": "9",
+    "expectMatch": "agree",
+    "convention": "Contraction 'don't' is 1 word; the apostrophe is part of the token class so it is not split. Quotation marks and commas are non-token punctuation.",
+    "tags": ["contraction", "dialogue", "apostrophe"]
+  },
+  {
+    "id": "agree-en-03",
+    "lang": "en",
+    "text": "My mother-in-law arrived before dawn, suitcase in hand.",
+    "label": "8",
+    "expectMatch": "agree",
+    "convention": "Multi-hyphen compound 'mother-in-law' is a single word; internal hyphens are kept inside one token.",
+    "tags": ["hyphen-compound", "multi-hyphen", "literary"]
+  },
+  {
+    "id": "agree-en-04",
+    "lang": "en",
+    "text": "Mr O'Brien locked the door, pocketed the key, and vanished.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "Name with internal apostrophe 'O'Brien' is 1 word; apostrophe is in the token class. Curly and straight apostrophes both count.",
+    "tags": ["apostrophe", "proper-noun", "narration"]
+  },
+  {
+    "id": "agree-en-05",
+    "lang": "en",
+    "text": "Rain. Wind. Silence. Then footsteps on the stair.",
+    "label": "8",
+    "expectMatch": "agree",
+    "convention": "Plain whitespace/word tokens with no edge cases; periods are non-token punctuation, so each capitalized fragment is one word.",
+    "tags": ["sparse", "staccato", "atmospheric"]
+  },
+  {
+    "id": "agree-en-06",
+    "lang": "en",
+    "text": "The old self-made millionaire wept into his empty glass.",
+    "label": "9",
+    "expectMatch": "agree",
+    "convention": "Hyphenated compound 'self-made' counts as 1 word; hyphen kept inside the token.",
+    "tags": ["hyphen-compound", "literary"]
+  },
+  {
+    "id": "agree-en-07",
+    "lang": "en",
+    "text": "\"Run!\" she screamed. He ran. The bridge groaned beneath them.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "Exclamation marks and quotes are non-token punctuation; every span is a plain word with no compound or numeric edge case.",
+    "tags": ["dialogue", "thriller", "action"]
+  },
+  {
+    "id": "agree-en-08",
+    "lang": "en",
+    "text": "'Tis a long road, lad, and the season is against us.",
+    "label": "11",
+    "expectMatch": "agree",
+    "convention": "Leading-apostrophe contraction ''Tis' is treated as 1 word; the apostrophe is inside the token class so the leading mark stays attached.",
+    "tags": ["apostrophe", "archaic", "dialogue"]
+  },
+  {
+    "id": "agree-en-09",
+    "lang": "en",
+    "text": "cat — dog — bird, the labels read, each one crossed out.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "Em dash '—' between spaces is NOT a word and is correctly ignored (only ASCII hyphen-minus is in the token class), so the three nouns plus the rest count cleanly.",
+    "tags": ["em-dash", "punctuation", "no-divergence-trap"]
+  },
+  {
+    "id": "agree-en-10",
+    "lang": "en",
+    "text": "Hard-won, half-broken, she climbed the last ridge alone.",
+    "label": "8",
+    "expectMatch": "agree",
+    "convention": "Two hyphenated compounds 'Hard-won' and 'half-broken' each count as 1 word; hyphens kept inside their tokens.",
+    "tags": ["hyphen-compound", "literary", "double-compound"]
+  },
+  {
+    "id": "agree-en-11",
+    "lang": "en",
+    "text": "He whispered her name once, twice, a third desperate time.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "Ordinary prose with no numeric, hyphen, or dash edge cases; straightforward whitespace word count.",
+    "tags": ["literary", "plain", "control"]
+  },
+  {
+    "id": "agree-fr-01",
+    "lang": "fr",
+    "text": "Élodie avait déjà tout oublié quand la nuit tomba.",
+    "label": "9",
+    "expectMatch": "agree",
+    "convention": "Accented Latin letters (É, à, é) are \\p{L} and stay within their tokens; nine plain words.",
+    "tags": ["french", "accents", "diacritics"]
+  },
+  {
+    "id": "agree-de-01",
+    "lang": "de",
+    "text": "Die Straße war groß und leer; weißes Licht über allem.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "ß and umlauts (ß, ö, ü) are \\p{L}; 'Straße', 'groß', 'weißes', 'über' each stay one token. Semicolon is non-token punctuation.",
+    "tags": ["german", "eszett", "umlaut"]
+  },
+  {
+    "id": "agree-es-01",
+    "lang": "es",
+    "text": "El niño comió rápido y corrió hacia el río pequeño.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "Spanish accents and ñ (í, ó, ñ) are \\p{L}; ten plain words with no numeric or hyphen traps.",
+    "tags": ["spanish", "accents", "enye"]
+  },
+  {
+    "id": "agree-de-02",
+    "lang": "de",
+    "text": "Großmutter saß am Fenster und sah dem Schnee zu, müde.",
+    "label": "10",
+    "expectMatch": "agree",
+    "convention": "ß within 'Großmutter' and 'saß', plus umlaut in 'müde', all remain inside single tokens. Ten words.",
+    "tags": ["german", "eszett", "umlaut"]
+  },
+  {
+    "id": "div-en-01",
+    "lang": "en",
+    "text": "The blade weighed 4.5 kilos and never once dulled.",
+    "label": "9",
+    "specLabel": "10",
+    "expectMatch": "known-divergence",
+    "convention": "A number with a decimal point ('4.5') is 1 word. The naive regex omits '.' from its token class, so it splits '4.5' into '4' and '5' and over-counts by one.",
+    "tags": ["decimal", "number", "over-count"]
+  },
+  {
+    "id": "div-en-02",
+    "lang": "en",
+    "text": "He counted 1,000 silent stars before the dawn broke.",
+    "label": "9",
+    "specLabel": "10",
+    "expectMatch": "known-divergence",
+    "convention": "A comma-grouped number ('1,000') is 1 word. The naive regex omits ',' from its token class and splits it into '1' and '000', over-counting by one.",
+    "tags": ["number", "thousands-separator", "over-count"]
+  },
+  {
+    "id": "div-en-03",
+    "lang": "en",
+    "text": "The reactor held at 3.14 atmospheres, then it didn't.",
+    "label": "9",
+    "specLabel": "10",
+    "expectMatch": "known-divergence",
+    "convention": "Decimal '3.14' is 1 word (and 'didn't' is correctly 1). The naive regex splits '3.14' into '3' and '14', over-counting by one.",
+    "tags": ["decimal", "number", "contraction", "over-count"]
+  },
+  {
+    "id": "div-en-04",
+    "lang": "en",
+    "text": "cat - dog, the chalkboard said, the dash between them stark.",
+    "label": "10",
+    "specLabel": "11",
+    "expectMatch": "known-divergence",
+    "convention": "A lone ASCII hyphen-minus between spaces ('cat - dog') is NOT a word. The naive regex includes '-' in its token class, so the standalone dash matches as its own token and over-counts by one.",
+    "tags": ["lone-hyphen", "dash", "over-count"]
+  },
+  {
+    "id": "div-en-05",
+    "lang": "en",
+    "text": "Wait -- stop -- listen, the radio crackled in the dark.",
+    "label": "9",
+    "specLabel": "11",
+    "expectMatch": "known-divergence",
+    "convention": "Free-standing ASCII dash runs ('--') between spaces are not words. The naive regex matches each '--' as a token, over-counting by two.",
+    "tags": ["lone-hyphen", "double-dash", "over-count"]
+  },
+  {
+    "id": "div-en-06",
+    "lang": "en",
+    "text": "Project code_name BLACKOUT was never meant to leak.",
+    "label": "8",
+    "specLabel": "9",
+    "expectMatch": "known-divergence",
+    "convention": "An underscore-joined compound ('code_name') reads as a single word under the compound = 1 rule. The naive regex excludes '_' from its token class and splits it into 'code' and 'name', over-counting by one.",
+    "tags": ["underscore", "compound", "over-count"]
+  },
+  {
+    "id": "div-en-07",
+    "lang": "en",
+    "text": "The train left at 3:30 and would not wait for stragglers.",
+    "label": "11",
+    "specLabel": "12",
+    "expectMatch": "known-divergence",
+    "convention": "A clock time ('3:30') is a single numeric word. The naive regex omits ':' and splits it into '3' and '30', over-counting by one.",
+    "tags": ["number", "time", "colon", "over-count"]
+  },
+  {
+    "id": "div-en-08",
+    "lang": "en",
+    "text": "Sales jumped 50.5% in a single feverish afternoon.",
+    "label": "8",
+    "specLabel": "9",
+    "expectMatch": "known-divergence",
+    "convention": "A decimal percentage ('50.5%') is one numeric word. The naive regex drops '%' (fine) but also splits on the '.', yielding '50' and '5', over-counting by one.",
+    "tags": ["decimal", "percent", "number", "over-count"]
+  },
+  {
+    "id": "div-fr-01",
+    "lang": "fr",
+    "text": "Le thermomètre indiquait 37,5 degrés sous la lune.",
+    "label": "8",
+    "specLabel": "9",
+    "expectMatch": "known-divergence",
+    "convention": "French decimals use a comma ('37,5'), which is still 1 word. The naive regex splits on ',' into '37' and '5', over-counting by one.",
+    "tags": ["french", "decimal-comma", "number", "over-count"]
+  },
+  {
+    "id": "div-es-01",
+    "lang": "es",
+    "text": "La factura sumaba 2.500 pesos, dijo el tendero, ceñudo.",
+    "label": "9",
+    "specLabel": "10",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish uses '.' as a thousands separator ('2.500' = two thousand five hundred), one numeric word. The naive regex splits on '.' into '2' and '500', over-counting by one.",
+    "tags": ["spanish", "thousands-separator", "number", "over-count"]
+  }
+]

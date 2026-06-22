@@ -1,0 +1,195 @@
+[
+  {
+    "id": "adv-en-01",
+    "lang": "en",
+    "text": "She closed the door softly and walked away. He answered quickly, almost before she had finished speaking. The candle burned brightly in the draft.",
+    "label": "3; ratio:0.13",
+    "expectMatch": "agree",
+    "convention": "Count manner adverbs ending in -ly: softly, quickly, brightly = 3 real adverbs out of 24 words. 'almost' is a degree adverb, does not end in -ly, and is not matched. The naive /\\w+ly/ regex captures exactly these three, so human and regex agree at 3.",
+    "tags": ["en", "agree", "real-ly", "literary"]
+  },
+  {
+    "id": "adv-en-02",
+    "lang": "en",
+    "text": "Suddenly the floor gave way. He fell, grabbing wildly at the rope, and held on desperately as the dust settled slowly beneath him.",
+    "label": "4; ratio:0.17",
+    "expectMatch": "agree",
+    "convention": "Real -ly adverbs: suddenly, wildly, desperately, slowly = 4 out of 23 words. Regex matches the same four; no -ly false positives present.",
+    "tags": ["en", "agree", "real-ly", "tension"]
+  },
+  {
+    "id": "adv-en-03",
+    "lang": "en",
+    "text": "\"Go on, then,\" she said calmly. \"I'll wait.\"\nHe nodded, smiled faintly, and stepped out into the rain.",
+    "label": "2; ratio:0.11",
+    "expectMatch": "agree",
+    "convention": "Real -ly adverbs: calmly, faintly = 2 out of 18 words. Regex matches both; nothing else ends in -ly.",
+    "tags": ["en", "agree", "dialogue", "real-ly"]
+  },
+  {
+    "id": "adv-en-04",
+    "lang": "en",
+    "text": "The engine hummed steadily as the ship drifted past the dead station. Lights blinked rhythmically across the console, and the air recycled quietly through old vents.",
+    "label": "3; ratio:0.12",
+    "expectMatch": "agree",
+    "convention": "Real -ly adverbs: steadily, rhythmically, quietly = 3 out of 26 words. Regex matches the same three.",
+    "tags": ["en", "agree", "sci-fi", "real-ly"]
+  },
+  {
+    "id": "adv-en-05",
+    "lang": "en",
+    "text": "He moved carefully along the ledge, breathing slowly, listening hard. The wind tugged insistently at his coat but he pressed on, gripping the cold stone tightly.",
+    "label": "4; ratio:0.15",
+    "expectMatch": "agree",
+    "convention": "Real -ly adverbs: carefully, slowly, insistently, tightly = 4 out of 26 words. Regex matches all four; no traps.",
+    "tags": ["en", "agree", "real-ly", "descriptive"]
+  },
+  {
+    "id": "adv-en-06",
+    "lang": "en",
+    "text": "The whole family gathered for the reply, and only Italy felt distant on the map. Sally would supply the bread; the rally was due by July.",
+    "label": "0; ratio:0.00",
+    "specLabel": "8; ratio:0.31",
+    "expectMatch": "known-divergence",
+    "convention": "None of these are adverbs: family, reply, only, Italy, Sally, supply, rally, July are nouns/names/adjective. True manner-adverb count is 0. The naive /\\w+ly/gi regex wrongly flags all 8 -ly words (out of 26 words).",
+    "tags": ["en", "known-divergence", "false-ly", "false-positive"]
+  },
+  {
+    "id": "adv-en-07",
+    "lang": "en",
+    "text": "I rely on you, and you rely on me. The ally we trusted betrayed us, but the bully never could.",
+    "label": "0; ratio:0.00",
+    "specLabel": "4; ratio:0.20",
+    "expectMatch": "known-divergence",
+    "convention": "rely (verb), rely (verb), ally (noun), bully (noun) are not adverbs; true count 0. Regex over-counts all 4 -ly words out of 20 words.",
+    "tags": ["en", "known-divergence", "false-ly", "verbs-nouns"]
+  },
+  {
+    "id": "adv-en-08",
+    "lang": "en",
+    "text": "The lily in the valley swayed. A butterfly drifted by the holly bush while the jolly old gully gurgled below.",
+    "label": "0; ratio:0.00",
+    "specLabel": "5; ratio:0.25",
+    "expectMatch": "known-divergence",
+    "convention": "lily, butterfly, holly, jolly, gully are nouns/adjective, not adverbs; true count 0. The naive regex flags all 5 -ly tokens out of 20 words.",
+    "tags": ["en", "known-divergence", "false-ly", "nouns"]
+  },
+  {
+    "id": "adv-en-09",
+    "lang": "en",
+    "text": "He quickly read the reply from his family in Italy, then softly closed the laptop and sat very still in the empty, ugly room.",
+    "label": "2; ratio:0.08",
+    "specLabel": "6; ratio:0.25",
+    "expectMatch": "known-divergence",
+    "convention": "Real adverbs: quickly, softly = 2. False -ly words: reply, family, Italy, ugly are nouns/name/adjective. The regex flags all 6 -ly tokens (out of 24 words); true count is 2 — a mixed case.",
+    "tags": ["en", "known-divergence", "mixed", "false-ly"]
+  },
+  {
+    "id": "adv-en-10",
+    "lang": "en",
+    "text": "Friendly though he seemed, the lonely clerk eyed me coldly. \"Kindly leave,\" he said, and bolted the door deliberately.",
+    "label": "3; ratio:0.16",
+    "specLabel": "5; ratio:0.26",
+    "expectMatch": "known-divergence",
+    "convention": "Real adverbs: coldly, kindly, deliberately = 3. friendly and lonely are adjectives, not adverbs. Regex flags all 5 -ly tokens out of 19 words; true count is 3.",
+    "tags": ["en", "known-divergence", "adjectives", "mixed"]
+  },
+  {
+    "id": "adv-en-11",
+    "lang": "en",
+    "text": "The detective studied the body. No clue, no weapon, no witness. Cold case. He lit a cigarette and waited.",
+    "label": "0; ratio:0.00",
+    "expectMatch": "agree",
+    "convention": "Sparse mystery prose with zero -ly words and zero manner adverbs. Both human count and regex agree at 0 (out of 19 words).",
+    "tags": ["en", "agree", "sparse", "zero-adverbs", "mystery"]
+  },
+  {
+    "id": "adv-en-12",
+    "lang": "en",
+    "text": "He spoke truly and acted nobly, yet history judged him harshly. The crowd, wholly unconvinced, dispersed silently into the dusk.",
+    "label": "5; ratio:0.25",
+    "expectMatch": "agree",
+    "convention": "Real -ly adverbs: truly, nobly, harshly, wholly, silently = 5 out of 20 words. Regex matches the same five.",
+    "tags": ["en", "agree", "real-ly", "literary"]
+  },
+  {
+    "id": "adv-fr-13",
+    "lang": "fr",
+    "text": "Elle ferma doucement la porte et s'éloigna lentement dans le couloir. Il répondit rapidement, presque trop vite.",
+    "label": "3; ratio:0.18",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "French manner adverbs in -ment: doucement, lentement, rapidement = 3 real adverbs out of 17 words. The naive -ly-only regex matches none, so it under-counts to 0.",
+    "tags": ["fr", "known-divergence", "ment", "under-count"]
+  },
+  {
+    "id": "adv-fr-14",
+    "lang": "fr",
+    "text": "Le mouvement de la foule était lent. Ce monument du gouvernement, vêtu de pierre, dominait le bâtiment.",
+    "label": "0; ratio:0.00",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "agree",
+    "convention": "These -ment words are nouns, not adverbs: mouvement, monument, gouvernement, bâtiment (and vêtu is a participle). True manner-adverb count is 0. The -ly regex also returns 0, so they agree at 0 (out of 17 words).",
+    "tags": ["fr", "agree", "ment-noun", "false-suffix"]
+  },
+  {
+    "id": "adv-fr-15",
+    "lang": "fr",
+    "text": "Il avança prudemment sur la corniche, respirant calmement, écoutant. Soudainement, une pierre se détacha et tomba bruyamment dans le vide.",
+    "label": "4; ratio:0.20",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "French -ment manner adverbs: prudemment, calmement, soudainement, bruyamment = 4 out of 20 words. The -ly-only regex matches none, under-counting to 0.",
+    "tags": ["fr", "known-divergence", "ment", "tension"]
+  },
+  {
+    "id": "adv-fr-16",
+    "lang": "fr",
+    "text": "\"Pars maintenant,\" dit-elle froidement. Il hocha la tête et sortit silencieusement sous la pluie battante.",
+    "label": "2; ratio:0.13",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "French -ment manner adverbs: froidement, silencieusement = 2 out of 16 words (maintenant is a time adverb, not -ment-manner; battante is a participle). The -ly regex matches none, under-counting to 0.",
+    "tags": ["fr", "known-divergence", "ment", "dialogue"]
+  },
+  {
+    "id": "adv-es-17",
+    "lang": "es",
+    "text": "Ella cerró la puerta suavemente y se alejó lentamente por el pasillo. Él respondió rápidamente, casi sin pensar.",
+    "label": "3; ratio:0.17",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish manner adverbs in -mente: suavemente, lentamente, rápidamente = 3 out of 18 words. The -ly-only regex matches none, under-counting to 0.",
+    "tags": ["es", "known-divergence", "mente", "under-count"]
+  },
+  {
+    "id": "adv-es-18",
+    "lang": "es",
+    "text": "Caminó cuidadosamente por la cornisa, respirando profundamente. De repente, una piedra cayó y golpeó fuertemente contra las rocas.",
+    "label": "3; ratio:0.17",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish -mente adverbs: cuidadosamente, profundamente, fuertemente = 3 out of 18 words ('de repente' is a multiword adverbial, not -mente). The -ly regex matches none, under-counting to 0.",
+    "tags": ["es", "known-divergence", "mente", "descriptive"]
+  },
+  {
+    "id": "adv-es-19",
+    "lang": "es",
+    "text": "La mente del niño era un misterio. El presidente habló con calma, sin prisa, ante la gente reunida en el puente.",
+    "label": "0; ratio:0.00",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "agree",
+    "convention": "These words are nouns/adjectives, not adverbs: mente, presidente, gente, puente. True manner-adverb count is 0; the -ly regex also returns 0, so they agree (out of 21 words).",
+    "tags": ["es", "agree", "mente-noun", "false-suffix"]
+  },
+  {
+    "id": "adv-es-20",
+    "lang": "es",
+    "text": "\"Vete ya,\" dijo fríamente. Él asintió, sonrió levemente y salió tranquilamente bajo la lluvia.",
+    "label": "3; ratio:0.21",
+    "specLabel": "0; ratio:0.00",
+    "expectMatch": "known-divergence",
+    "convention": "Spanish -mente manner adverbs: fríamente, levemente, tranquilamente = 3 out of 14 words. The -ly-only regex matches none, under-counting to 0.",
+    "tags": ["es", "known-divergence", "mente", "dialogue"]
+  }
+]

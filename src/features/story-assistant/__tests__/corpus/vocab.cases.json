@@ -1,0 +1,243 @@
+[
+  {
+    "id": "vocab-en-01",
+    "lang": "en",
+    "text": "Snow fell on the abandoned station, softening the cracked platform and the rusted rails into a single pale blur. Klara waited beneath the broken clock, her breath unfurling in slow grey ribbons that dissolved against the iron sky. No train would come; she had known that for an hour, yet leaving felt like surrender. Pigeons huddled in the rafters above, occasionally shifting, their wings whispering secrets to the cold. She remembered arriving here as a girl, suitcase enormous in her small fist, the future spread before her like an unmarked map. Now the map was filled, every road taken or refused, and the station stood as empty as the promises that once departed from it.",
+    "label": "0.80",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100 over lowercased tokens /[\\p{L}'’-]+/; text >100 tokens so MATTR applies. ~115 tokens, high lexical variety -> ~0.80.",
+    "tags": [
+      "en",
+      "literary",
+      "~120w",
+      "high-variety",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-02",
+    "lang": "en",
+    "text": "Every morning the baker rose before the sun and lit the great brick oven. He mixed the flour and the water and the salt, and he kneaded the dough until his arms ached. Then he let the dough rest while he swept the floor and arranged the trays. When the dough had risen, he shaped the loaves and slid them into the oven, and the warm smell of bread filled the empty street. Neighbors woke to that smell. They came to the door before it opened, coins ready, hungry for the first warm loaf. The baker greeted each by name, and for a moment the whole village felt like one family gathered around a single table.",
+    "label": "0.66",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~116 tokens with controlled moderate repetition of function words and 'dough/bread/oven' -> mid-band ~0.66.",
+    "tags": [
+      "en",
+      "domestic",
+      "~115w",
+      "moderate-repetition",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-03",
+    "lang": "en",
+    "text": "\"We should turn back,\" Mara whispered, gripping the rope tighter. The wind clawed at the cliff face, and far below the river churned white against black stone.\n\"Not yet,\" Theo answered. His fingers searched the rock for the next hold. \"The ledge is close. I can see it.\"\n\"You said that an hour ago.\"\n\"And it was true an hour ago.\" He grinned despite the cold burning his cheeks. \"It is only truer now.\"\nMara did not laugh. She watched a falcon ride the updraft, effortless where they were desperate, and envied its indifferent grace. Her arms trembled. The summit, somewhere above the clouds, felt less like a destination than a rumor invented to lure fools onto a mountain that did not want them.",
+    "label": "0.80",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; quotes/punctuation excluded by token regex. ~124 tokens, dialogue+narration with little verbatim repeat -> ~0.80.",
+    "tags": [
+      "en",
+      "dialogue-heavy",
+      "adventure",
+      "~125w",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-04",
+    "lang": "en",
+    "text": "The colony ship drifted three centuries from any star, its corridors humming with the patience of machines that did not dream. Inside the cryo-bay, two thousand sleepers floated in amber light, their slowed hearts marking decades between beats. Captain Voss walked the silent rows during her single waking month each year, checking seals, reading dials, speaking softly to people who could not hear. She told them about the planet ahead, blue and unproven, glimpsed only as a flicker in the long-range scope. She told them she was afraid. The sleepers kept their counsel, and the ship sailed on through the indifferent dark toward a horizon none of them had chosen but all of them would inherit.",
+    "label": "0.82",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~116 tokens. Note 'three/two thousand' digits absent here are spelled out so all count; high variety -> ~0.82.",
+    "tags": [
+      "en",
+      "sci-fi",
+      "~110w",
+      "high-variety",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-05",
+    "lang": "en",
+    "text": "Inspector Halloran studied the sealed chamber with the patience of a man who had witnessed every conceivable trick. The window was latched from inside, the chimney too narrow for a cat, the only door bolted shut. Yet the jeweler lay dead upon his carpet, and the famous ruby had vanished. Kneeling beside the corpse, the inspector noted a faint scent of bitter almonds, an overturned teacup, a clock frozen at precisely nine. Nothing here was accidental. Someone had arranged this grim tableau with a painter's deliberate care, wanting it discovered exactly so. Halloran straightened, brushed dust from his trousers, and smiled without any warmth. Every puzzle concealed its solution; every flawless scheme hid one careless thread waiting to unravel.",
+    "label": "0.82",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~119 tokens, dense varied diction (locked-room mystery) with minimal verbatim repeat -> ~0.82.",
+    "tags": [
+      "en",
+      "mystery",
+      "~130w",
+      "high-variety",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-06",
+    "lang": "en",
+    "text": "You wake in a room you do not recognize, the ceiling fan turning slow circles above you. You do not remember arriving. Your shoes sit neatly by the door, laces tucked, as though someone careful placed them there. You sit up. Your head aches behind the eyes, a dull insistent pressure, and your mouth tastes of copper and old wine. On the nightstand a glass of water waits, and beside it a folded note in handwriting you almost know. You reach for the note. Your hand trembles. Outside the window an unfamiliar city glitters, vast and patient, holding its breath, waiting to see what you will do now that you have finally, finally woken.",
+    "label": "0.77",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~114 tokens. Second-person repeats 'you/your' (counted, not stopworded for vocab) lower variety slightly -> ~0.77.",
+    "tags": [
+      "en",
+      "second-person",
+      "psychological",
+      "~120w",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-07",
+    "lang": "en",
+    "text": "The cartographer worked by candlelight long after the household slept, his quill tracing coastlines no European eye had yet confirmed. Rumors arrived with every ship: islands of spice, rivers of gold, kingdoms ruled by women, monsters that swallowed vessels whole. He recorded them all, separating likely from absurd by instinct alone, for certainty was a luxury the age could not afford. His map grew slowly, edges fraying into speculation and blank parchment where knowledge surrendered to faith. Somewhere out there, beyond the inked horizon, the world continued without him, indifferent to his careful guesses. Still he drew, believing that to name a place, however wrongly, was the first act of claiming it.",
+    "label": "0.87",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~112 tokens, very high lexical variety (almost no repeated content words) -> ~0.87.",
+    "tags": [
+      "en",
+      "historical",
+      "~115w",
+      "high-variety",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-08",
+    "lang": "en",
+    "text": "The office emptied slowly on Friday evenings, desk by desk, until only Priya remained beneath the buzzing fluorescent lights. She liked it then, the quiet, the way the building seemed to exhale once everyone had gone. She finished the report nobody would read until Monday, saved it twice, and lingered over the last sentence longer than it deserved. Through the glass wall the city assembled itself into evening, windows igniting one by one across the skyline. Somewhere down there people were laughing, arguing, falling in love, ordering dinner. Priya gathered her coat. She was not lonely exactly, only aware of how thoroughly a life could be spent in rooms like this, polishing words for an audience that never came.",
+    "label": "0.84",
+    "expectMatch": "agree",
+    "convention": "MATTR window=100; ~119 tokens, contemporary literary, high variety -> ~0.84.",
+    "tags": [
+      "en",
+      "contemporary",
+      "literary",
+      "~120w",
+      "mattr"
+    ]
+  },
+  {
+    "id": "vocab-en-09",
+    "lang": "en",
+    "text": "Rain. Then nothing. The room held its breath. A clock ticked somewhere, patient, indifferent. She lifted the cup, found it cold, set it down again. Outside, traffic murmured like distant surf. Everything waited. Nothing arrived. The afternoon dissolved into grey, unhurried, complete.",
+    "label": "5.86",
+    "specLabel": "0.90",
+    "expectMatch": "known-divergence",
+    "convention": "Under 100 tokens (42) -> convention uses root-TTR = types/sqrt(tokens) = 38/sqrt(42) ≈ 5.86 (NOT bounded to 0-1). Current code emits plain global TTR (uniques/total) ≈ 0.90, diverging by ~4.96.",
+    "tags": [
+      "en",
+      "sparse",
+      "minimalist",
+      "~50w",
+      "under-100-tokens",
+      "root-ttr",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-en-10",
+    "lang": "en",
+    "text": "The dog ran. The dog ran fast. The dog ran past the house. The dog ran past the house and the dog barked. The dog barked and the dog ran. The house was big. The big house was old. The dog ran past the big old house and barked again.",
+    "label": "1.70",
+    "specLabel": "0.24",
+    "expectMatch": "known-divergence",
+    "convention": "Under 100 tokens (50), heavy verbatim repetition -> root-TTR = 12/sqrt(50) ≈ 1.70. Current code emits plain global TTR ≈ 0.24, diverging by ~1.46. Both flag low variety but on different scales.",
+    "tags": [
+      "en",
+      "heavy-repetition",
+      "~50w",
+      "under-100-tokens",
+      "root-ttr",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-en-11",
+    "lang": "en",
+    "text": "The train left the city behind in increments, the way a tide withdraws: first the glittering towers, then the tired brick warehouses, then the rail yards where forgotten cars rusted in patient rows, and finally the ragged margin where pavement surrendered to weeds. Eleanor watched it all blur past the window, her reflection ghosting over the landscape like a second self pressed against the glass. She had not slept. The night had been a long negotiation with regret, and morning offered no amnesty.\nAcross the aisle, an old man read a newspaper folded into precise quarters, licking his thumb before each turned page. A child two rows ahead pressed sticky fingers to the window and announced every cow with the solemn authority of a herald. Eleanor envied the boy his uncomplicated wonder, the way the world still arrived fresh to him, unburdened by the residue of everything that had come before.\nHer mother was dying. The telegram had been characteristically terse, the way all communications from that house had always been, freighted with what went unsaid. Come if you can. Three words across two hundred miles, and the whole weight of three decades collapsed into them. She had not seen her mother since the wedding, and that ceremony had ended in a silence so complete it had calcified into permanent estrangement. Now the woman was failing in a narrow bed, and Eleanor was hurtling toward her through a countryside that grew greener and gentler by the mile, as though the land itself conspired to soften the reunion.\nShe remembered the kitchen of her childhood, the perpetual smell of yeast and woodsmoke, her mother's hands flour-dusted and sure. She remembered the arguments too, the slammed doors, the words sharpened to wound and aimed with surgical precision. Love and fury had always been braided together in that house, inseparable, each feeding the other until neither could be named with certainty. Eleanor had spent years untangling the knot in the company of patient therapists, and still it resisted resolution.\nThe conductor passed, punching tickets with a brass device that clicked like a metronome counting down. Eleanor surrendered hers without looking up. Outside, a river appeared and accompanied the tracks for a while, brown and unhurried, carrying the reflections of willows that trailed their branches in the current. A heron stood motionless in the shallows, a study in patience, waiting for something the eye could not perceive.\nShe wondered what she would say. The speeches she had rehearsed over the years had all assumed time, the luxury of a future in which reconciliation might unfold gradually, conversation by careful conversation. There was no time now. There was only a hospital room and whatever honesty she could summon before the machines fell quiet. She feared she would arrive and find nothing adequate in her, no language equal to the occasion, only the same defensive silence that had defined them both.\nThe landscape thickened into forest, pines crowding close to the rails, their shadows strobing across her face. Eleanor closed her eyes and let the rhythm of the wheels carry her toward sleep she did not expect to find. Memory surfaced unbidden: her mother singing in another language, a lullaby whose words Eleanor had never learned but whose melody still lived somewhere beneath her ribs, surfacing now after years submerged.\nWhen she opened her eyes the forest had given way to fields again, and the light had shifted toward afternoon, gold and slanting. The child had fallen asleep against his mother's shoulder. The old man had finished his newspaper and now gazed out at nothing with the equanimity of someone who had made his peace with arrivals and departures alike. Eleanor wished she possessed even a fraction of that composure.\nThe town announced itself with a water tower and a grain silo and the low spread of houses she half remembered. Her chest tightened. She gathered her single bag, smoothed her coat, and stood swaying in the aisle as the train decelerated, brakes singing their long metallic complaint. Through the window the platform slid into view, nearly empty, a place suspended outside the rush of the larger world. She had imagined this arrival a thousand times and never once like this, alone and unsure and already grieving someone not yet gone. The doors sighed open. Eleanor stepped down into the warm and ordinary afternoon, and the past rose up to meet her like water closing over a stone.",
+    "label": "0.75",
+    "specLabel": "0.54",
+    "expectMatch": "known-divergence",
+    "convention": "MATTR window=100 over ~742 tokens: averaged window TTR stays high (~0.75) because variety is measured per 100-token window. Current code emits a SINGLE global TTR over all 742 tokens (~0.54), which mechanically decays as length grows -> diverges by ~0.21. Classic MATTR-vs-global-TTR length artifact.",
+    "tags": [
+      "en",
+      "literary",
+      "~800w",
+      "length-decay",
+      "global-ttr-artifact",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-fr-01",
+    "lang": "fr",
+    "text": "Il pleut. Il pleut sur la ville. Il pleut sur les toits et il pleut sur les rues. Il pleut depuis ce matin et il pleut encore. La pluie tombe et la pluie tombe sans fin. Il pleut, il pleut, et la ville dort sous la pluie grise.",
+    "label": "2.89",
+    "specLabel": "0.42",
+    "expectMatch": "known-divergence",
+    "convention": "Under 100 tokens (48), French, heavy 'il pleut' refrain -> root-TTR = 20/sqrt(48) ≈ 2.89. Current code emits plain global TTR ≈ 0.42. Diverges ~2.47; also exercises the short-text root-TTR branch in a non-English text.",
+    "tags": [
+      "fr",
+      "repetition",
+      "refrain",
+      "~50w",
+      "under-100-tokens",
+      "root-ttr",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-nl-01",
+    "lang": "nl",
+    "text": "De oude molen stond stil aan de rand van het dorp, zijn wieken bevroren in een gebaar van eeuwig wachten. Anneke liep over het smalle pad langs de sloot, waar het riet ritselde in de novemberwind en het water zwart en roerloos lag onder een hemel van tin. Ze herinnerde zich de zomers van haar jeugd, toen de molen nog draaide en haar grootvader het meel maalde met handen wit van het stof. Nu was alles verlaten, de deuren dichtgespijkerd, de ramen blind van vuil en spinrag. Een reiger stond onbeweeglijk in de wei, een grijze schildwacht tussen de natte graspollen. Anneke bleef staan en luisterde naar de stilte, die niet werkelijk stil was maar gevuld met kleine geluiden: het kraken van takken, het verre blaffen van een hond, het kloppen van haar eigen hart. Ze dacht aan haar grootvader, aan zijn verhalen over de oorlog en de honger, over molens die brandden en mensen die verdwenen. De geschiedenis lag begraven in deze grond, in de klei en het veen, in de botten van wie hier hadden geleefd en geliefd en gestorven. Ze raapte een steen op, woog hem in haar hand, en wierp hem in het zwarte water, waar hij verdween zonder een spoor.",
+    "label": "0.71",
+    "specLabel": "0.60",
+    "expectMatch": "known-divergence",
+    "convention": "MATTR window=100 over ~205 Dutch tokens -> ~0.71 (windowed). Current code emits global TTR over all 205 tokens (~0.60); repeated Dutch articles/'de/het/van/in' depress global TTR more than windowed MATTR -> diverges ~0.10.",
+    "tags": [
+      "nl",
+      "literary",
+      "~200w",
+      "length-decay",
+      "global-ttr-artifact",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-de-01",
+    "lang": "de",
+    "text": "Der Bahnhof war fast leer, als Markus auf dem Bahnsteig stand und auf den letzten Zug wartete. Eine kalte Lampe summte über ihm, und ihr fahles Licht warf lange Schatten auf den nassen Beton. Er hatte den Koffer fest in der Hand, als könnte ihn jemand ihm entreißen, obwohl außer ihm niemand mehr da war. In der Ferne hörte er das Rattern der Schienen, das Pfeifen des Windes, das ferne Bellen eines Hundes. Markus dachte an die Stadt, die er verließ, an die Straßen, die er nie wieder sehen würde, an die Gesichter, die langsam verblassten wie alte Fotografien. Er hatte hier gelebt, geliebt, gestritten und verloren. Jetzt blieb nur der Koffer, ein paar Bücher, ein Brief, den er nicht zu öffnen wagte. Der Zug kam endlich, ein dunkler Schatten mit leuchtenden Augen, und hielt zischend vor ihm an. Die Türen öffneten sich mit einem müden Seufzer. Markus stieg ein, fand einen Platz am Fenster und drückte die Stirn gegen das kühle Glas. Draußen glitt der Bahnhof davon, die Lampe, der Beton, die Vergangenheit. Er schloss die Augen und ließ die Stadt für immer hinter sich.",
+    "label": "0.75",
+    "specLabel": "0.66",
+    "expectMatch": "known-divergence",
+    "convention": "MATTR window=100 over ~186 German tokens -> ~0.75. Current code emits global TTR (~0.66); repeated 'der/die/das/und/er' across the whole passage pull global TTR below the windowed MATTR -> diverges ~0.09.",
+    "tags": [
+      "de",
+      "literary",
+      "~200w",
+      "length-decay",
+      "global-ttr-artifact",
+      "divergence"
+    ]
+  },
+  {
+    "id": "vocab-es-01",
+    "lang": "es",
+    "text": "El mar golpeaba las rocas una y otra vez, y cada ola traía la misma furia y la misma espuma. María caminaba por la playa, sintiendo la arena fría bajo sus pies descalzos. El viento soplaba del norte, frío y constante, y llevaba el olor a sal y a algas hacia el pueblo dormido. Ella pensaba en su padre, que había sido pescador, que había salido al mar mil veces y mil veces había vuelto, hasta la última, cuando el mar no lo devolvió. El mar daba y el mar quitaba, decía su abuela, y el mar nunca pedía permiso. María se detuvo frente al agua oscura y miró el horizonte, donde el cielo y el mar se confundían en una línea gris. Las gaviotas gritaban sobre su cabeza, blancas y furiosas, peleando por algo invisible. Ella recogió una concha de la arena, la guardó en el bolsillo y siguió caminando. El mar seguía golpeando las rocas, una y otra vez, indiferente a su dolor, indiferente a su memoria, indiferente a todo lo que ella había perdido en aquellas aguas frías y profundas que nunca, nunca devolvían lo que tomaban.",
+    "label": "0.67",
+    "specLabel": "0.57",
+    "expectMatch": "known-divergence",
+    "convention": "MATTR window=100 over ~190 Spanish tokens -> ~0.67. Deliberate refrains ('el mar', 'una y otra vez', 'indiferente') depress global TTR (~0.57) more than windowed MATTR -> diverges ~0.10.",
+    "tags": [
+      "es",
+      "literary",
+      "~200w",
+      "moderate-repetition",
+      "global-ttr-artifact",
+      "divergence"
+    ]
+  }
+]

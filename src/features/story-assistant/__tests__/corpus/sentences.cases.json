@@ -1,0 +1,454 @@
+[
+  {
+    "id": "sent-en-01",
+    "lang": "en",
+    "text": "The rain stopped at dawn. Mara opened the shutters and let the gray light in. Somewhere below, a cart wheel groaned over the cobbles.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Three plain declaratives, each closed by a period followed by space or end of text.",
+    "tags": ["literary", "plain", "agree"]
+  },
+  {
+    "id": "sent-en-02",
+    "lang": "en",
+    "text": "\"Where have you been?\" she demanded. He said nothing. \"Answer me!\"",
+    "label": "3",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "Three units: a quoted question that ends at the dialogue tag 'demanded.', a declarative, and a final quoted exclamation. Ground truth is three sentences, but the naive regex misses two boundaries: '?' before the closing quote is not followed by whitespace, and the trailing '!' sits before a closing quote at end of text, so the final clause is never closed. Naive returns 2.",
+    "tags": ["dialogue", "question", "exclamation", "quote-after-terminal", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-03",
+    "lang": "en",
+    "text": "He shrugged. Then he laughed. Then he was gone.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Three short declaratives separated by period-plus-space.",
+    "tags": ["sparse", "short", "agree"]
+  },
+  {
+    "id": "sent-en-04",
+    "lang": "en",
+    "text": "Pi is roughly 3.14, but the engineer rounded it to 3 anyway. Nobody objected.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Decimals (3.14) do not create a sentence because the dot is followed by a digit, not whitespace; only the two real periods count.",
+    "tags": ["decimal", "agree"]
+  },
+  {
+    "id": "sent-en-05",
+    "lang": "en",
+    "text": "Wow! Amazing. Truly.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Three terminal units; exclamation and periods each delimit one sentence.",
+    "tags": ["short", "exclamation", "agree"]
+  },
+  {
+    "id": "sent-en-06",
+    "lang": "en",
+    "text": "Why? Because I said so. That is the end of it.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Question mark and periods each close a sentence; all are followed by space or end.",
+    "tags": ["question", "agree"]
+  },
+  {
+    "id": "sent-en-07",
+    "lang": "en",
+    "text": "\"Run!\" he shouted. They scattered into the trees.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Quoted exclamation forms part of the first sentence (the bang is followed by a closing quote, not space, so the unit closes at 'shouted.'); two sentences total, and the naive regex also returns 2.",
+    "tags": ["dialogue", "exclamation", "agree"]
+  },
+  {
+    "id": "sent-en-08",
+    "lang": "en",
+    "text": "He was born in the U.S.A.",
+    "label": "1",
+    "expectMatch": "agree",
+    "convention": "Acronym U.S.A. is a single sentence; the interior dots are followed by letters, only the final dot ends the sentence.",
+    "tags": ["acronym", "single", "agree"]
+  },
+  {
+    "id": "sent-en-09",
+    "lang": "en",
+    "text": "She earned her Ph.D.",
+    "label": "1",
+    "expectMatch": "agree",
+    "convention": "An abbreviation ending the only sentence; the trailing dot closes one sentence.",
+    "tags": ["abbreviation", "single", "agree"]
+  },
+  {
+    "id": "sent-en-10",
+    "lang": "en",
+    "text": "The room was empty save for a chair, a lamp, and the smell of old paper",
+    "label": "1",
+    "expectMatch": "agree",
+    "convention": "No terminal punctuation, but non-empty text counts as one sentence via the fallback.",
+    "tags": ["no-terminal", "fallback", "single", "agree"]
+  },
+  {
+    "id": "sent-en-11",
+    "lang": "en",
+    "text": "Pi is 3.14159 and e is about 2.718. Both numbers matter to her.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Two decimals do not split; only the two sentence-final periods count.",
+    "tags": ["decimal", "agree"]
+  },
+  {
+    "id": "sent-en-12",
+    "lang": "en",
+    "text": "It costs $3.50 today. Buy two before they're gone.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Currency decimal $3.50 is not a boundary; two periods, two sentences.",
+    "tags": ["decimal", "currency", "agree"]
+  },
+  {
+    "id": "sent-en-13",
+    "lang": "en",
+    "text": "One sentence here.\n\nAnother one here.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Two paragraphs, each a single period-terminated sentence; newlines do not affect the count.",
+    "tags": ["paragraphs", "newline", "agree"]
+  },
+  {
+    "id": "sent-en-14",
+    "lang": "en",
+    "text": "The CEO of NASA spoke first. Everyone in the hall fell silent.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "All-caps acronyms (NASA, CEO) carry no dots here; two ordinary periods, two sentences.",
+    "tags": ["acronym", "agree"]
+  },
+  {
+    "id": "sent-en-15",
+    "lang": "en",
+    "text": "— Are you sure? — Yes, completely.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Dash-led dialogue lines; a question mark and a period each close one sentence.",
+    "tags": ["dialogue", "dash", "question", "agree"]
+  },
+  {
+    "id": "sent-en-16",
+    "lang": "en",
+    "text": "Dr. Reyes arrived late and out of breath. She apologized to the panel.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "The title 'Dr.' must not create a sentence; there are two real sentences. The naive regex splits on 'Dr. ' and returns 3.",
+    "tags": ["abbreviation", "title", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-17",
+    "lang": "en",
+    "text": "Mr. and Mrs. Dale left without a word. They never came back.",
+    "label": "2",
+    "specLabel": "4",
+    "expectMatch": "known-divergence",
+    "convention": "Titles 'Mr.' and 'Mrs.' are abbreviations, not sentence ends; two sentences only. The naive regex splits on both titles and returns 4.",
+    "tags": ["abbreviation", "title", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-18",
+    "lang": "en",
+    "text": "Bring bread, milk, eggs, etc. We will need supplies for the week.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "'etc.' should not end a sentence; the true count is two. The naive regex also outputs 2, but for the wrong reason: it ends a sentence at 'etc.' and closes the trailing clause only at end of text, so the right number arrives by coincidence rather than correct segmentation.",
+    "tags": ["abbreviation", "etc", "divergence", "coincidental", "en"]
+  },
+  {
+    "id": "sent-en-19",
+    "lang": "en",
+    "text": "Some fruits, e.g. apples and plums, are red. I happen to like them.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'e.g.' is an abbreviation and must not split; only two sentences exist. The naive regex splits after 'e.g.' and returns 3.",
+    "tags": ["abbreviation", "eg", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-20",
+    "lang": "en",
+    "text": "It was very late, i.e. well past midnight, when she finally called. No one waited up.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'i.e.' is an abbreviation and does not end a sentence; two sentences total. The naive regex splits after 'i.e.' and returns 3.",
+    "tags": ["abbreviation", "ie", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-21",
+    "lang": "en",
+    "text": "The meeting is at 9 a.m. sharp, so don't be late.",
+    "label": "1",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "Time abbreviation 'a.m.' must not split; this is a single sentence. The naive regex splits after 'a.m.' and returns 2.",
+    "tags": ["abbreviation", "time", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-22",
+    "lang": "en",
+    "text": "Visit www.example.com for the full schedule. It saves a phone call.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "Dots inside a URL must not split. Ground truth is two sentences; the naive regex also returns 2 only because the URL dots are followed by letters, not whitespace — a benign but fragile coincidence.",
+    "tags": ["url", "divergence", "coincidental", "en"]
+  },
+  {
+    "id": "sent-en-23",
+    "lang": "en",
+    "text": "He moved to the U.S.A. last spring. Nobody back home knew.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "When the acronym 'U.S.A.' is followed by a space mid-text, its final dot wrongly splits; the true count is two sentences but the naive regex returns 3.",
+    "tags": ["acronym", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-24",
+    "lang": "en",
+    "text": "\"Go home.\" She turned away without looking back.",
+    "label": "2",
+    "specLabel": "1",
+    "expectMatch": "known-divergence",
+    "convention": "A quoted sentence closed by period-then-quote should count; there are two sentences, but the period sits before the closing quote so the naive regex misses the first boundary and returns 1.",
+    "tags": ["dialogue", "quote-after-period", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-25",
+    "lang": "en",
+    "text": "Stop.Go.Now.",
+    "label": "3",
+    "specLabel": "1",
+    "expectMatch": "known-divergence",
+    "convention": "Periods with no following space still terminate sentences; three units, but the naive regex requires whitespace-or-end after the terminal and so collapses them to one.",
+    "tags": ["no-space", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-26",
+    "lang": "en",
+    "text": "What?! You cannot possibly be serious right now.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "agree",
+    "convention": "An interrobang ('?!') is a single terminal cluster ending one sentence; two sentences total and the naive regex collapses the cluster correctly.",
+    "tags": ["interrobang", "agree", "en"]
+  },
+  {
+    "id": "sent-en-27",
+    "lang": "en",
+    "text": "No!!! Stop right there and put it down.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "agree",
+    "convention": "Multiple exclamation marks form one terminal cluster; two sentences, which the naive regex collapses correctly.",
+    "tags": ["multi-exclamation", "agree", "en"]
+  },
+  {
+    "id": "sent-en-28",
+    "lang": "en",
+    "text": "I wondered… then I gathered my coat and left.",
+    "label": "1",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "A mid-sentence ellipsis (…) marks a trailing-off pause, not a sentence end here; one sentence, but the naive regex treats … as terminal and splits into 2.",
+    "tags": ["ellipsis", "divergence", "en"]
+  },
+  {
+    "id": "sent-en-29",
+    "lang": "en",
+    "text": "\"I don't know…\" she whispered. He only nodded.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "The trailing ellipsis belongs to the dialogue clause that ends at 'whispered.'; there are two sentences. The naive regex returns 2 but boundaries are misplaced (it ends a unit at … inside the quote and folds the dialogue tag in), so the count is coincidental.",
+    "tags": ["ellipsis", "dialogue", "divergence", "coincidental", "en"]
+  },
+  {
+    "id": "sent-nl-01",
+    "lang": "nl",
+    "text": "De storm was voorbij. Anna deed de luiken open. Beneden kraakte een kar over de keien.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Drie gewone mededelende zinnen, elk afgesloten met een punt gevolgd door spatie of einde.",
+    "tags": ["literary", "plain", "agree", "nl"]
+  },
+  {
+    "id": "sent-nl-02",
+    "lang": "nl",
+    "text": "Dhr. Bakker kwam binnen en hing zijn jas op. Hij zweeg lange tijd.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'Dhr.' is een aanspreektitel en mag geen zin beëindigen; er zijn twee zinnen. De naïeve regex splitst op 'Dhr. ' en geeft 3.",
+    "tags": ["abbreviation", "title", "divergence", "nl"]
+  },
+  {
+    "id": "sent-nl-03",
+    "lang": "nl",
+    "text": "Neem brood, melk, kaas, enz. We hebben genoeg voor de week.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "'enz.' (enzovoort) is een afkorting en sluit geen zin af; het juiste aantal is twee, en de naïeve regex geeft toevallig ook 2 doordat hij de zin bij 'enz.' afkapt en de rest pas op het einde sluit.",
+    "tags": ["abbreviation", "enz", "divergence", "coincidental", "nl"]
+  },
+  {
+    "id": "sent-nl-04",
+    "lang": "nl",
+    "text": "Veel fruit, bijv. appels en peren, is gezond. Ik hou er erg van.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'bijv.' (bijvoorbeeld) is een afkorting en mag niet splitsen; er zijn twee zinnen. De naïeve regex splitst op 'bijv. ' en geeft 3.",
+    "tags": ["abbreviation", "bijv", "divergence", "nl"]
+  },
+  {
+    "id": "sent-fr-01",
+    "lang": "fr",
+    "text": "La pluie cessa à l'aube. Mara ouvrit les volets. En bas, une roue grinça sur les pavés.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Trois phrases déclaratives, chacune close par un point suivi d'une espace ou de la fin.",
+    "tags": ["literary", "plain", "agree", "fr"]
+  },
+  {
+    "id": "sent-fr-02",
+    "lang": "fr",
+    "text": "M. Dupont est arrivé en retard et essoufflé. Il a souri malgré tout.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'M.' (Monsieur) est une abréviation et ne termine pas une phrase ; il y a deux phrases. La regex naïve coupe après 'M. ' et renvoie 3.",
+    "tags": ["abbreviation", "title", "divergence", "fr"]
+  },
+  {
+    "id": "sent-fr-03",
+    "lang": "fr",
+    "text": "Mme Laurent attendait sous la pluie battante. Elle soupira longuement.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "agree",
+    "convention": "'Mme' s'écrit sans point en français, donc aucune fausse coupure ; deux phrases, et la regex donne le bon compte.",
+    "tags": ["title", "agree", "fr"]
+  },
+  {
+    "id": "sent-fr-04",
+    "lang": "fr",
+    "text": "Voir les chiffres détaillés, cf. page 3, avant de conclure. Tout devient clair ensuite.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'cf.' est une abréviation et ne doit pas couper la phrase ; il y a deux phrases. La regex naïve coupe après 'cf. ' et renvoie 3.",
+    "tags": ["abbreviation", "cf", "divergence", "fr"]
+  },
+  {
+    "id": "sent-fr-05",
+    "lang": "fr",
+    "text": "Certains fruits, p.ex. les pommes, sont rouges. J'aime beaucoup ça.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'p.ex.' (par exemple) est une abréviation et ne doit pas créer de phrase ; il y en a deux. La regex naïve coupe après 'p.ex. ' et renvoie 3.",
+    "tags": ["abbreviation", "p.ex", "divergence", "fr"]
+  },
+  {
+    "id": "sent-de-01",
+    "lang": "de",
+    "text": "Der Sturm war vorüber. Anna öffnete die Läden. Unten knarrte ein Karren über das Kopfsteinpflaster.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Drei einfache Aussagesätze, jeweils mit Punkt und folgendem Leerzeichen oder Textende.",
+    "tags": ["literary", "plain", "agree", "de"]
+  },
+  {
+    "id": "sent-de-02",
+    "lang": "de",
+    "text": "Obst, z.B. Äpfel und Birnen, ist gesund. Ich mag es sehr.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'z.B.' (zum Beispiel) ist eine Abkürzung und beendet keinen Satz; es gibt zwei Sätze. Die naive Regex trennt nach 'z.B. ' und liefert 3.",
+    "tags": ["abbreviation", "zB", "divergence", "de"]
+  },
+  {
+    "id": "sent-de-03",
+    "lang": "de",
+    "text": "Brot, Milch, Käse usw. Wir brauchen alles für die Woche.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "'usw.' (und so weiter) ist eine Abkürzung und beendet keinen Satz; die richtige Zahl ist zwei, die die naive Regex hier zufällig trifft, weil sie bei 'usw.' trennt und den Rest erst am Ende schließt.",
+    "tags": ["abbreviation", "usw", "divergence", "coincidental", "de"]
+  },
+  {
+    "id": "sent-de-04",
+    "lang": "de",
+    "text": "Er kam spät, d.h. nach Mitternacht, nach Hause. Niemand hatte gewartet.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'d.h.' (das heißt) ist eine Abkürzung und darf nicht trennen; es gibt zwei Sätze. Die naive Regex trennt nach 'd.h. ' und liefert 3.",
+    "tags": ["abbreviation", "dh", "divergence", "de"]
+  },
+  {
+    "id": "sent-es-01",
+    "lang": "es",
+    "text": "La lluvia paró al amanecer. Mara abrió los postigos. Abajo, una rueda chirrió sobre los adoquines.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Tres oraciones declarativas simples, cada una cerrada por un punto seguido de espacio o fin.",
+    "tags": ["literary", "plain", "agree", "es"]
+  },
+  {
+    "id": "sent-es-02",
+    "lang": "es",
+    "text": "El Sr. García llegó tarde y sin aliento. Se disculpó ante todos.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'Sr.' es una abreviatura de tratamiento y no termina una oración; hay dos oraciones. La regex naïve corta tras 'Sr. ' y devuelve 3.",
+    "tags": ["abbreviation", "title", "divergence", "es"]
+  },
+  {
+    "id": "sent-es-03",
+    "lang": "es",
+    "text": "La Sra. López esperaba bajo la lluvia. Suspiró con cansancio.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "'Sra.' es una abreviatura y no debe dividir; hay exactamente dos oraciones. La regex naïve corta tras 'Sra. ' y devuelve 3.",
+    "tags": ["abbreviation", "title", "divergence", "es"]
+  },
+  {
+    "id": "sent-es-04",
+    "lang": "es",
+    "text": "Trae pan, leche, queso, etc. Necesitamos de todo para la semana.",
+    "label": "2",
+    "specLabel": "2",
+    "expectMatch": "known-divergence",
+    "convention": "'etc.' es una abreviatura y no cierra una oración; el total correcto es dos, y la regex ingenua devuelve 2 por coincidencia al cortar en 'etc.' y cerrar el resto solo al final.",
+    "tags": ["abbreviation", "etc", "divergence", "coincidental", "es"]
+  },
+  {
+    "id": "sent-es-05",
+    "lang": "es",
+    "text": "Vive en los EE. UU. desde 2010. Le gusta mucho la costa.",
+    "label": "2",
+    "specLabel": "4",
+    "expectMatch": "known-divergence",
+    "convention": "'EE. UU.' (Estados Unidos) es un acrónimo con espacio interno; no debe dividir. Hay dos oraciones, pero la regex cuenta cada punto seguido de espacio y sobreestima a cuatro.",
+    "tags": ["acronym", "abbreviation", "divergence", "es"]
+  }
+]

@@ -1,0 +1,302 @@
+[
+  {
+    "id": "dlg-en-01",
+    "lang": "en",
+    "text": "\"You came back,\" she whispered, hardly daring to believe it.\n\"I told you I would,\" he said, brushing the snow from her shoulders. \"I always keep my word.\"",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Spoken lines in ASCII double quotes are dialogue; presence -> yes.",
+    "tags": ["ratio:0.55", "doc:prose", "quotes:ascii-double", "genre:romance"]
+  },
+  {
+    "id": "dlg-en-02",
+    "lang": "en",
+    "text": "The lighthouse had stood for ninety years. Salt had eaten the railings to lace, and the lamp room smelled of cold iron and older storms. No one climbed the stairs anymore. The keeper's logbook lay open on the last page he had ever written, the ink long since faded to the colour of weak tea.",
+    "label": "no",
+    "specLabel": "no",
+    "expectMatch": "agree",
+    "convention": "Pure description, no quoted or marked speech -> no.",
+    "tags": ["ratio:0.0", "doc:prose", "genre:literary", "sparse"]
+  },
+  {
+    "id": "dlg-fr-03",
+    "lang": "fr",
+    "text": "« Tu as encore oublié les clés », soupira Margot en fouillant son sac.\n« Je ne les ai pas oubliées, protesta Lucien. Elles sont quelque part. »",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "French guillemets enclose spoken dialogue -> yes.",
+    "tags": ["ratio:0.6", "doc:prose", "quotes:guillemet", "genre:drama"]
+  },
+  {
+    "id": "dlg-en-04",
+    "lang": "en",
+    "text": "“Don't move,” the surgeon murmured, her voice flat with concentration. “If you flinch now, we lose the hand.” Somewhere beyond the curtain a monitor kept its small, insistent count.",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Curly double quotes enclose speech -> yes.",
+    "tags": ["ratio:0.4", "doc:prose", "quotes:curly-double", "genre:medical-drama"]
+  },
+  {
+    "id": "dlg-fr-05",
+    "lang": "fr",
+    "text": "— Tu viens ? lança-t-elle depuis le quai.\n— J'arrive, répondit-il, le souffle court.\nLe train sifflait déjà, impatient.",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Em-dash dialogue (tiret cadratin) marks speech turns -> yes; naive em-dash branch catches it.",
+    "tags": ["ratio:0.45", "doc:prose", "quotes:em-dash", "genre:literary"]
+  },
+  {
+    "id": "dlg-es-06",
+    "lang": "es",
+    "text": "La playa estaba desierta al amanecer. Las gaviotas trazaban círculos sobre la espuma y el viento traía olor a sal y algas. Marina caminó hasta donde el agua borraba sus huellas, y se quedó mirando el horizonte vacío durante un largo rato.",
+    "label": "no",
+    "specLabel": "no",
+    "expectMatch": "agree",
+    "convention": "Descriptive narration, no marked speech -> no.",
+    "tags": ["ratio:0.0", "doc:prose", "genre:literary", "sparse"]
+  },
+  {
+    "id": "dlg-en-07",
+    "lang": "en",
+    "text": "“Fire on the second deck!” the bosun roared. “Buckets, now — move!”\n“She's listing,” someone screamed back. “We have to cut her loose!”\n“Belay that,” the captain said, low and cold. “Nobody cuts anything until I say.”",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Multiple quoted spoken lines -> yes; dialogue-heavy.",
+    "tags": ["ratio:0.7", "doc:prose", "quotes:curly-double", "genre:adventure", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-nl-08",
+    "lang": "nl",
+    "text": "De motregen tikte tegen het zinken dak van de werkplaats. Gerard veegde zijn handen af aan een lap en bekeek de oude klok die hij al drie weken probeerde te herstellen. De tandwielen lagen uitgespreid op het laken als de botten van een klein, koppig dier.",
+    "label": "no",
+    "specLabel": "no",
+    "expectMatch": "agree",
+    "convention": "Workshop description, no speech -> no.",
+    "tags": ["ratio:0.0", "doc:prose", "genre:literary", "sparse"]
+  },
+  {
+    "id": "dlg-en-09",
+    "lang": "en",
+    "text": "INT. PRECINCT - NIGHT\n\nRain streaks the windows. DETECTIVE ROSS leans over the table.\n\n\"Where were you at midnight?\" Ross asks.\n\nThe suspect says nothing.\n\n\"I asked you a question,\" Ross repeats, quieter now.",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Screenplay action with quoted spoken lines -> yes; naive catches ASCII quotes.",
+    "tags": ["ratio:0.4", "doc:script", "quotes:ascii-double", "genre:crime"]
+  },
+  {
+    "id": "dlg-de-10",
+    "lang": "de",
+    "text": "Der Bahnhof war leer um diese Stunde. Über den Gleisen flackerte eine einzelne Lampe, und der Wind trieb ein zerknülltes Ticket über den Bahnsteig. Klara stand allein an Gleis vier und zählte die Minuten, die noch nicht vergangen waren.",
+    "label": "no",
+    "specLabel": "no",
+    "expectMatch": "agree",
+    "convention": "Atmospheric description, no quoted speech -> no.",
+    "tags": ["ratio:0.0", "doc:prose", "genre:literary", "sparse"]
+  },
+  {
+    "id": "dlg-en-11",
+    "lang": "en",
+    "text": "the gulls came in low / over the breakwater\nand the morning broke gray / against the pilings\nno one spoke / there was nothing to say\nonly the tide / counting itself out",
+    "label": "no",
+    "specLabel": "no",
+    "expectMatch": "agree",
+    "convention": "Lyric poem, no quoted or marked speech -> no.",
+    "tags": ["ratio:0.0", "doc:poetry", "genre:lyric", "sparse"]
+  },
+  {
+    "id": "dlg-es-12",
+    "lang": "es",
+    "text": "«No pienso firmar eso», dijo el viejo, cruzando los brazos.\n«Entonces lo perderá todo», respondió el abogado, sin levantar la vista de sus papeles.",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Spanish guillemets (comillas latinas) enclose speech -> yes.",
+    "tags": ["ratio:0.6", "doc:prose", "quotes:guillemet", "genre:drama"]
+  },
+  {
+    "id": "dlg-en-13",
+    "lang": "en",
+    "text": "INT. KITCHEN - DAY\n\nMAYA stands at the sink, not turning around.\n\nMAYA\nYou could have called. One text. That's all it would have taken.\n\nDANIEL\nI know. I didn't have the words.\n\nMAYA\nYou never do.",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "Screenplay character-cue dialogue (CHARACTER on its own line, speech below) IS dialogue -> yes; naive has no quotes/em-dash to match, outputs no.",
+    "tags": ["ratio:0.65", "doc:script", "quotes:none", "cue:character", "genre:drama", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-es-14",
+    "lang": "es",
+    "text": "INT. COMISARÍA - NOCHE\n\nINSPECTORA VEGA\n¿Dónde estabas anoche entre las once y la medianoche?\n\nSOSPECHOSO\nEn casa. Solo. Como siempre.\n\nINSPECTORA VEGA\nNadie está solo siempre.",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "Quoteless screenplay cue format is dialogue -> yes; naive finds no quote/em-dash, outputs no.",
+    "tags": ["ratio:0.7", "doc:script", "quotes:none", "cue:character", "genre:crime", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-nl-15",
+    "lang": "nl",
+    "text": "BINNEN. ZIEKENHUISKAMER - NACHT\n\nJOHAN\nJe moet rusten. De dokter zei het zelf.\n\nELSE\nIk heb mijn hele leven gerust. Nu wil ik wakker blijven.\n\nJOHAN\nDan blijf ik bij je.",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "Character-cue screenplay dialogue -> yes; naive sees no quotes, outputs no.",
+    "tags": ["ratio:0.7", "doc:script", "quotes:none", "cue:character", "genre:drama", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-en-16",
+    "lang": "en",
+    "text": "'You're late,' she said, not looking up from her book.\n'The bridge was out,' he answered. 'I had to go round by the mill.'\n'You always have to go round by something.'",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "British single straight quotes enclose speech -> yes; naive class lacks the apostrophe char, outputs no.",
+    "tags": ["ratio:0.6", "doc:prose", "quotes:single-straight", "genre:literary", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-en-17",
+    "lang": "en",
+    "text": "‘Mind the step,’ Gran called from the dark of the cellar. ‘It's been loose since your grandfather's day, and he never did fix it, the old fool.’",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "Curly single quotation marks enclose speech (UK convention) -> yes; naive class excludes U+2018/U+2019, outputs no.",
+    "tags": ["ratio:0.5", "doc:prose", "quotes:single-curly", "genre:literary"]
+  },
+  {
+    "id": "dlg-de-18",
+    "lang": "de",
+    "text": "„Wo warst du die ganze Nacht?“ fragte sie leise, ohne ihn anzusehen, und ihre Stimme zitterte ein wenig dabei.",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "A single German low-high (Gaensefuesschen) quoted utterance is dialogue -> yes; naive misses it because the opener U+201E is not in its class and the lone closing U+201C has no second class-char to pair with, so it outputs no.",
+    "tags": ["ratio:0.7", "doc:prose", "quotes:german-low-high", "genre:drama", "single-turn"]
+  },
+  {
+    "id": "dlg-de-19",
+    "lang": "de",
+    "text": "Die Großmutter zog die Decke fester um die Schultern. „Der Wald vergisst nichts, mein Kind, er wartet nur.“",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "One German low-high quoted line of speech -> yes; naive opener U+201E not in class, single trailing U+201C unpaired -> outputs no.",
+    "tags": ["ratio:0.5", "doc:prose", "quotes:german-low-high", "genre:folk-horror", "single-turn"]
+  },
+  {
+    "id": "dlg-de-20",
+    "lang": "de",
+    "text": "INNEN. DACHBODEN - TAG\n\nVater steht am Fenster und dreht sich nicht um. „Fass die Truhe nicht an, hörst du mich?“",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "A single German low-high quoted line inside a script action paragraph is dialogue -> yes; naive misses the U+201E opener and finds only one unpaired closing mark -> outputs no.",
+    "tags": ["ratio:0.5", "doc:script", "quotes:german-low-high", "genre:mystery", "single-turn"]
+  },
+  {
+    "id": "dlg-fr-21",
+    "lang": "fr",
+    "text": "‹ Doucement ›, murmura-t-elle, ‹ ils nous écoutent peut-être. ›",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "French single guillemets mark speech -> yes; naive class holds only the double guillemets, not the single forms, outputs no.",
+    "tags": ["ratio:0.55", "doc:prose", "quotes:single-guillemet", "genre:thriller"]
+  },
+  {
+    "id": "dlg-es-22",
+    "lang": "es",
+    "text": "–¿Has traído el dinero? –preguntó ella, sin apartar la vista de la puerta.\n–Todo lo que pude reunir –respondió él, dejando el sobre sobre la mesa.",
+    "label": "yes",
+    "specLabel": "no",
+    "expectMatch": "known-divergence",
+    "convention": "Dialogue marked with an en-dash/raya rendered as U+2013 is speech -> yes; naive only matches the em-dash U+2014, outputs no.",
+    "tags": ["ratio:0.6", "doc:prose", "quotes:en-dash", "genre:crime", "dialogue-heavy"]
+  },
+  {
+    "id": "dlg-en-23",
+    "lang": "en",
+    "text": "'He looked at me and said \"run\", so I ran,' Tom panted. 'I didn't stop to ask what from.'",
+    "label": "yes",
+    "specLabel": "yes",
+    "expectMatch": "agree",
+    "convention": "Nested speech: outer turn in single quotes with an embedded double-quoted reported word. Truth yes. Naive fires on the inner double-quote pair and also outputs yes, so the yes/no output labels agree even though the naive boundary is the inner pair (a mechanism artifact, not an output divergence).",
+    "tags": ["ratio:0.7", "doc:prose", "quotes:nested-single-outer", "mechanism-artifact", "genre:literary"]
+  },
+  {
+    "id": "dlg-en-24",
+    "lang": "en",
+    "text": "The brochure promised a \"luxury\" cabin, which turned out to be a shed with a mattress. The \"lake view\" was a drainage ditch, and the \"continental breakfast\" was a vending machine that only took exact change.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "Quotation marks are scare quotes / sarcasm around single words, not spoken dialogue -> no. Naive sees paired double quotes and falsely outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:scare", "false-positive", "genre:comic"]
+  },
+  {
+    "id": "dlg-en-25",
+    "lang": "en",
+    "text": "In philosophy, the term \"qualia\" refers to the subjective quality of experience. Some authors prefer \"phenomenal character\", but the distinction is largely terminological and need not detain us here.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "Quotes mark mentioned/defined terms (use-mention), not speech -> no. Naive treats paired quotes as dialogue, outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:mention", "false-positive", "genre:nonfiction"]
+  },
+  {
+    "id": "dlg-fr-26",
+    "lang": "fr",
+    "text": "Le restaurant se disait « gastronomique », mais le « plat du chef » n'était qu'un steak surgelé réchauffé au micro-ondes et noyé sous une « sauce maison » sortie d'une brique.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "Guillemets used ironically around terms (scare quotes), not dialogue -> no. Naive sees guillemet pairs and falsely outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:scare-guillemet", "false-positive", "genre:comic"]
+  },
+  {
+    "id": "dlg-de-27",
+    "lang": "de",
+    "text": "Man nannte ihn den „Professor“, obwohl er nie an einer Universität gelehrt hatte. Sein sogenanntes „Labor“ war eine Garage voller rostiger Apparate, die niemals funktioniert hatten.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "German low-high quotes used as nickname/scare quotes, NOT speech -> no. Naive cannot match the U+201E opener, but with two such scare-quote instances it spuriously pairs the closing U+201C of the first with the closing U+201C of the second across the intervening narration, so it falsely outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:scare-german", "false-positive", "cross-pair-artifact", "genre:literary"]
+  },
+  {
+    "id": "dlg-en-28",
+    "lang": "en",
+    "text": "The report called the merger — and I quote — a \"synergistic realignment of core competencies.\" Nobody in the room knew what that meant, least of all the man who had written it.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "An embedded quoted jargon phrase (a citation of corporate-speak), not a spoken dialogue turn -> no. The em-dashes are parenthetical, not dialogue dashes. Naive fires on the quoted phrase and on the em-dash+word, outputting yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:citation", "em-dash-parenthetical", "false-positive", "genre:satire"]
+  },
+  {
+    "id": "dlg-nl-29",
+    "lang": "nl",
+    "text": "Het pakket was volgens de website \"binnen 24 uur\" bezorgd. Drie weken later stond het \"premium\" karton nog steeds niet voor de deur, en de \"klantenservice\" bleek uitsluitend uit een antwoordapparaat te bestaan.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "Double quotes as scare quotes around marketing terms, not speech -> no. Naive sees paired ASCII quotes and falsely outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:scare", "false-positive", "genre:comic"]
+  },
+  {
+    "id": "dlg-en-30",
+    "lang": "en",
+    "text": "— and that, the footnote insisted, was the whole of the matter. The dash at the head of the line was a typesetter's flourish, a way of resuming an argument broken off three pages earlier, not the voice of any speaker at all.",
+    "label": "no",
+    "specLabel": "yes",
+    "expectMatch": "known-divergence",
+    "convention": "A leading em-dash used as a typographic continuation, not a dialogue marker -> no. Naive's em-dash+word branch fires on the line-initial dash+word and falsely outputs yes.",
+    "tags": ["ratio:0.0", "doc:prose", "quotes:none", "em-dash-typographic", "false-positive", "genre:metafiction"]
+  }
+]

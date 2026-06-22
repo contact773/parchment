@@ -1,0 +1,141 @@
+[
+  {
+    "id": "pace-en-01",
+    "lang": "en",
+    "text": "He hit the brakes. The car slid. Gravel sprayed the ditch. She screamed his name. He did not answer. The engine ticked. Smoke curled up. Somewhere a dog barked. He kicked the door. It would not give. He kicked again. The glass cracked. He climbed out. His hands shook.",
+    "label": "Brisk",
+    "expectMatch": "agree",
+    "convention": "Median sentence word-length ~3-4 words (well under 11); fourteen clipped action sentences and short paragraph -> Brisk.",
+    "tags": ["en", "brisk", "action", "short-sentences", "thriller", "agree"]
+  },
+  {
+    "id": "pace-en-02",
+    "lang": "en",
+    "text": "\"Where is it?\" she asked.\n\"Gone,\" he said.\n\"Gone where?\"\n\"I don't know.\"\n\"You lost it?\"\n\"I never had it.\"\nShe stared at him. \"Liar.\"\nHe shrugged. \"Believe what you want.\"\n\"I always do,\" she said. \"That's the problem.\"",
+    "label": "Brisk",
+    "expectMatch": "agree",
+    "convention": "Dialogue-dense, terse two-to-five word exchanges; median sentence length ~3 and high dialogue density -> Brisk. Spec also flips Brisk on dialogueRatio.",
+    "tags": ["en", "brisk", "dialogue-heavy", "double-quotes", "agree"]
+  },
+  {
+    "id": "pace-en-03",
+    "lang": "en",
+    "text": "The afternoon light came down through the high branches of the elms in long unhurried shafts that pooled upon the moss and turned the whole of the clearing into a slow green cathedral of shadow and gold. Beyond the water the hills lay folded one upon another in a haze that softened every edge until the distance itself seemed less a place than a memory of one. She walked without hurry along the bank where the reeds bowed and straightened in the breeze that carried the smell of warm mud and crushed mint and the faint sweetness of something flowering far off and unseen.",
+    "label": "Languid",
+    "expectMatch": "agree",
+    "convention": "Long, unbroken descriptive sentences; median sentence word-length ~37 (>=24) with no dialogue -> Languid.",
+    "tags": ["en", "languid", "descriptive", "literary", "long-sentences", "agree"]
+  },
+  {
+    "id": "pace-en-04",
+    "lang": "en",
+    "text": "The committee reached no decision that first long and tiresome afternoon. Margaret presented the figures and the others listened in a polite, noncommittal silence. They had heard versions of this very proposal before, and the room carried the faint weariness of people rehearsing an old argument. When she finished at last, the chairman thanked her warmly and suggested they reconvene the following week. Nobody in the room objected to the delay. The meeting dissolved slowly into the usual murmur of scraping chairs and rustling coats.",
+    "label": "Measured",
+    "expectMatch": "agree",
+    "convention": "Even literary narration; median sentence word-length ~13-14 (between 11 and 24), little dialogue -> Measured.",
+    "tags": ["en", "measured", "literary", "narration", "agree"]
+  },
+  {
+    "id": "pace-en-05",
+    "lang": "en",
+    "text": "She ran. He followed. The alley turned. Dead end. She spun around, and in that single suspended instant she understood with perfect and terrible clarity that every choice she had made over the preceding eleven years, every small surrender and every loud refusal, every door she had closed and every bridge she had quietly let burn behind her without once looking back, had funneled her with the cold indifference of gravity to exactly this wall in exactly this city on exactly this rain-slicked and unforgiving night. He smiled. She didn't.",
+    "label": "Brisk",
+    "specLabel": "Measured",
+    "expectMatch": "known-divergence",
+    "convention": "Six of seven sentences are 1-3 words; median sentence word-length ~2 -> a human reads this as Brisk. The lone 70-word run-on drags the MEAN to ~13, so the mean-based spec mislabels it Measured.",
+    "tags": ["en", "brisk", "mean-vs-median", "run-on-outlier", "known-divergence"]
+  },
+  {
+    "id": "pace-en-06",
+    "lang": "en",
+    "text": "\"I think we should talk,\" he said, settling into the worn armchair by the cold hearth.\n\"About what, exactly?\" she answered, not looking up from the book she was pretending to read.\n\"About the thing neither of us has been willing to say aloud for the better part of a year.\"\n\"There is nothing to say,\" she told him, turning another page she had not actually read.",
+    "label": "Measured",
+    "specLabel": "Brisk",
+    "expectMatch": "known-divergence",
+    "convention": "Median sentence word-length ~16 with substantial narration after each quote -> a human reads this as Measured. The spec's dialogueRatio>0.4 override forces Brisk on any quote-dense passage regardless of sentence length.",
+    "tags": ["en", "measured", "dialogue-override", "known-divergence"]
+  },
+  {
+    "id": "pace-en-07",
+    "lang": "en",
+    "text": "'Run,' he said.\n'Where?' she asked.\n'Anywhere. Now.'\n'I can't.'\n'You can.'\nThe sirens were closer now, threading through the narrow streets behind them like something alive and patient and entirely certain of its quarry, and she felt the old animal fear rise in her throat. He grabbed her wrist and pulled her toward the broken fence at the end of the lane where the darkness was thickest. 'Go,' he said.\n'Come with me.'\n'I can't.'",
+    "label": "Brisk",
+    "specLabel": "Measured",
+    "expectMatch": "known-divergence",
+    "convention": "Mostly one-to-three-word single-quote dialogue lines; median sentence word-length ~2 and clearly dialogue-driven -> a human reads this as Brisk. The spec's DIALOGUE_RE only matches double/guillemet quotes and em-dashes, so it sees zero dialogue, and the two long narration sentences lift the mean to ~14 -> spec says Measured.",
+    "tags": ["en", "brisk", "single-quote-blindspot", "dialogue-undercount", "known-divergence"]
+  },
+  {
+    "id": "pace-nl-01",
+    "lang": "nl",
+    "text": "Hij rende. De deur viel dicht. Ze gilde. Niemand kwam. Het licht ging uit. Hij struikelde. Zijn knie raakte de steen. Bloed. Hij stond op. Hij liep door. De gang was lang. Te lang. Achter hem klonk een stem. Hij keek niet om.",
+    "label": "Brisk",
+    "expectMatch": "agree",
+    "convention": "Veertien korte actie-zinnen; mediane zinslengte ~3 woorden (ruim onder 11) -> Brisk.",
+    "tags": ["nl", "brisk", "action", "short-sentences", "agree"]
+  },
+  {
+    "id": "pace-nl-02",
+    "lang": "nl",
+    "text": "In het trage gouden licht van de late namiddag lag het dorp roerloos onder de hemel, en de rook van de schoorstenen steeg recht omhoog in de windstille lucht tot ver boven de daken waar hij oploste in een waas dat de verre heuvels deed vervagen tot niet meer dan een herinnering aan heuvels. De vrouw liep langzaam langs de gracht waar het water zwart en stil tussen de oude gevels lag te dromen van de schepen die er ooit hadden gevaren.",
+    "label": "Languid",
+    "expectMatch": "agree",
+    "convention": "Twee lange, beschrijvende zinnen; mediane zinslengte ~41 woorden (>=24), geen dialoog -> Languid.",
+    "tags": ["nl", "languid", "descriptive", "long-sentences", "agree"]
+  },
+  {
+    "id": "pace-nl-03",
+    "lang": "nl",
+    "text": "De vergadering leverde die eerste middag geen besluit op. Margaret legde de cijfers uit en de anderen luisterden in een beleefd, afwachtend stilzwijgen. Ze hadden dit voorstel eerder gehoord en de kamer droeg de vermoeidheid van mensen die een oude discussie herhaalden. Toen ze klaar was, bedankte de voorzitter haar en stelde voor om de volgende week opnieuw bijeen te komen. Niemand maakte bezwaar tegen het uitstel.",
+    "label": "Measured",
+    "expectMatch": "agree",
+    "convention": "Gelijkmatige verhalende zinnen; mediane zinslengte ~14 (tussen 11 en 24), weinig dialoog -> Measured.",
+    "tags": ["nl", "measured", "narration", "agree"]
+  },
+  {
+    "id": "pace-fr-01",
+    "lang": "fr",
+    "text": "— Tu es prêt ? demanda-t-elle.\n— Presque, dit-il.\n— On part quand ?\n— Bientôt.\n— Tu dis toujours ça.\n— Cette fois c'est vrai.\nElle soupira. Il sourit. La porte s'ouvrit. Ils sortirent dans la nuit.",
+    "label": "Brisk",
+    "expectMatch": "agree",
+    "convention": "Dialogue au tiret, repliques de deux a cinq mots; longueur mediane de phrase ~3 et forte densite de dialogue -> Brisk. Le spec detecte aussi le tiret et bascule en Brisk.",
+    "tags": ["fr", "brisk", "dialogue-heavy", "em-dash-dialogue", "agree"]
+  },
+  {
+    "id": "pace-fr-02",
+    "lang": "fr",
+    "text": "La lumière de la fin du jour descendait lentement entre les hautes branches des platanes en longues nappes dorées qui se posaient sur la mousse et changeaient la clairière tout entière en une cathédrale verte et silencieuse où l'ombre et l'or se mêlaient sans hâte. Au-delà de la rivière les collines se repliaient l'une sur l'autre dans une brume qui adoucissait chaque contour jusqu'à ce que la distance elle-même parût moins un lieu qu'un souvenir de lieu.",
+    "label": "Languid",
+    "expectMatch": "agree",
+    "convention": "Deux longues phrases descriptives; longueur mediane de phrase ~38 mots (>=24), sans dialogue -> Languid.",
+    "tags": ["fr", "languid", "descriptive", "long-sentences", "literary", "agree"]
+  },
+  {
+    "id": "pace-fr-03",
+    "lang": "fr",
+    "text": "Le vieux médecin — celui qui avait soigné le village pendant quarante ans — referma lentement sa sacoche. La pluie tombait. Marie attendait sur le seuil — pâle, immobile, les mains jointes — sans oser poser la question. Il leva les yeux. Le ciel — lourd, gris, sans la moindre éclaircie — pesait sur les toits. Il hocha la tête. Elle comprit alors — et ce fut pire que tout — qu'il était trop tard.",
+    "label": "Measured",
+    "specLabel": "Brisk",
+    "expectMatch": "known-divergence",
+    "convention": "Longueur mediane de phrase ~12 (entre 11 et 24), aucune vraie ligne de dialogue — les tirets sont des incises -> un humain lit Measured. Le DIALOGUE_RE du spec compte chaque tiret-cadratin comme du dialogue, gonfle le ratio au-dessus de 0,4 et force Brisk.",
+    "tags": ["fr", "measured", "em-dash-aside", "false-positive-dialogue", "known-divergence"]
+  },
+  {
+    "id": "pace-de-01",
+    "lang": "de",
+    "text": "Der Ausschuss fasste an jenem ersten langen Nachmittag keinen Beschluss. Margarete legte die Zahlen dar und die anderen hörten in einem höflichen, unverbindlichen Schweigen zu. Sie hatten dieses Vorhaben schon früher gehört, und im Raum lag die leise Müdigkeit von Menschen, die ein altes Streitgespräch wiederholten. Als sie geendet hatte, dankte ihr der Vorsitzende und schlug vor, sich in der folgenden Woche erneut zu treffen.",
+    "label": "Measured",
+    "expectMatch": "agree",
+    "convention": "Gleichmaessige Erzaehlsaetze; mediane Satzlaenge ~17 Woerter (zwischen 11 und 24), kaum Dialog -> Measured.",
+    "tags": ["de", "measured", "narration", "agree"]
+  },
+  {
+    "id": "pace-de-02",
+    "lang": "de",
+    "text": "Das Licht des späten Nachmittags fiel langsam durch die hohen Zweige der Ulmen in langen goldenen Bahnen, die sich auf das Moos legten und die ganze Lichtung in eine stille grüne Kathedrale aus Schatten und Gold verwandelten, in der nichts sich zu regen schien. Jenseits des Wassers lagen die Hügel einer über dem anderen in einem Dunst, der jede Kante so weich werden ließ, dass die Ferne selbst weniger ein Ort als die Erinnerung an einen Ort zu sein schien.",
+    "label": "Languid",
+    "expectMatch": "agree",
+    "convention": "Zwei lange, verschachtelte Beschreibungssaetze; mediane Satzlaenge ~40 Woerter (>=24), kein Dialog -> Languid.",
+    "tags": ["de", "languid", "descriptive", "long-sentences", "agree"]
+  }
+]

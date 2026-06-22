@@ -1,0 +1,142 @@
+[
+  {
+    "id": "genre-en-01",
+    "lang": "en",
+    "text": "The wizard raised his sword as the dragon circled the kingdom. Only an ancient spell could save the realm from the dark magic that bled across the land.",
+    "label": "Fantasy",
+    "expectMatch": "agree",
+    "convention": "Dense, unambiguous fantasy iconography (wizard, sword, dragon, kingdom, spell, realm, magic) — a competent human reads this as Fantasy, and the keyword scorer agrees.",
+    "tags": ["agree", "fantasy", "clear-signal"]
+  },
+  {
+    "id": "genre-en-02",
+    "lang": "en",
+    "text": "The ship's engine coughed once before the jump. Beyond the station's viewport, the planet turned slow against a field of stars, and the galaxy seemed to hold its breath.",
+    "label": "Sci-Fi",
+    "expectMatch": "agree",
+    "convention": "Space-opera setting (ship, engine, station, planet, galaxy) reads as Sci-Fi to a human; scorer also lands Sci-Fi.",
+    "tags": ["agree", "sci-fi", "clear-signal"]
+  },
+  {
+    "id": "genre-en-03",
+    "lang": "en",
+    "text": "The detective knelt by the body. Every clue pointed to the same suspect, but the evidence in this case refused to add up; somewhere, a murderer was still breathing.",
+    "label": "Mystery",
+    "expectMatch": "agree",
+    "convention": "Whodunit framing (detective, body, clue, suspect, evidence, case, murder) is Mystery by genre convention; scorer agrees.",
+    "tags": ["agree", "mystery", "clear-signal"]
+  },
+  {
+    "id": "genre-en-04",
+    "lang": "en",
+    "text": "She felt her heart stumble when he leaned close. A blush rose to her cheeks; the longing in his eyes mirrored her own as they fell into an embrace and a single, trembling kiss.",
+    "label": "Romance",
+    "expectMatch": "agree",
+    "convention": "Emotional intimacy beats (heart, blush, longing, embrace, kiss) are Romance; scorer agrees.",
+    "tags": ["agree", "romance", "clear-signal"]
+  },
+  {
+    "id": "genre-en-05",
+    "lang": "en",
+    "text": "The agent sprinted, gun drawn, as the chase spilled into the station. Her target had a bomb, and the hostage had minutes to live before the whole platform went up.",
+    "label": "Thriller",
+    "expectMatch": "agree",
+    "convention": "High-stakes pursuit (agent, gun, chase, target, bomb, hostage) reads as Thriller; the lone Sci-Fi false hit (station) is outweighed, so scorer agrees.",
+    "tags": ["agree", "thriller", "cross-bucket-noise"]
+  },
+  {
+    "id": "genre-en-06",
+    "lang": "en",
+    "text": "Blood pooled beneath the door. In the dark, something scraped — a creature, or the corpse it had left to haunt the cellar where the screams had stopped.",
+    "label": "Horror",
+    "expectMatch": "agree",
+    "convention": "Visceral dread (blood, dark, creature, corpse, haunt, scream) is Horror; scorer agrees.",
+    "tags": ["agree", "horror", "clear-signal"]
+  },
+  {
+    "id": "genre-en-07",
+    "lang": "en",
+    "text": "The afternoon thinned to a pale gold over the orchard. She sat on the porch with the unopened letter in her lap, watching the wind turn the long grass, and did not move for a long while.",
+    "label": "none",
+    "expectMatch": "agree",
+    "convention": "Quiet literary interiority with no genre markers at all — a human declines to assign a bucket; scorer finds zero keywords and returns none.",
+    "tags": ["agree", "none", "literary"]
+  },
+  {
+    "id": "genre-en-08",
+    "lang": "en",
+    "text": "They repainted the hallway on Saturday. Tom held the ladder; Priya argued about the shade of grey until they both gave up and ordered pizza.",
+    "label": "none",
+    "expectMatch": "agree",
+    "convention": "Mundane domestic vignette, no genre vocabulary; human says none, scorer scores zero and returns none.",
+    "tags": ["agree", "none", "domestic"]
+  },
+  {
+    "id": "genre-es-01",
+    "lang": "es",
+    "text": "El ingeniero revisó el motor del taller antes del amanecer. La relación entre los dos pueblos llevaba años rota, y nadie quería ser el primero en ceder.",
+    "label": "none",
+    "expectMatch": "agree",
+    "convention": "Spanish realist passage about an engineer and feuding towns — no genre. Doubles as a substring-safety check: 'ingeniero', 'motor', 'relación' do not contain the English substrings engine/ship, so the scorer correctly returns none.",
+    "tags": ["agree", "none", "spanish", "substring-safe"]
+  },
+  {
+    "id": "genre-en-09",
+    "lang": "en",
+    "text": "The lead engineer wiped grease from her hands. The relationship between the two township councils had soured over who would pay for the staircase repairs in the old bookcase factory.",
+    "label": "none",
+    "specLabel": "Sci-Fi",
+    "expectMatch": "known-divergence",
+    "convention": "A human reads a workplace/civic vignette with no genre at all. The substring scorer counts engine (engineer), ship (relationship), ship (township) = 3 Sci-Fi and case (staircase, bookcase) = 2 Mystery, so it wrongly outputs Sci-Fi.",
+    "tags": ["known-divergence", "none", "substring-trap", "engineer", "relationship", "staircase", "township"]
+  },
+  {
+    "id": "genre-en-10",
+    "lang": "en",
+    "text": "\"Darling,\" she said, exasperated, \"you spell everything wrong.\" He grinned, unbothered, and kept writing the grocery list at the kitchen table.",
+    "label": "none",
+    "specLabel": "Fantasy",
+    "expectMatch": "known-divergence",
+    "convention": "Word-sense trap: 'spell' here is the verb 'to spell', and the scene is plainly domestic — a human assigns none. The scorer matches the literal substring 'spell' and outputs Fantasy.",
+    "tags": ["known-divergence", "none", "word-sense", "spell", "fantasy-false-positive"]
+  },
+  {
+    "id": "genre-en-11",
+    "lang": "en",
+    "text": "The wizard's spell tore the dark open and something with no face climbed out. Blood ran down the kingdom's white walls as the creature screamed in a voice that was almost a word.",
+    "label": "Fantasy",
+    "specLabel": "Horror",
+    "expectMatch": "known-divergence",
+    "convention": "Cross-bucket bleed: a human reads dark fantasy — the wizard/spell/kingdom world-frame is primary and the horror imagery is texture. The scorer tallies Horror 4 (blood, dark, creature, scream) over Fantasy 3 (wizard, spell, kingdom) and outputs Horror.",
+    "tags": ["known-divergence", "fantasy", "cross-bucket-bleed", "horror-tiebreak"]
+  },
+  {
+    "id": "genre-nl-01",
+    "lang": "nl",
+    "text": "Het ruimteschip naderde de planeet bij volle snelheid. De relatie tussen de bemanningsleden werd gespannen toen de motor uitviel en de sterren stil bleven hangen.",
+    "label": "Sci-Fi",
+    "specLabel": "none",
+    "expectMatch": "known-divergence",
+    "convention": "A human reads obvious Dutch sci-fi (ruimteschip = spaceship, planeet, bemanning, motor). The English-only keyword list matches nothing — 'schip'/'planeet'/'motor' lack the English substrings — so the scorer returns none.",
+    "tags": ["known-divergence", "sci-fi", "dutch", "vocab-gap"]
+  },
+  {
+    "id": "genre-de-01",
+    "lang": "de",
+    "text": "Blut sickerte unter der Tür hervor. Im Dunkeln kratzte etwas an der Wand, und aus dem Keller stieg ein Schrei, der kein menschlicher Schrei mehr war.",
+    "label": "Horror",
+    "specLabel": "none",
+    "expectMatch": "known-divergence",
+    "convention": "Unmistakable German horror (Blut = blood, Dunkeln = dark, Schrei = scream). The English-only scorer matches none of these German words and returns none.",
+    "tags": ["known-divergence", "horror", "german", "vocab-gap"]
+  },
+  {
+    "id": "genre-fr-01",
+    "lang": "fr",
+    "text": "Le détective s'agenouilla près du corps. Chaque indice menait au même suspect, mais aucune preuve ne tenait dans cette affaire de meurtre non résolu.",
+    "label": "Mystery",
+    "expectMatch": "agree",
+    "convention": "French mystery (détective, corps, indice, suspect, meurtre). A human says Mystery, and the scorer agrees by accident: the French cognate 'suspect' contains the English keyword 'suspect', and 'détective' contains 'detective', so Mystery scores highest.",
+    "tags": ["agree", "mystery", "french", "cognate-luck"]
+  }
+]

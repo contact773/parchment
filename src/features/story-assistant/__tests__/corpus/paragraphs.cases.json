@@ -1,0 +1,190 @@
+[
+  {
+    "id": "para-en-01",
+    "lang": "en",
+    "text": "The harbour was empty at dawn.\n\nGulls wheeled over the slack water, crying to no one. Marlowe pulled his coat tighter and walked the length of the pier.\n\nNothing moved but the tide.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Paragraphs are separated by blank lines (\\n\\n). Three clean blank-line-separated blocks, no internal single newlines, so count is 3.",
+    "tags": ["literary", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-en-02",
+    "lang": "en",
+    "text": "\"You can't stay here,\" she said.\n\n\"Watch me.\"\n\nHe sat down on the cold step and folded his arms.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Blank-line separated. Three dialogue/action blocks divided by \\n\\n, no soft wraps, count is 3.",
+    "tags": ["dialogue", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-en-03",
+    "lang": "en",
+    "text": "Rain hammered the tin roof all night.",
+    "label": "1",
+    "expectMatch": "agree",
+    "convention": "A single block with no newlines at all is one paragraph.",
+    "tags": ["sparse", "single", "agree"]
+  },
+  {
+    "id": "para-en-04",
+    "lang": "en",
+    "text": "The detective laid out the photographs.\n\n\n\nThree bodies, three towns, one signature carved into each door.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Multiple consecutive blank lines still form a single boundary between two paragraphs; the empty middle chunks are whitespace-only and ignored. Count is 2.",
+    "tags": ["mystery", "multiple-blanks", "agree"]
+  },
+  {
+    "id": "para-en-05",
+    "lang": "en",
+    "text": "Only paragraph here.\n\n\n",
+    "label": "1",
+    "expectMatch": "agree",
+    "convention": "Trailing blank lines after the final paragraph add no real paragraph; they trim to empty and are ignored. Count is 1.",
+    "tags": ["trailing-blank", "edge", "agree"]
+  },
+  {
+    "id": "para-en-06",
+    "lang": "en",
+    "text": "\n\nThe ship broke atmosphere at midnight.\n\nIts engines were already failing.",
+    "label": "2",
+    "expectMatch": "agree",
+    "convention": "Leading blank lines before the first paragraph are ignored. Two real blocks remain, count is 2.",
+    "tags": ["sci-fi", "leading-blank", "edge", "agree"]
+  },
+  {
+    "id": "para-en-07",
+    "lang": "en",
+    "text": "She counted the coins twice.\n\nForty silver, no more, no less. It would have to be enough for the crossing and whatever waited on the far shore.\n\nShe blew out the candle.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Three clean blank-line-separated paragraphs, no internal newlines. Count is 3.",
+    "tags": ["fantasy", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-nl-01",
+    "lang": "nl",
+    "text": "De storm trok over het dorp.\n\nDaken klapperden, ramen rinkelden, en niemand durfde naar buiten.\n\nTegen de ochtend was alles stil.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Drie alinea's gescheiden door lege regels, geen interne enkele newline. Telling is 3.",
+    "tags": ["dutch", "literary", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-fr-01",
+    "lang": "fr",
+    "text": "Le train entra en gare à l'heure exacte.\n\n— Vous descendez ? demanda le contrôleur.\n\nElle ne répondit pas et serra sa valise.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Trois blocs séparés par des lignes vides, dont un dialogue à tiret cadratin sur une seule ligne. Aucune coupure interne, compte = 3.",
+    "tags": ["french", "dialogue", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-de-01",
+    "lang": "de",
+    "text": "Der Markt war leer.\n\nNur ein alter Hund lag im Schatten des Brunnens und hob nicht einmal den Kopf, als sie vorbeiging.\n\nSie kaufte nichts und ging weiter.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Drei durch Leerzeilen getrennte Absätze, keine internen einzelnen Zeilenumbrüche. Anzahl ist 3.",
+    "tags": ["german", "literary", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-es-01",
+    "lang": "es",
+    "text": "El reloj dio las doce.\n\nNadie en la casa se movió, pero todos estaban despiertos, escuchando.\n\nLa puerta del sótano crujió.",
+    "label": "3",
+    "expectMatch": "agree",
+    "convention": "Tres párrafos separados por líneas en blanco, sin saltos de línea internos. El recuento es 3.",
+    "tags": ["spanish", "horror", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-en-08",
+    "lang": "en",
+    "text": "\"Stop the car,\" he whispered.\n\nThe driver didn't slow.\n\n\"I said stop the car.\"\n\nThe locks clicked shut.",
+    "label": "4",
+    "expectMatch": "agree",
+    "convention": "Four dialogue/action beats cleanly separated by blank lines, no soft wraps. Count is 4.",
+    "tags": ["thriller", "dialogue-heavy", "clean-blank-sep", "agree"]
+  },
+  {
+    "id": "para-en-09",
+    "lang": "en",
+    "text": "The letter was short and cruel,\nwritten in a hand she almost recognised,\nand it ended without a signature.",
+    "label": "1",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "Single newlines are soft wraps inside ONE paragraph; they must not split it. By convention this is 1 paragraph. The naive split(/\\n{1,}/) splits on every newline and returns 3.",
+    "tags": ["literary", "soft-wrap", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-en-10",
+    "lang": "en",
+    "text": "He spoke softly,\nbarely a whisper.\n\nThen he turned and walked into the rain without looking back.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "First paragraph contains an internal single newline (soft wrap) and must stay one block; a blank line separates the second paragraph. True count is 2, but the naive regex splits the soft wrap and returns 3.",
+    "tags": ["literary", "soft-wrap", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-en-11",
+    "lang": "en",
+    "text": "Chapter One\nThe Long Road\n\nThey set out before the sun, three of them and a lame mule.",
+    "label": "2",
+    "specLabel": "3",
+    "expectMatch": "known-divergence",
+    "convention": "The heading occupies two soft-wrapped lines (title + subtitle) joined by a single newline = one block; then one prose paragraph after the blank line. True count is 2; the naive regex splits the heading and returns 3.",
+    "tags": ["heading", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-en-12",
+    "lang": "en",
+    "text": "Pack for the trip:\n- rope\n- flint\n- the map she stole\n\nLeave before anyone wakes.",
+    "label": "2",
+    "specLabel": "5",
+    "expectMatch": "known-divergence",
+    "convention": "A lead-in line plus a tight bullet list reads as one block, and the instruction after the blank line is a second paragraph. By the blank-line convention this is 2 paragraphs; the naive regex splits every list line and returns 5.",
+    "tags": ["list", "mixed", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-nl-02",
+    "lang": "nl",
+    "text": "Ze schreef het adres op een briefje:\nKerkstraat 12\n3811 GH Amersfoort\n\nDaarna stak ze het in haar zak.",
+    "label": "2",
+    "specLabel": "4",
+    "expectMatch": "known-divergence",
+    "convention": "Een adresblok van drie regels met enkele newlines hoort bij één alinea; daarna volgt na een lege regel een tweede alinea. Werkelijk 2; de naïeve regex splitst elke regel en geeft 4.",
+    "tags": ["dutch", "address-block", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-fr-02",
+    "lang": "fr",
+    "text": "Elle relut le poème :\nLes feuilles tombent,\nle vent se tait,\nl'hiver s'installe.\n\nPuis elle ferma le cahier.",
+    "label": "2",
+    "specLabel": "5",
+    "expectMatch": "known-divergence",
+    "convention": "Les vers du poème sont reliés par des sauts de ligne simples et forment un seul bloc avec son introduction; la phrase finale après la ligne vide est le second paragraphe. Vrai compte = 2; la regex naïve coupe à chaque vers et renvoie 5.",
+    "tags": ["french", "poem", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-de-02",
+    "lang": "de",
+    "text": "Er las die Notiz noch einmal:\nKomm um Mitternacht.\nKomm allein.\n\nDann verbrannte er sie.",
+    "label": "2",
+    "specLabel": "4",
+    "expectMatch": "known-divergence",
+    "convention": "Der zitierte Notiztext mit einzelnen Zeilenumbrüchen bildet mit seiner Einleitung einen Absatz; nach der Leerzeile folgt ein zweiter. Wahre Anzahl 2; die naive Regex trennt jede Zeile und liefert 4.",
+    "tags": ["german", "quoted-lines", "internal-newline", "known-divergence"]
+  },
+  {
+    "id": "para-es-02",
+    "lang": "es",
+    "text": "La lista de la compra decía:\nhuevos\nharina\nsal\n\nNo había dinero para nada más.",
+    "label": "2",
+    "specLabel": "5",
+    "expectMatch": "known-divergence",
+    "convention": "El encabezado más la lista de tres artículos unidos por saltos de línea simples son un solo bloque; la frase tras la línea en blanco es el segundo párrafo. Recuento real 2; la regex ingenua divide cada renglón y devuelve 5.",
+    "tags": ["spanish", "list", "internal-newline", "known-divergence"]
+  }
+]

@@ -1,0 +1,453 @@
+[
+  {
+    "id": "names-en-01",
+    "lang": "en",
+    "text": "The frost bit at her hands, but Mara kept walking. Somewhere ahead, Tomas waited by the broken gate. When Mara found Tomas there, hunched against the cold, Tomas said nothing. Then Mara spoke, and Mara would not stop.",
+    "label": "Mara, Tomas",
+    "expectMatch": "agree",
+    "convention": "Characters are named persons; lead is the most frequent. Both Mara and Tomas recur mid-sentence; Mara dominates.",
+    "tags": [
+      "lead:Mara",
+      "literary",
+      "third-person",
+      "two-characters"
+    ]
+  },
+  {
+    "id": "names-en-02",
+    "lang": "en",
+    "text": "\"You don't mean that,\" Eleanor whispered. When Harold turned from the window, Eleanor flinched. \"I mean every word, Eleanor.\" She studied Harold's face. But Harold only sighed, and Eleanor sat down. Still Eleanor waited for Harold to speak.",
+    "label": "Eleanor, Harold",
+    "expectMatch": "agree",
+    "convention": "Dialogue-tag names are characters; Eleanor leads non-initial mentions over Harold.",
+    "tags": [
+      "lead:Eleanor",
+      "dialogue",
+      "two-characters"
+    ]
+  },
+  {
+    "id": "names-en-03",
+    "lang": "en",
+    "text": "Captain Reyes ordered the bridge cleared. The ensign hesitated. \"Now,\" Reyes snapped. Around Reyes, the consoles flickered. The ship lurched, and Reyes gripped the rail. Reyes would not lose her again. Still Reyes held on.",
+    "label": "Reyes",
+    "expectMatch": "agree",
+    "convention": "A single named character (Reyes); the title 'Captain' is not a name. Reyes recurs mid-sentence and is both the only character and the lead.",
+    "tags": [
+      "lead:Reyes",
+      "sci-fi",
+      "single-character",
+      "sparse"
+    ]
+  },
+  {
+    "id": "names-fr-01",
+    "lang": "fr",
+    "text": "Plus loin, Julien attendait sous l'auvent. Quand Camille rejoignit Julien, Camille ne dit rien. Ensemble, Camille et Julien marchèrent vers le pont. Là, Camille regarda Julien longuement. Puis Camille sourit enfin.",
+    "label": "Camille, Julien",
+    "expectMatch": "agree",
+    "convention": "Named persons are characters; Camille leads non-initial positions over Julien.",
+    "tags": [
+      "lead:Camille",
+      "french",
+      "literary",
+      "two-characters"
+    ]
+  },
+  {
+    "id": "names-fr-02",
+    "lang": "fr",
+    "text": "Le vieux Bernard ne parlait plus. Sa fille, Hélène, venait chaque dimanche. Hélène lui apportait du pain. Parfois Bernard souriait à Hélène. Souvent, Hélène repartait en pleurant, mais Bernard attendait Hélène.",
+    "label": "Hélène, Bernard",
+    "expectMatch": "agree",
+    "convention": "Named persons; Hélène (capital É is inside [A-ZÀ-Þ]) leads non-initial mentions over Bernard.",
+    "tags": [
+      "lead:Hélène",
+      "french",
+      "accented",
+      "literary",
+      "in-range-accent"
+    ]
+  },
+  {
+    "id": "names-es-01",
+    "lang": "es",
+    "text": "Cuando Diego abrió la carta, supo que Lucía no volvería. Pensó en Lucía, en su risa. Después Diego guardó la carta. Más tarde, Diego escribió a Lucía. Esa noche Diego no durmió.",
+    "label": "Diego, Lucía",
+    "expectMatch": "agree",
+    "convention": "Named persons are characters; Diego dominates non-initial mentions over Lucía.",
+    "tags": [
+      "lead:Diego",
+      "spanish",
+      "literary",
+      "epistolary",
+      "accented"
+    ]
+  },
+  {
+    "id": "names-es-02",
+    "lang": "es",
+    "text": "\"No te vayas\", dijo Marta. Pero Andrés ya tenía la maleta. Cuando Marta lo siguió, Andrés se detuvo. Andrés besó a Marta en la frente. \"Volveré\", prometió Andrés, y Marta vio a Andrés partir sin decir más. Nunca olvidó a Andrés.",
+    "label": "Andrés, Marta",
+    "expectMatch": "agree",
+    "convention": "Named persons; Andrés (capital A) leads non-initial mentions over Marta.",
+    "tags": [
+      "lead:Andrés",
+      "spanish",
+      "dialogue",
+      "accented"
+    ]
+  },
+  {
+    "id": "names-de-01",
+    "lang": "de",
+    "text": "Am Morgen rief Stefan nach seiner Schwester. Als Stefan die Tür öffnete, sah er Anna am Fenster. \"Komm, Anna\", sagte Stefan leise. Da lächelte Anna. Lange blieb Anna still, und Anna nickte.",
+    "label": "Anna, Stefan",
+    "expectMatch": "agree",
+    "convention": "Person names are characters; common nouns (Morgen, Tür, Fenster) are not. Anna leads non-initial mentions over Stefan.",
+    "tags": [
+      "lead:Anna",
+      "german",
+      "dialogue",
+      "two-characters",
+      "capitalization-aware"
+    ]
+  },
+  {
+    "id": "names-de-02",
+    "lang": "de",
+    "text": "Hinter ihm lachte Greta, als Klaus das Geld zählte. \"Es reicht nicht\", sagte Greta. Als Klaus die Scheine warf, sah Greta ihn an. Doch Klaus schwieg. \"Dann stehlen wir mehr\", flüsterte Greta, und Greta lächelte Klaus an.",
+    "label": "Greta, Klaus",
+    "expectMatch": "agree",
+    "convention": "Person names are characters; Geld/Scheine are common nouns. Greta leads non-initial mentions over Klaus.",
+    "tags": [
+      "lead:Greta",
+      "german",
+      "dialogue",
+      "thriller",
+      "capitalization-aware"
+    ]
+  },
+  {
+    "id": "names-nl-01",
+    "lang": "nl",
+    "text": "De trein was te laat, en Sanne fronste. Toen zag Sanne Pieter aankomen. Snel zwaaide Sanne naar Pieter. En Pieter glimlachte terug naar Sanne.",
+    "label": "Sanne, Pieter",
+    "expectMatch": "agree",
+    "convention": "Dutch person names are characters; Sanne leads non-initial mentions over Pieter.",
+    "tags": [
+      "lead:Sanne",
+      "dutch",
+      "two-characters"
+    ]
+  },
+  {
+    "id": "names-nl-02",
+    "lang": "nl",
+    "text": "Op het schip werkte Søren dag en nacht. De kapitein vertrouwde Søren volledig. Toen de storm kwam, riep iedereen om Søren. En Søren, kalm als altijd, redde het schip. Iedereen prees Søren.",
+    "label": "Søren",
+    "expectMatch": "agree",
+    "convention": "Søren is the sole character; 'Ø' (U+00D8) is inside [A-ZÀ-Þ], so the accented name is correctly captured. Human and naive agree.",
+    "tags": [
+      "lead:Søren",
+      "dutch",
+      "accented",
+      "in-range-accent",
+      "single-character"
+    ]
+  },
+  {
+    "id": "names-en-04",
+    "lang": "en",
+    "text": "Verona had betrayed him once. Now Verona smiled across the ballroom. When Marcus watched Verona move through the crowd, Marcus said nothing. As Verona reached him, Marcus only stared at Verona.",
+    "label": "Verona, Marcus",
+    "expectMatch": "agree",
+    "convention": "Here 'Verona' is a woman's given name (a character who betrays and smiles), not the Italian city. Both human and naive agree: Verona leads, Marcus second.",
+    "tags": [
+      "lead:Verona",
+      "place-as-personal-name",
+      "ambiguous",
+      "english"
+    ]
+  },
+  {
+    "id": "names-en-05",
+    "lang": "en",
+    "text": "They had run from London to Paris, from Paris to Madrid. In London the rain never stopped. In Paris the cafés stayed open. But Madrid was where Cole finally stopped running. Cole loved Madrid.",
+    "label": "Cole",
+    "specLabel": "Paris, Madrid, London",
+    "expectMatch": "known-divergence",
+    "convention": "Cities (London, Paris, Madrid) are places, not characters; only Cole is a character. The naive regex counts the repeated mid-sentence cities and ranks Paris as lead, while Cole — only ever sentence-initial — is dropped entirely.",
+    "tags": [
+      "lead:Cole",
+      "place-distractor",
+      "city",
+      "lead-error",
+      "dropped-character"
+    ]
+  },
+  {
+    "id": "names-en-06",
+    "lang": "en",
+    "text": "Brighton in winter was a grey thing. Soon Brighton emptied of tourists; Brighton belonged to the gulls. Only Edith stayed. Each morning Edith walked the front, and Brighton kept Edith company, after a fashion.",
+    "label": "Edith",
+    "specLabel": "Brighton, Edith",
+    "expectMatch": "known-divergence",
+    "convention": "Brighton is a town, not a character; Edith is the only character. The naive regex counts Brighton (3 mid-sentence) above Edith and names the place as lead.",
+    "tags": [
+      "lead:Edith",
+      "place-distractor",
+      "city",
+      "lead-error"
+    ]
+  },
+  {
+    "id": "names-en-07",
+    "lang": "en",
+    "text": "Harriet opened the ledger. Harriet read the figures twice. Harriet closed the book and stood. The clerk watched her go. Harriet never returned to that office.",
+    "label": "Harriet",
+    "specLabel": "—",
+    "expectMatch": "known-divergence",
+    "convention": "Harriet is plainly the protagonist, but every mention is sentence-initial (word index 0), which the naive regex always skips, so it records zero names.",
+    "tags": [
+      "lead:Harriet",
+      "sentence-initial",
+      "dropped-character",
+      "english"
+    ]
+  },
+  {
+    "id": "names-fr-03",
+    "lang": "fr",
+    "text": "Étienne ferma les volets. Étienne alluma une bougie. Étienne s'assit près du feu. Le silence l'entourait. Étienne attendit l'aube sans dormir.",
+    "label": "Étienne",
+    "specLabel": "—",
+    "expectMatch": "known-divergence",
+    "convention": "Étienne is the sole character, but every mention is sentence-initial, so the naive regex skips all of them and returns no names — even though the accented initial would otherwise be in range.",
+    "tags": [
+      "lead:Étienne",
+      "french",
+      "sentence-initial",
+      "accented",
+      "dropped-character"
+    ]
+  },
+  {
+    "id": "names-en-08",
+    "lang": "en",
+    "text": "In the kitchen, MARTHA pours the coffee while GEORGE leans in the doorway. Quietly, MARTHA sets down the pot. At the window, GEORGE watches MARTHA. Then GEORGE speaks, and MARTHA flinches.",
+    "label": "Martha, George",
+    "expectMatch": "agree",
+    "convention": "Screenplay cue names are the characters Martha and George. The naive regex captures the ALL-CAPS tokens MARTHA/GEORGE; the scorer lowercases both sides, so the casing difference is normalized away and the detected set matches the human label.",
+    "tags": [
+      "lead:Martha",
+      "script",
+      "all-caps",
+      "casing"
+    ]
+  },
+  {
+    "id": "names-en-09",
+    "lang": "en",
+    "text": "EXT. LONDON ROOFTOP — DUSK\nNADIA checks the rifle. NADIA breathes. LONDON glitters below.\nNADIA\nOne shot.\nThe wind shifts. NADIA waits. LONDON does not notice her at all.",
+    "label": "Nadia",
+    "specLabel": "—",
+    "expectMatch": "known-divergence",
+    "convention": "Nadia is the only character; LONDON is a place. But every cue and sentence here begins with NADIA or LONDON at index 0 (speaker labels and line starts), so the naive regex skips them all and finds no names.",
+    "tags": [
+      "lead:Nadia",
+      "script",
+      "all-caps",
+      "slugline",
+      "sentence-initial",
+      "dropped-character"
+    ]
+  },
+  {
+    "id": "names-en-10",
+    "lang": "en",
+    "text": "The new tenant, Łukasz, kept odd hours. People whispered about Łukasz. The neighbours heard Łukasz pacing at three in the morning. Still, Łukasz paid his rent on time, and nobody dared ask Łukasz a thing.",
+    "label": "Łukasz",
+    "specLabel": "—",
+    "expectMatch": "known-divergence",
+    "convention": "Łukasz is the central character, but 'Ł' (U+0141) lies outside the regex's [A-ZÀ-Þ] capital range, so every mention is rejected and no names are found.",
+    "tags": [
+      "lead:Łukasz",
+      "accented",
+      "extended-latin",
+      "polish-name",
+      "dropped-character"
+    ]
+  },
+  {
+    "id": "names-en-11",
+    "lang": "en",
+    "text": "Everyone in the troupe adored Šárka. When Šárka danced, the room held its breath. The director built the whole season around Šárka. Without Šárka, there was simply no show, and Šárka knew it.",
+    "label": "Šárka",
+    "specLabel": "—",
+    "expectMatch": "known-divergence",
+    "convention": "Šárka is the protagonist, but 'Š' (U+0160) is outside [A-ZÀ-Þ], so all mentions are rejected and no names are detected.",
+    "tags": [
+      "lead:Šárka",
+      "accented",
+      "extended-latin",
+      "czech-name",
+      "dropped-character"
+    ]
+  },
+  {
+    "id": "names-en-12",
+    "lang": "en",
+    "text": "It was Anna's coat on the chair, Anna's gloves on the sill. The whole flat still felt like Anna's. But Anna had left months ago. Only Anna's things stayed behind, waiting for Anna.",
+    "label": "Anna",
+    "specLabel": "Anna's, Anna",
+    "expectMatch": "known-divergence",
+    "convention": "The character is Anna. The possessive 'Anna's' should normalize to Anna, but the regex retains the apostrophe so 'Anna's' (4x) is counted as a separate, leading name, splitting Anna's true frequency.",
+    "tags": [
+      "lead:Anna",
+      "possessive",
+      "apostrophe",
+      "split-count"
+    ]
+  },
+  {
+    "id": "names-nl-03",
+    "lang": "nl",
+    "text": "Het was Anna’s fiets, Anna’s tas, Anna’s hele leven dat hier lag. Maar Anna’s kamer bleef leeg. Iedereen wachtte op Anna, en Anna’s stilte zei genoeg.",
+    "label": "Anna",
+    "specLabel": "Anna’s",
+    "expectMatch": "known-divergence",
+    "convention": "The character is Anna. The curly-apostrophe possessive 'Anna’s' is retained as a single distinct token (5x) and reported instead of Anna; bare 'Anna' is sentence-initial-only and dropped.",
+    "tags": [
+      "lead:Anna",
+      "dutch",
+      "possessive",
+      "curly-apostrophe",
+      "split-count"
+    ]
+  },
+  {
+    "id": "names-nl-04",
+    "lang": "nl",
+    "text": "Mevrouw van den Berg opende de winkel om acht uur. Iedereen kende van den Berg. Toen van den Berg ziek werd, sloot de winkel. De buurt miste van den Berg enorm.",
+    "label": "van den Berg",
+    "specLabel": "Berg",
+    "expectMatch": "known-divergence",
+    "convention": "The character's surname is the multi-word 'van den Berg'. The lowercase particles 'van'/'den' (tussenvoegsels) are dropped, so only 'Berg' is counted and the name is mangled.",
+    "tags": [
+      "lead:van den Berg",
+      "dutch",
+      "particle",
+      "tussenvoegsel",
+      "name-fragment"
+    ]
+  },
+  {
+    "id": "names-de-03",
+    "lang": "de",
+    "text": "Im Wald stand ein Haus. Das Haus war alt. Eine Frau lebte dort, und die Frau hieß niemand mehr beim Namen. Der Wald schwieg. Das Haus schwieg. Die Frau wartete.",
+    "label": "",
+    "specLabel": "Haus, Frau, Wald",
+    "expectMatch": "known-divergence",
+    "convention": "There are NO named characters — Haus, Frau and Wald are ordinary German nouns, which are always capitalized. The naive regex treats the repeated mid-sentence nouns as character names.",
+    "tags": [
+      "german",
+      "common-noun",
+      "capitalization-trap",
+      "no-character"
+    ]
+  },
+  {
+    "id": "names-de-04",
+    "lang": "de",
+    "text": "Werner reparierte den Motor. Der Motor sprang nicht an, und Werner fluchte. Die Werkstatt war kalt. Der Motor blieb stumm, und Werner gab auf. Die Werkstatt roch nach Öl, doch Werner blieb.",
+    "label": "Werner",
+    "specLabel": "Motor, Werner, Werkstatt",
+    "expectMatch": "known-divergence",
+    "convention": "Werner is the only character; Motor and Werkstatt are common nouns. The naive regex counts the capitalized nouns and ranks 'Motor' (3x) at or above Werner, mislabeling a machine as the lead.",
+    "tags": [
+      "lead:Werner",
+      "german",
+      "common-noun",
+      "capitalization-trap",
+      "lead-error"
+    ]
+  },
+  {
+    "id": "names-en-13",
+    "lang": "en",
+    "text": "The soldiers feared the Colonel. When the Colonel spoke, the camp fell silent. The Colonel had won three wars. Now the Colonel wanted a fourth. Nobody questioned the Colonel.",
+    "label": "",
+    "specLabel": "Colonel",
+    "expectMatch": "known-divergence",
+    "convention": "'the Colonel' is a rank used as a stand-in, not a proper name — there is no named character in this passage. The naive regex counts the capitalized 'Colonel' (5x mid-sentence) as a character name.",
+    "tags": [
+      "honorific",
+      "title",
+      "no-name"
+    ]
+  },
+  {
+    "id": "names-es-03",
+    "lang": "es",
+    "text": "Barcelona dormía. Barcelona siempre dormía a esa hora. Pero en un balcón de Barcelona, Rosa fumaba. Rosa miraba las luces de Barcelona. A Rosa le gustaba Barcelona de noche.",
+    "label": "Rosa",
+    "specLabel": "Barcelona, Rosa",
+    "expectMatch": "known-divergence",
+    "convention": "Rosa is the only character; Barcelona is a city. Mid-sentence 'Barcelona' (3x) outnumbers Rosa and is wrongly named the lead.",
+    "tags": [
+      "lead:Rosa",
+      "spanish",
+      "place-distractor",
+      "city",
+      "lead-error"
+    ]
+  },
+  {
+    "id": "names-en-14",
+    "lang": "en",
+    "text": "The reunion was small. Across the table sat Priya, beside her Devon, and at the end, quiet as ever, old Gideon. Devon poured the wine. Priya laughed at something Gideon said. It was a good night.",
+    "label": "Priya, Devon, Gideon",
+    "specLabel": "Gideon",
+    "expectMatch": "known-divergence",
+    "convention": "Three characters are present (Priya, Devon, Gideon). Priya and Devon each appear once mid-sentence (the rest sentence-initial), so the count>=2 rule drops both; only Gideon survives, producing a wrong single-name list and lead.",
+    "tags": [
+      "lead:Priya",
+      "count-threshold",
+      "sparse-mentions",
+      "dropped-character",
+      "lead-error"
+    ]
+  },
+  {
+    "id": "names-en-15",
+    "lang": "en",
+    "text": "\"STOP,\" she screamed. But the truck kept coming. \"STOP!\" Inez threw herself sideways. The horn blared. Still STOP, her mind kept saying, STOP, STOP. Inez hit the gravel hard, and Inez did not move.",
+    "label": "Inez",
+    "specLabel": "STOP, Inez",
+    "expectMatch": "known-divergence",
+    "convention": "Inez is the only character; 'STOP' is shouted emphasis, not a name. The naive regex counts capitalized 'STOP' (3x mid-sentence) above Inez and names it the lead.",
+    "tags": [
+      "lead:Inez",
+      "all-caps",
+      "emphasis",
+      "lead-error"
+    ]
+  },
+  {
+    "id": "names-fr-04",
+    "lang": "fr",
+    "text": "Ils se rencontraient chaque Mardi. Mardi était leur jour. À Lyon, toujours à Lyon, près de la gare. Mardi après Mardi, Olivier attendait. Mais ce Mardi-là, à Lyon, Olivier attendit en vain.",
+    "label": "Olivier",
+    "specLabel": "Lyon, Mardi, Olivier",
+    "expectMatch": "known-divergence",
+    "convention": "Olivier is the only character; 'Mardi' (a weekday, capitalized stylistically) and 'Lyon' (a city) are not characters. The naive regex counts both and ranks 'Lyon' (3x) as the lead.",
+    "tags": [
+      "lead:Olivier",
+      "french",
+      "weekday",
+      "place-distractor",
+      "lead-error"
+    ]
+  }
+]
