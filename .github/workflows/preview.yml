@@ -1,0 +1,134 @@
+# Preview channel. Publishes a signed prerelease to the rolling `preview` tag,
+# which preview builds — and only preview builds — poll for updates.
+#
+# Opt-in twice over, on purpose:
+#   * A writer only receives previews if they installed a preview build; the
+#     update endpoint is compiled into the artifact (see
+#     docs/adr/0001-release-channels-and-updates.md).
+#   * Pushing to main publishes nothing unless the repository variable
+#     PUBLISH_PREVIEWS is set to "true" (Settings → Secrets and variables →
+#     Actions → Variables). Until then, previews are cut by hand from the
+#     Actions tab. This keeps "every commit is a release" from happening by
+#     accident.
+#
+# The version is derived, never hand-written: 0.2.0 in package.json produces
+# 0.2.1-preview.<run number>, which is strictly newer than released 0.2.0 and
+# strictly older than the eventual 0.2.1. A preview device therefore returns to
+# stable simply by installing the next stable release.
+name: Preview
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: preview
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Should this push publish a preview?
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+    steps:
+      - id: decide
+        env:
+          PUBLISH_PREVIEWS: ${{ vars.PUBLISH_PREVIEWS }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif [ "$PUBLISH_PREVIEWS" = "true" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Preview publishing is off. Set the PUBLISH_PREVIEWS repository variable to 'true' to enable it."
+          fi
+
+  publish:
+    name: Build and publish preview
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && github.repository == 'contact773/parchment'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - name: Signing secrets are configured
+        shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not configured. Refusing to publish an unsigned preview."
+            exit 1
+          fi
+
+      - name: Typecheck and test
+        shell: bash
+        run: |
+          npm run typecheck
+          npm test -- --run
+
+      # Written into package.json/tauri.conf.json/Cargo.toml but never committed:
+      # main keeps its release version, the artifact carries the preview version.
+      - name: Stamp the preview version
+        id: stamp
+        shell: bash
+        run: |
+          node scripts/version.mjs preview "${{ github.run_number }}"
+          echo "version=$(node scripts/version.mjs print)" >> "$GITHUB_OUTPUT"
+
+      - name: Build, sign and publish the preview
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # A rolling tag keeps the preview manifest at one stable URL:
+          # https://github.com/contact773/parchment/releases/download/preview/latest.json
+          tagName: preview
+          releaseName: Parchment preview ${{ steps.stamp.outputs.version }}
+          releaseBody: |
+            Unreleased build from `main` (${{ github.sha }}).
+
+            Previews are for testing. They can contain unfinished work and are
+            not covered by the stable release notes. Back up your projects
+            (Settings → Data & Backup) before installing one.
+
+            Install the next stable release to return to the stable channel.
+          releaseDraft: false
+          prerelease: true
+          includeUpdaterJson: true
+          # The preview endpoint is compiled in from this overlay.
+          args: --config src-tauri/tauri.preview.conf.json
+
+      - name: Verify the preview manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download preview --pattern latest.json --clobber
+          node scripts/verify-release.mjs \
+            --manifest latest.json \
+            --version "${{ steps.stamp.outputs.version }}" \
+            --tag preview

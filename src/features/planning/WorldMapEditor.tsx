@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   MousePointer2,
   Pencil,
@@ -21,6 +21,7 @@ import {
 import type { MapMarker, MapPoint, MapRegion, MarkerKind, RegionKind, WorldMap } from '@/types'
 import { getOrCreateMap, updateMap } from '@/data/repo'
 import { uid } from '@/lib/id'
+import { registerPendingWrite } from '@/lib/pendingWrites'
 import { cn } from '@/lib/utils'
 import { Menu } from '@/components/ui/Menu'
 import { saveBlob } from '@/lib/desktop'
@@ -161,12 +162,52 @@ export function WorldMapEditor({ projectId }: { projectId: string }) {
     }
   }, [projectId])
 
+  const writeMap = (m: WorldMap) =>
+    updateMap(m.id, { name: m.name, background: m.background, regions: m.regions, markers: m.markers, width: m.width, height: m.height })
+
+  /** The map the pending 300 ms timer is holding, or null when nothing is due. */
+  const unsaved = useRef<WorldMap | null>(null)
+
   const schedule = (m: WorldMap) => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
+    unsaved.current = m
     saveTimer.current = window.setTimeout(() => {
-      void updateMap(m.id, { name: m.name, background: m.background, regions: m.regions, markers: m.markers, width: m.width, height: m.height })
+      saveTimer.current = null
+      unsaved.current = null
+      void writeMap(m)
     }, 300)
   }
+
+  /**
+   * Write the pending map straight away. Registered below so that closing the
+   * map, leaving the page, or restarting for an update can never drop the last
+   * gesture into a timer that is about to be thrown away.
+   */
+  const flushMap = useCallback(async () => {
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current)
+      saveTimer.current = null
+    }
+    const pending = unsaved.current
+    unsaved.current = null
+    if (pending) await writeMap(pending)
+  }, [])
+
+  useEffect(() => {
+    const unregister = registerPendingWrite('world map', flushMap)
+    const onPageHide = () => void flushMap()
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') void flushMap()
+    }
+    window.addEventListener('pagehide', onPageHide)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      unregister()
+      window.removeEventListener('pagehide', onPageHide)
+      document.removeEventListener('visibilitychange', onVisibility)
+      void flushMap()
+    }
+  }, [flushMap])
   /** Mutate + save. */
   const apply = (updater: (m: WorldMap) => WorldMap) =>
     setMap((m) => {

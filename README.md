@@ -6,18 +6,35 @@ general manuscripts. It aims to replace Word / Google Docs for creative writers 
 combining the calm of a distraction-free editor, the structure of a manuscript binder,
 multilingual spellcheck, a story-development assistant, deep theming and reliable exports.
 
-Everything you write is stored privately in your browser (IndexedDB). No account, no cloud.
+Everything you write is stored privately on your own device (IndexedDB). No account, no cloud.
 
-## Quick start
+## Install it
+
+Download the Windows setup program from
+[the latest release](https://github.com/contact773/parchment/releases/latest).
+It installs for your user account only — no administrator prompt — and updates
+itself from signed releases after that.
+
+[`docs/INSTALL.md`](docs/INSTALL.md) covers where your projects are stored, how
+updates work, and what to do if one fails.
+
+## Develop it
 
 ```bash
-npm install         # installs deps and (via postinstall-style predev) copies dictionaries
+npm ci              # installs deps and copies the Hunspell dictionaries
 npm run dev         # start the dev server  → http://localhost:5173
 npm run build       # typecheck + production build into dist/
 npm run preview     # preview the production build
 npm run typecheck   # type-only check
+npm test -- --run   # unit tests
 npm run dict        # (re)copy Hunspell dictionaries into public/dictionaries
+
+npm run tauri:dev   # run inside the desktop shell
+npm run tauri:build # build the Windows installer (needs the Tauri prerequisites)
 ```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for conventions and
+[`docs/RELEASE.md`](docs/RELEASE.md) for how a release is cut.
 
 On first run, two sample projects are seeded (a literary-mystery novel and a thriller
 screenplay) so you can explore immediately. Delete them any time.
@@ -51,6 +68,10 @@ screenplay) so you can explore immediately. Delete them any time.
   ePub (foundation), and full JSON backup; import a full backup or a single project file.
 - **Safety** — autosave, save indicator, snapshots (manual + automatic before restore),
   restore, survives refresh, one-click backup, "delete all" guarded danger zone.
+- **Updates** — the desktop app checks for signed releases in the background, explains
+  every state (available, downloading, ready, offline, signature failure…), lets you defer
+  or skip a version, and flushes your open document and map to disk before it restarts.
+  An update that cannot save your work is cancelled rather than forced through.
 
 ## Architecture
 
@@ -66,12 +87,16 @@ src/
     export/          block model, exporters (md/txt/html/docx/pdf/fountain/epub/json), backup
     planning/        inspector, corkboard, outline, timeline, character/location/thread managers
     projects/        binder tree, node icons, new-project modal
+    updates/         update state machine, service, Settings panel, notice card
     workspace/       topbar, left sidebar, right panel, goals widget
   hooks/             useApplyTheme
-  lib/               text analysis, tree utils, constants, formatting, id, cn/debounce
+  lib/               text analysis, tree utils, constants, formatting, id, cn/debounce,
+                     semver, release manifest, pending-write registry, app info
   pages/             Dashboard, Workspace, SettingsPage
   store/             useSettings (persisted), useUI (transient)
   types/             the full data model
+scripts/             version authority, updater key generation, release verification
+.github/workflows/   CI quality gate, tag-driven stable release, opt-in preview
 ```
 
 State: **Zustand** for settings/themes/dictionary/stats (persisted to localStorage) and
@@ -92,8 +117,18 @@ key. Keys are stored only in your browser's localStorage. Note: direct browser�
 calls can be blocked by provider CORS; on failure Parchment automatically uses the local
 assistant.
 
+## Releases and updates
+
+`package.json` is the version authority; `npm run version:set -- <version>` propagates it
+to `tauri.conf.json` and `Cargo.toml` and refuses anything that is not strictly newer.
+Pushing a `v*` tag builds and signs the installer in CI, publishes it as a **draft**
+release, verifies the updater manifest that installed copies will poll, and only then
+publishes. Details and the rollback procedure: [`docs/RELEASE.md`](docs/RELEASE.md).
+
 ## Known limitations / next steps
 
+- Windows only for now. macOS and Linux need their own signing and packaging work before
+  they join the release matrix.
 - Bundle is a single large chunk (editor + db); route-level code-splitting would trim it.
 - Inline-comment editing/removal UI is minimal (view-only popover + Notes list).
 - ePub export is a valid single-spine foundation, not chapter-split.

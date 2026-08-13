@@ -138,11 +138,11 @@ If the product requirement is literally “every push updates every installed de
 
 ## Roadmap at a glance
 
-| Priority | Phase | Outcome |
-|---|---|---|
-| P0 | 0. Baseline and release decisions | A controlled delivery contract and measurable baseline |
-| P0 | 1. Installer, signing, and automatic updates | Installable desktop app that can safely update from GitHub Releases |
-| P0 | 2. Data integrity and recovery | Trustworthy autosave, snapshots, backup, migration, and failure handling |
+| Priority | Phase | Outcome | Status |
+|---|---|---|---|
+| P0 | 0. Baseline and release decisions | A controlled delivery contract and measurable baseline | **Delivered** (decisions + version authority; baseline timings still to capture) |
+| P0 | 1. Installer, signing, and automatic updates | Installable desktop app that can safely update from GitHub Releases | **Delivered** (see below) |
+| P0 | 2. Data integrity and recovery | Trustworthy autosave, snapshots, backup, migration, and failure handling | Next |
 | P1 | 3. Editor and writing workflow | Faster, clearer, more predictable long-form writing |
 | P1 | 4. World-map interaction and visual overhaul | A map that feels deliberate rather than janky |
 | P1 | 5. Planning and Codex integration | Planning surfaces that reinforce one shared project model |
@@ -178,6 +178,21 @@ Create a stable reference point before changing behavior. Make the release, stor
 ## Phase 1 — Installer, release pipeline, and automatic updates
 
 This phase is required before calling Parchment distributable.
+
+> **Status: delivered.** `npm run tauri:build` produces a signed per-user NSIS
+> installer with updater artifacts; `package.json` is the enforced version
+> authority; the Tauri updater is wired to a tested state machine with a
+> Settings panel, a native Help menu entry and a dismissible startup notice;
+> CI, tag-driven release and opt-in preview workflows are in place, with
+> publication gated on verifying the manifest installed copies will poll.
+> An update flushes the editor and map to disk before restarting and cancels
+> itself if it cannot. See [`docs/adr/0001-release-channels-and-updates.md`](./docs/adr/0001-release-channels-and-updates.md)
+> and [`docs/RELEASE.md`](./docs/RELEASE.md).
+>
+> Outstanding within this phase: the maintainer must add the two signing
+> secrets to GitHub; the end-to-end upgrade rehearsal on a clean machine and on
+> a machine with existing project data has not been run; macOS and Linux
+> targets are deliberately not yet in the matrix.
 
 ### 1.1 Package the real application
 

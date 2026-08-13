@@ -1,10 +1,24 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+// `vitest/config` re-exports Vite's defineConfig and adds the `test` block, so
+// the app build and the test run share one alias/define configuration.
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
+
+// package.json is the version authority (see scripts/version.mjs). Reading it
+// here means the About panel, the updater's "current version" and the built
+// installer can never disagree.
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf8')) as {
+  version: string
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -29,4 +43,12 @@ export default defineConfig({
     allowedHosts: ['.trycloudflare.com'],
   },
   envPrefix: ['VITE_', 'TAURI_ENV_'],
+  test: {
+    // Node by default — most suites are pure logic. Files that need a DOM
+    // (localStorage-backed stores, components) opt in with the
+    // `@vitest-environment jsdom` docblock.
+    environment: 'node',
+    include: ['src/**/*.test.{ts,tsx}'],
+    restoreMocks: true,
+  },
 })

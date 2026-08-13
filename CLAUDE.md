@@ -58,8 +58,13 @@ desktop build. The checked-in scripts are:
 | `npm run preview` | Serve the production `dist/` build. |
 | `npm run dict` | Copy `.aff` and `.dic` files to ignored `public/dictionaries/`. |
 | `npm run tauri:dev` | Run the frontend in the Tauri shell. |
-| `npm run tauri:build` | Build bundled Tauri artifacts. |
-| `npm run desktop:build` | Build without bundling and copy the Windows binary to `Parchment.exe`. |
+| `npm run tauri:build` | Build the Windows NSIS installer plus signed updater artifacts. This is the distribution path. |
+| `npm run desktop:build` | Developer convenience only: build without bundling and copy the raw binary to `Parchment.exe`. Not an installer. |
+| `npm run version:check` | Fail if `package.json`, `tauri.conf.json` and `Cargo.toml` disagree. CI gate. |
+| `npm run version:set -- <v>` | Bump the version everywhere; refuses anything not strictly newer. |
+| `npm run version:sync` | Copy `package.json`'s version outward. |
+| `npm run updater:keygen` | Create the updater signing key pair outside the repository. |
+| `npm run release:verify -- --manifest latest.json …` | Validate a release manifest before it is published. |
 
 Repository verification performed during this audit:
 
@@ -94,18 +99,32 @@ src/
   features/story-assistant/        Local analysis, AI providers, chat and transforms
   features/themes/                 Built-in themes, theme application and builder
   features/export/                 Block model, exporters, backup and imports
+  features/updates/                Update state machine, service, Settings panel, notice
 
 src-tauri/
   src/main.rs                      Tauri commands, native menu, plugins, single instance
-  tauri.conf.json                  Window/build/bundle configuration
+  tauri.conf.json                  Window/build/bundle/updater configuration
+  tauri.preview.conf.json          Build-time overlay: preview-channel endpoint
+  tauri.ci.conf.json               Build-time overlay: no updater artifacts (unsigned CI builds)
   capabilities/default.json        Tauri permissions
   Cargo.toml                       Rust dependencies and release profile
 
 public/parchment.svg               Favicon/branding
 scripts/copy-dictionaries.mjs      Static Hunspell asset preparation
 scripts/place-exe.mjs              Copies release binary to repository root
+scripts/version.mjs                Version authority: print/check/sync/set/preview
+scripts/updater-keygen.mjs         Generates the signing key pair outside the repo
+scripts/verify-release.mjs         Validates a release manifest before publication
+.github/workflows/ci.yml           Quality gate + unsigned installer build
+.github/workflows/release.yml      Tag-driven signed release, published after verification
+.github/workflows/preview.yml      Opt-in signed prerelease on the rolling `preview` tag
 docs/RESEARCH.md                   Product discovery and design imperatives
+docs/RELEASE.md                    Release runbook, secrets and rollback
+docs/INSTALL.md                    Writer-facing install/update guide
+docs/adr/0001-…                    Release channels, version authority, update safety
 README.md                          Product/architecture overview
+CONTRIBUTING.md                    Setup, checks, conventions, branch/release rules
+CHANGELOG.md                       User-visible changes per release
 ```
 
 `dist/` and `node_modules/` are generated/dependency directories. The
@@ -315,8 +334,9 @@ use these functions rather than accessing tables directly for mutations.
 Zustand `persist` store named `parchment-settings`. It stores:
 
 - `settings`: active theme, interface scale, sidebar density, default language,
-  spellcheck, focus/typewriter modes, autosave flag, AI configuration, and
-  onboarding flag;
+  spellcheck, focus/typewriter modes, autosave flag, AI configuration,
+  onboarding flag, and `updates` (`checkOnStartup`, `lastCheckedAt`,
+  `skippedVersion`);
 - `customThemes`;
 - per-language added/ignored dictionary words;
 - `stats`: daily goal, date-keyed history, and last word-count baselines;
@@ -713,6 +733,59 @@ writing exports but is not an efficient streaming path for very large backups.
 The Tauri CSP is currently null; review this before introducing more external
 content or provider integrations.
 
+The shell also registers `tauri-plugin-updater` and `tauri-plugin-process`
+(desktop targets only) and adds a Help submenu whose single item emits
+`parchment://check-for-updates`. The frontend listens for that event in
+`initUpdates()`, so the native menu and the Settings button drive the same
+state machine. `capabilities/default.json` grants `updater:default` and the
+single `process:allow-restart` permission rather than `process:default`.
+
+## 13a. Release, distribution and update architecture
+
+The distribution artifact is a Windows NSIS installer (`bundle.targets` is
+`["nsis"]`, `installMode` is `currentUser`), published to GitHub Releases with a
+signed updater archive and a `latest.json` manifest.
+
+**Version authority.** `package.json` owns the version. `scripts/version.mjs`
+propagates it to `tauri.conf.json`, `Cargo.toml` and both lockfiles; `check`
+fails CI when they drift, and `set` refuses a version that is not strictly newer.
+Vite injects the same value as `__APP_VERSION__`, which `src/lib/appInfo.ts`
+exposes to the UI — so About, the installer and the updater cannot disagree.
+
+**Channels.** The Tauri updater reads its endpoints from the compiled
+configuration, so the channel is chosen at build time, not at runtime. Stable
+builds poll `releases/latest/download/latest.json`; preview builds are compiled
+with `tauri.preview.conf.json` and poll the rolling `preview` tag. Preview
+versions are derived as `X.Y.(Z+1)-preview.N`, which sorts above the released
+`X.Y.Z` and below the eventual `X.Y.(Z+1)`, so a stable release always
+supersedes a preview. The tradeoff — no in-app channel switching — is recorded
+in `docs/adr/0001-release-channels-and-updates.md`.
+
+**Update state machine.** `features/updates/updateModel.ts` is pure: a reducer
+over `idle → checking → up-to-date | available → downloading → ready →
+installing → restarting`, with `error` reachable from the busy states and
+`reset` returning to the last safe resting state. It refuses any candidate that
+is not strictly newer (`isNewerVersion`, which fails closed on unparseable
+input) and ignores illegal transitions rather than throwing.
+`updateService.ts` owns the side effects: a lazily imported Tauri backend behind
+an injectable seam, the six-hour automatic-check policy, the eight-second
+startup delay, the native-menu listener, and diagnostics that contain no project
+content.
+
+**Update safety.** `lib/pendingWrites.ts` is a registry of debounced writers —
+the editor's 700 ms autosave and the world map's 300 ms geometry save both
+register. `installUpdate()` flushes them with a five-second bound and
+**aborts the update** if any writer fails or the flush times out; the installed
+copy is untouched at that point, so aborting is always safe.
+
+**Publication safety.** `release.yml` builds into a draft release, downloads the
+`latest.json` it produced, validates it with `scripts/verify-release.mjs`
+(version, required targets, tag-referencing URLs, non-empty signatures) and only
+then publishes. GitHub's `releases/latest` excludes drafts and prereleases, so a
+failed release is invisible to installed copies.
+`src/__tests__/releaseConfig.test.ts` locks the decisions that are expensive to
+reverse: identifier, public key, endpoints, permissions and workflow rules.
+
 ## 14. Styling and visual language
 
 Tailwind semantic colors are CSS-variable backed RGB triplets. The visual
@@ -859,12 +932,16 @@ later object.
 
 Region and marker drag starts push an undo snapshot; pointer movement uses
 `setLive()` with no save; pointer-up calls `apply(m => m)` to schedule a save.
-This is a sensible performance shape, but an interrupted pointer sequence,
-component unmount, or app close before the 300 ms timer fires can leave the last
-movement unsaved. The save timer is not flushed on unmount. Undo/redo snapshots
-also contain only region/marker arrays, not map background/dimensions/name, so
-history is intentionally geometry-only and can feel inconsistent when mixed
-with color/background edits.
+This is a sensible performance shape.
+
+The unmount/close half of this has been fixed: `schedule()` now records the
+pending map in a ref and `flushMap()` writes it immediately. `flushMap` runs on
+unmount, on `pagehide`, on hidden visibility, and through the
+`registerPendingWrite` registry — which is also what an application update waits
+for before restarting. What remains open is history coverage: undo/redo
+snapshots still contain only region/marker arrays, not map background,
+dimensions or name, so history is intentionally geometry-only and can feel
+inconsistent when mixed with color/background edits.
 
 #### 10. Background “select/pan” conflicts with selection expectations
 
@@ -1085,6 +1162,10 @@ part of a module’s public surface.
 | `src/lib/text.ts` | `lex`; `docToText`; `countWords`; `countCharacters`; `splitSentences`; `countSentences`; `countParagraphs`; `readingMinutes`; `pageEstimate`; `analyzeText`; `formatReadingTime`. Internal lexical constants are `WORDS_PER_PAGE`, `WPM`, `ABBREV`, `BLOCK_TYPES`, `TITLES`, `INTRODUCERS`, and `WORD_RE`. |
 | `src/lib/tree.ts` | `buildForest`; `flattenForest`; `orderedDocuments`; `manuscriptNodes`; `subtreeWordCount`; internal `isNoteType`, `isContainerType`. |
 | `src/lib/desktop.ts` | `isDesktop`; `saveBlob`; `openFileNative`. |
+| `src/lib/semver.ts` | `parseVersion`; `isValidVersion`; `isPrerelease`; `compareVersions`; `isNewerVersion`; `maxVersion`; internal `comparePrerelease`. Shared with `scripts/` through Node type stripping. |
+| `src/lib/releaseManifest.ts` | `parseReleaseManifest`; `selectPlatformAsset`; `updaterTargetKey`; `verifyManifest`; `resolveEndpoint`; `ManifestError`; `REQUIRED_TARGETS`. |
+| `src/lib/pendingWrites.ts` | `registerPendingWrite`; `flushPendingWrites`; `pendingWriteCount`. |
+| `src/lib/appInfo.ts` | `APP_VERSION`; `RELEASE_CHANNEL`; `CHANNEL_LABEL`; `REPOSITORY_URL`; `RELEASES_URL`. |
 | `src/hooks/useApplyTheme.ts` | `useApplyTheme` — applies theme/density effects. |
 | `src/store/useSettings.ts` | `emptyByLang`; Zustand actions `setSettings`, `setAI`, `setActiveTheme`, `allThemes`, `activeTheme`, `saveCustomTheme`, `deleteCustomTheme`, `addDictWord`, `ignoreWord`, `removeDictWord`, `removeIgnoredWord`, `setDailyGoal`, `recordWordCount`, `todayWords`, `streak`, `setLastLocation`, `importBackupState`; persistence `merge`/`migrate`. |
 | `src/store/useUI.ts` | Zustand actions `reloadEditor`, `toggleLeft`, `toggleRight`, `setRightTab`, `openRight`, `setCenterView`, `setDistractionFree`, `setEditorZoom`, `setCommandOpen`, `setWorkspaceMode`, `setRibbon`, `setFindOpen`, `startSession`, `addSessionWords`, `tickSession`, `resetSession`, `setSaving`, `markSaved`, `toast`, `dismissToast`. |
@@ -1156,6 +1237,10 @@ part of a module’s public surface.
 | `src/features/export/backup.ts` | `todayStamp`; `exportFullBackup`; `importBackup`. |
 | `src/features/export/importDoc.ts` | `para`; `heading`; `textToBlocks`; `markdownToBlocks`; `docxToBlocks`; `importDocumentFile`. |
 | `src/features/export/ExportDialog.tsx` | `ExportDialog`; internal `doExport`. |
+| `src/features/updates/updateModel.ts` | `channelForVersion`; `initialUpdateState`; `updateReducer`; `isBusy`; `updateError`; `classifyUpdateError`; `describeStatus`; internal `comparePrerelease`-free pure transitions and `restingStatus`. |
+| `src/features/updates/updateService.ts` | `useUpdates`; `checkForUpdates`; `downloadUpdate`; `installUpdate`; `downloadAndInstall`; `skipVersion`; `resetUpdateState`; `shouldNotify`; `initUpdates`; `updateDiagnostics`; `updatesSupported`; `refreshUpdateSupport`; `setUpdaterBackend`; `CHECK_FOR_UPDATES_EVENT`; internal `tauriBackend`, `releaseHeld`, `dueForAutomaticCheck`, `recordCheck`. |
+| `src/features/updates/UpdatesSettings.tsx` | `UpdatesSettings`; `StatusIcon`. |
+| `src/features/updates/UpdateNotice.tsx` | `UpdateNotice`. |
 
 ### Test-only symbols
 
@@ -1163,5 +1248,22 @@ part of a module’s public surface.
 loader (`files`, `CORPUS`), `run`, `insight`, `tag`, `docOf`, `normPov`,
 `mapPacing`, `nameSet`, `refMattr`, `predict`, `correct`, and `accuracyFor`,
 plus the parameter/threshold tables. The test compares local analyzer results
-with tagged corpus expectations and is currently the only checked-in test
-suite.
+with tagged corpus expectations.
+
+The release/update suites are:
+
+- `src/lib/__tests__/semver.test.ts` — SemVer ordering, pre-release precedence,
+  and the fail-closed behaviour of `isNewerVersion`.
+- `src/lib/__tests__/releaseManifest.test.ts` — manifest parsing and field-level
+  errors, platform selection, endpoint placeholder resolution, and the
+  publication checks.
+- `src/lib/__tests__/pendingWrites.test.ts` — flush ordering, failure reporting
+  and the hung-writer timeout.
+- `src/features/updates/__tests__/updateModel.test.ts` — every state transition,
+  including the illegal ones, downgrade refusal and error classification.
+- `src/features/updates/__tests__/updateService.test.ts` — the whole flow
+  against a fake updater backend (jsdom), including the guarantee that pending
+  writes are flushed before install and that a failed flush cancels the update.
+- `src/__tests__/releaseConfig.test.ts` — repository configuration invariants:
+  identifier, updater key and endpoints, capabilities, bundle settings, workflow
+  safety rules, and the absence of signing material.

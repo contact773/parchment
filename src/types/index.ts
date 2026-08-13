@@ -432,4 +432,15 @@ export interface Settings {
   autosave: boolean
   ai: AIConfig
   onboardingDone: boolean
+  updates: UpdatePreferences
+}
+
+/** Desktop auto-update behaviour. Ignored by the browser build, which has no installer. */
+export interface UpdatePreferences {
+  /** Check the release endpoint shortly after launch. Never blocks startup. */
+  checkOnStartup: boolean
+  /** Epoch ms of the last completed check, successful or not. */
+  lastCheckedAt: number | null
+  /** A version the writer chose to skip; never offered again unless something newer appears. */
+  skippedVersion: string | null
 }

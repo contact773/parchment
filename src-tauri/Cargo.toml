@@ -24,6 +24,12 @@ serde_json = "1"
 # Desktop-only: focus the existing window instead of opening a second instance
 # (two windows on the same IndexedDB would risk last-write-wins data loss).
 tauri-plugin-single-instance = "2"
+# Signed in-app updates. The public verification key lives in tauri.conf.json;
+# the private key exists only in the maintainer's key store and in the
+# TAURI_SIGNING_PRIVATE_KEY GitHub Actions secret. See docs/RELEASE.md.
+tauri-plugin-updater = "2"
+# Restart after an update is installed.
+tauri-plugin-process = "2"
 # Pin transitive `time`: 0.3.48 added `impl From<HourBase> for <HourBase as ModifierValue>::Type`,
 # which current rustc's coherence checker can't normalize — producing spurious E0119 conflicts in
 # `cookie` and `tauri-utils`. 0.3.47 is the last good release. Remove once time/rustc resolve this.

@@ -18,7 +18,13 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "desktop:build": "tauri build --no-bundle && node scripts/place-exe.mjs",
-    "place-exe": "node scripts/place-exe.mjs"
+    "place-exe": "node scripts/place-exe.mjs",
+    "version:print": "node scripts/version.mjs print",
+    "version:check": "node scripts/version.mjs check",
+    "version:sync": "node scripts/version.mjs sync",
+    "version:set": "node scripts/version.mjs set",
+    "updater:keygen": "node scripts/updater-keygen.mjs",
+    "release:verify": "node scripts/verify-release.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -29,6 +35,8 @@
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
     "@tiptap/extension-character-count": "^3.26.0",
     "@tiptap/extension-color": "^3.26.0",
     "@tiptap/extension-font-family": "^3.26.0",
@@ -71,6 +79,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.5.0",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19",
     "typescript": "^6.0.3",

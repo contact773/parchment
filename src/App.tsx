@@ -9,12 +9,18 @@ import { Dashboard } from '@/pages/Dashboard'
 import { Workspace } from '@/pages/Workspace'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { HelpPage } from '@/pages/HelpPage'
+import { initUpdates } from '@/features/updates/updateService'
+import { UpdateNotice } from '@/features/updates/UpdateNotice'
 
 export function App() {
   useApplyTheme()
   useEffect(() => {
     void migrateChapterContentToScenes()
   }, [])
+  // Updates are wired up here, not inside the workspace: a writer must be able
+  // to receive and install one without opening a project. The check itself is
+  // deferred and never blocks the first render.
+  useEffect(() => initUpdates(), [])
   return (
     <>
       <ErrorBoundary>
@@ -26,6 +32,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
+      <UpdateNotice />
       <Toaster />
       <ConfirmRoot />
     </>

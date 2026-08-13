@@ -10,6 +10,7 @@ node_modules
 dist
 dist-ssr
 *.local
+*.tsbuildinfo
 
 # Editor / OS
 .vscode/*
@@ -24,3 +25,15 @@ dist-ssr
 
 # Generated dictionary assets (re-created by `npm run dict`)
 public/dictionaries/
+
+# Signing material. The updater private key lives outside the repository
+# (~/.parchment/updater/) and in the TAURI_SIGNING_PRIVATE_KEY GitHub secret —
+# never here. These patterns are a backstop, not the policy. See docs/RELEASE.md.
+*.key
+*.pem
+*.p12
+*.pfx
+.tauri/
+
+# Locally built desktop artifacts
+/Parchment.exe

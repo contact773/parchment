@@ -1,0 +1,91 @@
+# Quality gate. Runs on every pull request and every push to the default
+# branch. Publishes nothing, needs no secrets, and must pass before a release
+# tag is cut.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# One run per ref: a new push cancels the previous, still-running check.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Typecheck, tests and web build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # package.json is the version authority; a release built from files that
+      # disagree would ship an installer whose version does not match its
+      # updater manifest.
+      - name: Version files agree
+        run: npm run version:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test -- --run
+
+      - name: Web build
+        run: npm run build
+
+      - name: No signing material committed
+        run: |
+          if git ls-files | grep -E '(^|/)[^/]*\.key$|minisign.*\.key|updater.*\.key' ; then
+            echo "::error::A private key appears to be committed. Remove it and rotate the key."
+            exit 1
+          fi
+          if git grep -In 'untrusted comment: minisign encrypted secret key' -- . ; then
+            echo "::error::A minisign private key is committed. Remove it and rotate the key."
+            exit 1
+          fi
+          echo "No private signing material found in tracked files."
+
+  installer:
+    name: Windows installer (unsigned, not published)
+    runs-on: windows-latest
+    # Proves the desktop bundle still packages. Uses the CI overlay so it does
+    # not need — and cannot leak — the updater signing key.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - name: Build NSIS installer
+        run: npm run tauri -- build --config src-tauri/tauri.ci.conf.json
+
+      - name: Upload installer for manual smoke testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: parchment-windows-installer-unsigned
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+          retention-days: 14

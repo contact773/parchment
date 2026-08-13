@@ -5,6 +5,7 @@ import type {
   LanguageCode,
   Settings,
   Theme,
+  UpdatePreferences,
   UserDictionary,
   WritingStats,
 } from '@/types'
@@ -22,6 +23,14 @@ const defaultAI: AIConfig = {
   baseUrl: 'http://localhost:11434',
 }
 
+// Check on startup, but never install without asking: an update restarts the
+// app, and a writer mid-sentence should be the one who decides when that happens.
+const defaultUpdates: UpdatePreferences = {
+  checkOnStartup: true,
+  lastCheckedAt: null,
+  skippedVersion: null,
+}
+
 const defaultSettings: Settings = {
   id: 'app',
   activeThemeId: DEFAULT_THEME_ID,
@@ -34,6 +43,7 @@ const defaultSettings: Settings = {
   autosave: true,
   ai: defaultAI,
   onboardingDone: false,
+  updates: defaultUpdates,
 }
 
 const emptyByLang = (): Record<LanguageCode, string[]> => ({ en: [], nl: [], fr: [], de: [], es: [] })
@@ -203,7 +213,12 @@ export const useSettings = create<SettingsState>()(
         return {
           ...c,
           ...p,
-          settings: { ...c.settings, ...ps, ai: { ...c.settings.ai, ...(ps.ai ?? {}) } },
+          settings: {
+            ...c.settings,
+            ...ps,
+            ai: { ...c.settings.ai, ...(ps.ai ?? {}) },
+            updates: { ...c.settings.updates, ...(ps.updates ?? {}) },
+          },
           stats: { ...c.stats, ...(p.stats ?? {}) },
           dictionary: {
             added: { ...c.dictionary.added, ...(pd.added ?? {}) },

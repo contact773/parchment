@@ -2,8 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::path::Path;
-use tauri::menu::{MenuBuilder, SubmenuBuilder};
-use tauri::Manager;
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::{Emitter, Manager};
+
+/// Event the frontend listens for to run a user-requested update check.
+/// Kept in sync with `CHECK_FOR_UPDATES_EVENT` in `src/features/updates/updateService.ts`.
+const CHECK_FOR_UPDATES_EVENT: &str = "parchment://check-for-updates";
 
 /// Write raw bytes to an absolute path chosen by the user via the native save dialog.
 /// Bytes arrive from the frontend as a JSON number array (Vec<u8>); fine for the
@@ -39,6 +43,15 @@ fn main() {
         }));
     }
 
+    // Signed in-app updates and the restart that follows one. Desktop-only:
+    // there is no installer to replace on mobile.
+    #[cfg(desktop)]
+    {
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init());
+    }
+
     builder
         // Remember window size/position/maximized across launches.
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -64,8 +77,21 @@ fn main() {
                 .separator()
                 .close_window()
                 .build()?;
-            let menu = MenuBuilder::new(app).items(&[&file, &edit, &window]).build()?;
+            // Help -> Check for Updates… is the manual entry point required by
+            // the release policy: it must work from a cold app with no project
+            // open. The heavy lifting stays in the frontend update service so
+            // there is one state machine, not two.
+            let check_updates = MenuItemBuilder::with_id("check-for-updates", "Check for Updates…").build(app)?;
+            let help = SubmenuBuilder::new(app, "Help").item(&check_updates).build()?;
+            let menu = MenuBuilder::new(app)
+                .items(&[&file, &edit, &window, &help])
+                .build()?;
             app.set_menu(menu)?;
+            app.on_menu_event(move |app, event| {
+                if event.id() == check_updates.id() {
+                    let _ = app.emit(CHECK_FOR_UPDATES_EVENT, ());
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![write_file_bytes, read_file_bytes])

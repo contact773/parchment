@@ -22,6 +22,7 @@ import { db } from '@/data/db'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
 import { debounce, cn } from '@/lib/utils'
+import { registerPendingWrite } from '@/lib/pendingWrites'
 import { formatReadingTime, readingMinutes, pageEstimate } from '@/lib/text'
 import { formatNumber } from '@/lib/format'
 import { BUILTIN_THEMES, findBuiltin } from '@/features/themes/themes'
@@ -124,34 +125,51 @@ export function DocumentEditor({
   }, [dictionary])
 
   // ── Autosave ──────────────────────────────────────────────────────────
+  // The write that `save.flush()` kicked off, so callers that must not proceed
+  // until it lands (an update restart) have something to await.
+  const inFlight = useRef<Promise<unknown> | null>(null)
   const save = useMemo(
     () =>
       debounce((json: object) => {
-        void saveNodeContent(node.id, json).then((words) => {
-          const delta = recordWordCount(node.id, words)
-          if (delta > 0) addSessionWords(delta)
-          markSaved()
-        })
+        const write = saveNodeContent(node.id, json)
+          .then((words) => {
+            const delta = recordWordCount(node.id, words)
+            if (delta > 0) addSessionWords(delta)
+            markSaved()
+          })
+          .finally(() => {
+            if (inFlight.current === write) inFlight.current = null
+          })
+        inFlight.current = write
       }, 700),
     [node.id, recordWordCount, addSessionWords, markSaved],
   )
+  /** Run any pending save now and resolve once it has reached IndexedDB. */
+  const flushSave = useCallback(async () => {
+    save.flush()
+    await inFlight.current
+  }, [save])
   useEffect(() => () => save.flush(), [save])
   // Flush the last pending save when the tab/app is hidden or closing, so the
   // final <700ms of typing is never lost on a quick quit ("your work is safe").
+  // The registry entry additionally lets an update wait for the write before it
+  // restarts the app.
   useEffect(() => {
     const flush = () => save.flush()
     const onVis = () => {
       if (document.visibilityState === 'hidden') save.flush()
     }
+    const unregister = registerPendingWrite(`editor:${node.id}`, flushSave)
     window.addEventListener('pagehide', flush)
     window.addEventListener('beforeunload', flush)
     document.addEventListener('visibilitychange', onVis)
     return () => {
+      unregister()
       window.removeEventListener('pagehide', flush)
       window.removeEventListener('beforeunload', flush)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [save])
+  }, [save, flushSave, node.id])
 
   const editor = useEditor(
     {

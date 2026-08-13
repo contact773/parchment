@@ -1,0 +1,195 @@
+# Stable release. Triggered by a `v*` tag.
+#
+#   preflight  →  build (draft release, signed)  →  verify (publish or leave draft)
+#
+# The release is created as a DRAFT and only published once the updater manifest
+# it produced has been verified. GitHub's `releases/latest` — which is what
+# every installed copy polls — ignores drafts and prereleases, so a failed or
+# half-finished release can never reach a writer's machine.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   TAURI_SIGNING_PRIVATE_KEY           contents of the updater private key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password ("" if the key has none)
+# See docs/RELEASE.md.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail closed. An unsigned release is worse than no release: installed
+      # copies would reject it, and the tag would have to be withdrawn.
+      - name: Signing secrets are configured
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not configured. Refusing to publish an unsigned release."
+            echo "::error::Generate a key with 'npm run updater:keygen' and add it as a repository secret."
+            exit 1
+          fi
+          echo "Updater signing key is present."
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Version files agree
+        run: npm run version:check
+
+      - name: Tag matches package.json
+        id: version
+        run: |
+          VERSION="$(node scripts/version.mjs print)"
+          TAG="${GITHUB_REF_NAME}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          # Also covers a manual run: workflow_dispatch must be launched from a
+          # tag, never from a branch, or the release would be tagged "main".
+          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then
+            echo "::error::Releases are cut from tags. This ran on ${GITHUB_REF_TYPE} ${TAG}."
+            exit 1
+          fi
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Tag $TAG does not match package.json version $VERSION."
+            echo "::error::Run 'npm run version:set -- <version>', commit, then tag v<version>."
+            exit 1
+          fi
+          echo "Releasing $VERSION as $TAG"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test -- --run
+
+      - name: Web build
+        run: npm run build
+
+  build:
+    name: Build and sign (${{ matrix.platform }})
+    needs: preflight
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: true
+      matrix:
+        # Windows first, deliberately. macOS and Linux join once their signing,
+        # notarisation and install behaviour have been verified on those systems.
+        include:
+          - platform: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    outputs:
+      release_id: ${{ steps.tauri.outputs.releaseId }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - name: Build installer, updater archive and signature
+        id: tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ needs.preflight.outputs.tag }}
+          releaseName: Parchment v__VERSION__
+          releaseBody: |
+            Parchment v__VERSION__
+
+            Installed copies on the stable channel will offer this update
+            automatically. You can also install it by hand with the setup
+            program below — your projects stay where they are.
+
+            See CHANGELOG.md for what changed.
+          # Draft until the manifest is verified. `releases/latest` skips drafts.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+
+  verify:
+    name: Verify manifest and publish
+    needs: [preflight, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Download the release manifest installed copies will poll
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.build.outputs.release_id }}
+        run: |
+          ASSET_ID="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets" \
+            --jq '.[] | select(.name == "latest.json") | .id')"
+          if [ -z "$ASSET_ID" ]; then
+            echo "::error::The release has no latest.json — installed copies would never see this version."
+            exit 1
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" \
+            -H "Accept: application/octet-stream" > latest.json
+          cat latest.json
+
+      - name: Manifest matches this release
+        run: |
+          node scripts/verify-release.mjs \
+            --manifest latest.json \
+            --version "${{ needs.preflight.outputs.version }}" \
+            --tag "${{ needs.preflight.outputs.tag }}"
+
+      # Only now does the release become the one installed copies will find.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.build.outputs.release_id }}
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            -F draft=false -f make_latest=true
+          echo "Published ${{ needs.preflight.outputs.tag }}."
+
+      - name: Leave the release as a draft if verification failed
+        if: failure()
+        run: |
+          echo "::warning::The release stayed a draft. No installed copy will be offered it."
+          echo "::warning::Inspect the draft, fix the problem, delete it, and re-tag."

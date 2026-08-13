@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Palette,
@@ -11,6 +11,7 @@ import {
   Download,
   Upload,
   Feather,
+  ArrowUpCircle,
 } from 'lucide-react'
 import { useSettings } from '@/store/useSettings'
 import { useUI } from '@/store/useUI'
@@ -24,8 +25,10 @@ import { Button } from '@/components/ui/Button'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Switch } from '@/components/ui/misc'
 import { cn } from '@/lib/utils'
+import { APP_VERSION, CHANNEL_LABEL, RELEASE_CHANNEL } from '@/lib/appInfo'
+import { UpdatesSettings } from '@/features/updates/UpdatesSettings'
 
-type Section = 'appearance' | 'writing' | 'assistant' | 'dictionary' | 'data' | 'about'
+type Section = 'appearance' | 'writing' | 'assistant' | 'dictionary' | 'data' | 'updates' | 'about'
 
 const NAV: { id: Section; label: string; icon: typeof Palette }[] = [
   { id: 'appearance', label: 'Appearance & Themes', icon: Palette },
@@ -33,12 +36,22 @@ const NAV: { id: Section; label: string; icon: typeof Palette }[] = [
   { id: 'assistant', label: 'Story Assistant', icon: Sparkles },
   { id: 'dictionary', label: 'Dictionaries', icon: BookMarked },
   { id: 'data', label: 'Data & Backup', icon: Database },
+  { id: 'updates', label: 'Updates', icon: ArrowUpCircle },
   { id: 'about', label: 'About', icon: Feather },
 ]
 
+const isSection = (v: string | null): v is Section => NAV.some((n) => n.id === v)
+
 export function SettingsPage() {
   const navigate = useNavigate()
-  const [section, setSection] = useState<Section>('appearance')
+  // `?section=updates` lets the update notice deep-link straight here — from
+  // anywhere, including from this page, where there is no remount to rely on.
+  const [params] = useSearchParams()
+  const requested = params.get('section')
+  const [section, setSection] = useState<Section>(isSection(requested) ? requested : 'appearance')
+  useEffect(() => {
+    if (isSection(requested)) setSection(requested)
+  }, [requested])
 
   return (
     <div className="flex h-full flex-col bg-bg">
@@ -73,6 +86,7 @@ export function SettingsPage() {
             {section === 'assistant' && <AssistantSettings />}
             {section === 'dictionary' && <DictionarySettings />}
             {section === 'data' && <DataSettings />}
+            {section === 'updates' && <UpdatesSettings />}
             {section === 'about' && <AboutSection />}
           </div>
         </main>
@@ -356,7 +370,10 @@ function AboutSection() {
           </span>
           <div>
             <div className="font-serif text-xl font-semibold text-ink">Parchment</div>
-            <div className="text-sm text-muted">A writing studio for serious work · v0.1.0</div>
+            <div className="text-sm text-muted">
+              A writing studio for serious work · v{APP_VERSION}
+              {RELEASE_CHANNEL === 'preview' && ` · ${CHANNEL_LABEL.preview} build`}
+            </div>
           </div>
         </div>
         <p className="text-sm leading-relaxed text-muted">

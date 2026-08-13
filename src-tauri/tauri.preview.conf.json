@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "//": [
+    "Preview-channel overlay, merged over tauri.conf.json with:",
+    "    tauri build --config src-tauri/tauri.preview.conf.json",
+    "",
+    "The update channel is baked into the artifact rather than switchable at",
+    "runtime: the Tauri updater reads its endpoints from the compiled config, so",
+    "a build points at exactly one manifest for its whole life. A writer opts",
+    "into previews by installing a preview build, and returns to stable by",
+    "installing a stable installer (a stable X.Y.Z always sorts above every",
+    "X.Y.Z-preview.N, so it installs cleanly over the top).",
+    "",
+    "productName and identifier stay the same on purpose: a preview is an",
+    "upgrade of the same installed application, not a second copy with its own",
+    "IndexedDB.",
+    "",
+    "See docs/adr/0001-release-channels-and-updates.md."
+  ],
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/contact773/parchment/releases/download/preview/latest.json"
+      ]
+    }
+  }
+}
