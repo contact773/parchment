@@ -24,6 +24,9 @@ export default defineConfig({
     // preview harness) can run the web build on any free port instead.
     port: Number(process.env.PORT) || 5173,
     strictPort: !process.env.PORT,
+    // Allow Cloudflare quick-tunnel hostnames so `cloudflared tunnel --url`
+    // can expose the dev server without Vite's host check rejecting it.
+    allowedHosts: ['.trycloudflare.com'],
   },
   envPrefix: ['VITE_', 'TAURI_ENV_'],
 })
