@@ -4,8 +4,11 @@
 name: CI
 
 on:
+  # Every branch, so the gate does not depend on what the default branch is
+  # called this month. Tag pushes are excluded automatically by filtering on
+  # branches at all — those are the release workflow's business.
   push:
-    branches: [main, master]
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -63,6 +66,10 @@ jobs:
     runs-on: windows-latest
     # Proves the desktop bundle still packages. Uses the CI overlay so it does
     # not need — and cannot leak — the updater signing key.
+    #
+    # A 15-minute Windows build on every push to every working branch is not
+    # worth it; on pull requests and on the default branch it is.
+    if: github.event_name != 'push' || github.ref_name == github.event.repository.default_branch
     steps:
       - uses: actions/checkout@v4
 
