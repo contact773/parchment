@@ -6,7 +6,10 @@ Notable changes to Parchment. Versions follow [SemVer](https://semver.org/);
 Migration or backup requirements, when a release has any, are called out under
 the release heading.
 
-## Unreleased
+## 0.2.0 — 2026-08-14
+
+The first release Parchment can install and update by itself. No migration or
+backup is required to move to it from 0.1.0; your projects are untouched.
 
 ### Added
 

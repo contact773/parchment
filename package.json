@@ -1,7 +1,7 @@
 {
   "name": "parchment",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Parchment — a serious local-first writing studio for novels, scripts, poetry and worldbuilding.",
   "scripts": {
