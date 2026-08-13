@@ -141,10 +141,13 @@ export interface ManifestExpectation {
   /** Platform keys that must all be present. Defaults to {@link REQUIRED_TARGETS}. */
   targets?: readonly string[]
   /**
-   * Every asset URL must contain this string — normally the git tag, which
-   * catches a manifest accidentally pointing at a previous release's assets.
+   * Every asset URL must contain these strings — normally the git tag *and* the
+   * version. Both matter: the tag catches a manifest pointing at another
+   * release's directory, and the version catches a manifest paired with a
+   * stale artifact left in the bundle directory by an earlier build, whose
+   * signature would not verify against the file it claims to describe.
    */
-  urlMustContain?: string
+  urlMustContain?: string | readonly string[]
 }
 
 /**
@@ -157,14 +160,22 @@ export function verifyManifest(manifest: ReleaseManifest, expect: ManifestExpect
   if (manifest.version !== expect.version) {
     problems.push(`manifest version is ${manifest.version}, expected ${expect.version}`)
   }
+  const required =
+    expect.urlMustContain === undefined
+      ? []
+      : typeof expect.urlMustContain === 'string'
+        ? [expect.urlMustContain]
+        : expect.urlMustContain
   for (const target of expect.targets ?? REQUIRED_TARGETS) {
     const asset = selectPlatformAsset(manifest, target)
     if (!asset) {
       problems.push(`missing required target ${target}`)
       continue
     }
-    if (expect.urlMustContain && !asset.url.includes(expect.urlMustContain)) {
-      problems.push(`${target} url does not reference ${expect.urlMustContain}: ${asset.url}`)
+    for (const needle of required) {
+      if (!asset.url.includes(needle)) {
+        problems.push(`${target} url does not reference ${needle}: ${asset.url}`)
+      }
     }
   }
   return problems

@@ -117,6 +117,32 @@ describe('verifyManifest', () => {
     expect(problems[0]).toMatch(/does not reference v0.3.0/)
   })
 
+  it('catches a stale artifact paired with a newer manifest', () => {
+    // The real bug this guards: a bundle directory still holding the previous
+    // build, so a 0.2.0 manifest points at the 0.1.0 installer — right tag,
+    // right URL directory, wrong file, and a signature that cannot verify.
+    const stale = parseReleaseManifest({
+      ...valid,
+      platforms: {
+        'windows-x86_64': {
+          signature: 'c2ln',
+          url: 'https://github.com/contact773/parchment/releases/download/v0.2.0/Parchment_0.1.0_x64-setup.exe',
+        },
+      },
+    })
+    expect(verifyManifest(stale, { version: '0.2.0', urlMustContain: 'v0.2.0' })).toEqual([])
+    expect(verifyManifest(stale, { version: '0.2.0', urlMustContain: ['v0.2.0', '0.2.0_x64'] })).toEqual([
+      'windows-x86_64 url does not reference 0.2.0_x64: https://github.com/contact773/parchment/releases/download/v0.2.0/Parchment_0.1.0_x64-setup.exe',
+    ])
+  })
+
+  it('accepts a single string or a list of required substrings', () => {
+    const manifest = parseReleaseManifest(valid)
+    expect(verifyManifest(manifest, { version: '0.2.0', urlMustContain: 'v0.2.0' })).toEqual([])
+    expect(verifyManifest(manifest, { version: '0.2.0', urlMustContain: ['v0.2.0', '0.2.0', 'setup.exe'] })).toEqual([])
+    expect(verifyManifest(manifest, { version: '0.2.0', urlMustContain: [] })).toEqual([])
+  })
+
   it('defaults to the targets Parchment promises to publish', () => {
     expect(REQUIRED_TARGETS).toContain('windows-x86_64')
     expect(verifyManifest(parseReleaseManifest(valid), { version: '0.2.0' })).toEqual([])
