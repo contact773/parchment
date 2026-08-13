@@ -15,6 +15,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { resolveEndpoint } from '@/lib/releaseManifest'
+import { containsPrivateKeyMaterial } from '@/lib/secretScan'
 import { isValidVersion } from '@/lib/semver'
 
 const root = fileURLToPath(new URL('../..', import.meta.url))
@@ -84,7 +85,8 @@ describe('updater configuration', () => {
     const decoded = Buffer.from(updater.pubkey, 'base64').toString('utf8')
     expect(decoded).toContain('minisign public key')
     expect(decoded).not.toContain('secret key')
-    expect(read('src-tauri/tauri.conf.json')).not.toContain('minisign encrypted secret key')
+    // The same detector CI runs across every tracked file.
+    expect(containsPrivateKeyMaterial(read('src-tauri/tauri.conf.json'))).toBe(false)
   })
 
   it('polls exactly one https endpoint, and it is the stable one', () => {
@@ -138,6 +140,31 @@ describe('CI overlay', () => {
   })
 })
 
+describe('every Tauri config is schema-clean', () => {
+  // Tauri validates its configuration with `additionalProperties: false`, and
+  // JSON has no comments — so a well-meaning `"//"` explanation key fails the
+  // build outright with "Additional properties are not allowed". The prose that
+  // used to live in those keys is in src-tauri/README.md instead.
+  const schemaProperties = new Set<string>(
+    Object.keys(readJson('node_modules/@tauri-apps/cli/config.schema.json').properties),
+  )
+
+  const configs: Record<string, Record<string, unknown>> = {
+    'tauri.conf.json': tauriConf,
+    'tauri.preview.conf.json': previewConf,
+    'tauri.ci.conf.json': ciConf,
+  }
+
+  it('uses only top-level keys the Tauri schema allows', () => {
+    expect(schemaProperties.size).toBeGreaterThan(0)
+    for (const [name, conf] of Object.entries(configs)) {
+      for (const key of Object.keys(conf)) {
+        expect(schemaProperties.has(key), `${name}: unsupported top-level key ${JSON.stringify(key)}`).toBe(true)
+      }
+    }
+  })
+})
+
 describe('workflows', () => {
   const ci = read('.github/workflows/ci.yml')
   const release = read('.github/workflows/release.yml')
@@ -187,6 +214,13 @@ describe('workflows', () => {
   it('does not publish previews from main until a maintainer opts in', () => {
     expect(preview).toContain('PUBLISH_PREVIEWS')
     expect(preview).toContain("github.repository == 'contact773/parchment'")
+  })
+
+  it('scans for committed keys with the tested detector, not an inline grep', () => {
+    // An inline grep for a key header matched this workflow, the tests and the
+    // docs — every file that discusses the header — and could not detect a real
+    // Tauri key anyway, since those are base64-wrapped. See src/lib/secretScan.ts.
+    expect(ci).toContain('npm run check:secrets')
   })
 
   it('grants write access only to the jobs that publish', () => {

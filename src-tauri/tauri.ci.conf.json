@@ -1,16 +1,5 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "//": [
-    "Continuous-integration overlay, merged over tauri.conf.json with:",
-    "    tauri build --config src-tauri/tauri.ci.conf.json",
-    "",
-    "Turns off updater-artifact generation so pull-request builds can prove the",
-    "installer still packages without needing the signing key. Signing secrets",
-    "are never exposed to pull requests, and a build that quietly produced",
-    "unsigned updater artifacts would be worse than one that produces none.",
-    "",
-    "Release builds do NOT use this file — they must sign."
-  ],
   "bundle": {
     "createUpdaterArtifacts": false
   }

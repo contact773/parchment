@@ -24,7 +24,8 @@
     "version:sync": "node scripts/version.mjs sync",
     "version:set": "node scripts/version.mjs set",
     "updater:keygen": "node scripts/updater-keygen.mjs",
-    "release:verify": "node scripts/verify-release.mjs"
+    "release:verify": "node scripts/verify-release.mjs",
+    "check:secrets": "node scripts/check-no-secrets.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
