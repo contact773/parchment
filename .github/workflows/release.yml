@@ -9,7 +9,13 @@
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   TAURI_SIGNING_PRIVATE_KEY           contents of the updater private key
-#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password ("" if the key has none)
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  only if the key has a password
+#   RELEASE_TOKEN                       optional. A fine-grained personal access
+#                                       token with Contents: Read and write on
+#                                       this repository. Used in place of the
+#                                       built-in GITHUB_TOKEN when the repository
+#                                       workflow-permission setting will not
+#                                       grant write access.
 # See docs/RELEASE.md.
 name: Release
 
@@ -29,6 +35,10 @@ jobs:
   preflight:
     name: Preflight
     runs-on: ubuntu-latest
+    # Needed so the token probe below reflects the write access the build job
+    # will actually get. Without it the probe would report read and mislead.
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
@@ -47,6 +57,31 @@ jobs:
             exit 1
           fi
           echo "Updater signing key is present."
+
+      # Publishing is the very last thing the release does, after an eight-minute
+      # Windows build. Finding out then that the token cannot create a release
+      # wastes the build and reads as a mysterious failure, so check it here in
+      # two seconds instead.
+      - name: Token can publish releases
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          USING_PAT: ${{ secrets.RELEASE_TOKEN != '' }}
+        run: |
+          echo "Token in use: $([ "$USING_PAT" = "true" ] && echo 'RELEASE_TOKEN (personal access token)' || echo 'built-in GITHUB_TOKEN')"
+          CAN_WRITE="$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.permissions.push // false')"
+          echo "Write access reported by the API: $CAN_WRITE"
+          if [ "$CAN_WRITE" != "true" ]; then
+            echo "::error::This token cannot create a release, so the build would be thrown away."
+            echo "::error::Fix it in ONE of two ways:"
+            echo "::error::  1. Settings -> Actions -> General -> Workflow permissions ->"
+            echo "::error::     'Read and write permissions' -> press Save. Then start a NEW run"
+            echo "::error::     (Actions -> Release -> Run workflow -> pick the tag); re-running an"
+            echo "::error::     old run replays its original permissions."
+            echo "::error::  2. Or add a RELEASE_TOKEN secret: a fine-grained personal access token"
+            echo "::error::     scoped to this repository with Contents: Read and write. This"
+            echo "::error::     bypasses the workflow-permission setting entirely."
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -123,7 +158,7 @@ jobs:
         id: tauri
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
@@ -158,7 +193,7 @@ jobs:
 
       - name: Download the release manifest installed copies will poll
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           RELEASE_ID: ${{ needs.build.outputs.release_id }}
         run: |
           ASSET_ID="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets" \
@@ -181,7 +216,7 @@ jobs:
       # Only now does the release become the one installed copies will find.
       - name: Publish the release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           RELEASE_ID: ${{ needs.build.outputs.release_id }}
         run: |
           gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \

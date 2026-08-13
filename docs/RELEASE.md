@@ -50,13 +50,26 @@ reaches the config, and `.gitignore` blocks `*.key` as a backstop.
 |---|---|
 | `PUBLISH_PREVIEWS` | set to `true` to publish a preview on every push to `main`. Unset, previews are cut by hand from the Actions tab. |
 
-**Settings → Actions → General**
+**Settings → Actions → General → Workflow permissions**
 
-- Workflow permissions: *Read repository contents and packages permissions*.
-  The release jobs request `contents: write` explicitly; the default does not
-  need to be permissive.
+Select **Read and write permissions** and press **Save** (the button sits below
+the radio buttons and is easy to miss).
 
-Nothing else is required. `GITHUB_TOKEN` is provided by Actions.
+The release jobs declare `contents: write` themselves, so in principle the
+restrictive default should work. In practice it does not always take effect —
+notably, **re-running an existing run replays that run's original permissions**,
+so a settings change only reaches a *new* run. Preflight probes the token and
+fails in two seconds with instructions rather than after an eight-minute build.
+
+If write access still cannot be granted, add the escape hatch:
+
+| Secret | Value |
+|---|---|
+| `RELEASE_TOKEN` | A fine-grained personal access token (Settings → Developer settings → Personal access tokens → Fine-grained), scoped to this repository only, with **Contents: Read and write**. |
+
+Every workflow prefers `RELEASE_TOKEN` when present and falls back to the
+built-in `GITHUB_TOKEN`, so adding it needs no code change. Give it an expiry
+and a calendar reminder — an expired token fails the release at preflight.
 
 ---
 
